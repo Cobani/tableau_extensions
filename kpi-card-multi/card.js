@@ -824,7 +824,9 @@
     // Paint
     // ---------------------------------------------------------------------------
     function paint () {
-      if (!lastData || !cfg) return;
+      if (!cfg) return;
+      paintCard(); // background applies in every state, including the empty/hint state
+      if (!lastData) return;
       var pts = lastData.points;
       if (!pts.length) {
         showEmpty(lastData.dateIssue || 'No data for the measure.');
@@ -837,7 +839,6 @@
 
       el.card.classList.remove('is-empty');
       hideTooltip();
-      paintCard();
       paintHeader();
       paintNumber(latest, lastIdx);
       paintChange(cmp);
