@@ -5,7 +5,12 @@ Color dimension, stacked and 100% areas, a dual axis, reference lines, a band be
 and an interactive legend. The icon, title, explanation and card options are the same as **KPI Card 3** and
 **Waterfall**, and so is the number formatting.
 
-![preview](preview.png)
+<p>
+  <img src="examples/example-1.png" alt="Line Chart example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Line Chart example 2" width="100%">
+</p>
 
 ```
 line-chart.trex  manifest: Marks card tiles + "Format Extension" button
@@ -50,7 +55,7 @@ show off a feature. **Reset settings** brings those back.
 - **Hover** anywhere in the chart: a crosshair snaps to the nearest date and the tooltip lists every series at that
   point with full, unabbreviated values (Tableau's own format when the point is a single value), plus the stacked
   total, each area's share with 100% stacking, and the band range. Under each series: the change vs the previous
-  point (▲ +3.25%, coloured good / bad) and the previous value — set per series on the Series tab.
+  point (↗ +3.25%, KPI Card arrows, coloured good / bad) and the previous value — set per series on the Series tab.
 - **Legend**: click an item to hide or show that series, hover to highlight it, double-click to format it. Hiding
   is for this session only; to hide a series for everyone, set it to *Hidden* in Format → Series.
 - **Right-click** a line, an area or a legend item → *Format "Deposits"…*, *Hide "Deposits"*, Series…, Areas &

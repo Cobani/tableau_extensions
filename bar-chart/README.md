@@ -5,7 +5,17 @@ comparison and overlapping bars, as plain bars, lollipops or filling (progress) 
 reference lines, icons per member, comments, Top N with *Others*, and drill-down on double-click. The icon, title and
 explanation are the same as **KPI Card**; the card options and number formatting are the same as **Waterfall**.
 
-![preview](preview.png)
+<p>
+  <img src="examples/example-1.png" alt="Bar Chart example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Bar Chart example 2" width="49%">
+  <img src="examples/example-3.png" alt="Bar Chart example 3" width="49%">
+</p>
+<p>
+  <img src="examples/example-4.png" alt="Bar Chart example 4" width="49%">
+  <img src="examples/example-5.png" alt="Bar Chart example 5" width="49%">
+</p>
 
 ```
 bar-chart.trex   manifest: Marks card tiles + "Format Extension" button

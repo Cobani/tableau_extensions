@@ -6,7 +6,10 @@ shading, group totals that fold, a diagonal mark for From → To matrices, and e
 and CSV. The icon, title and explanation are the same as **KPI Card**; the card options, number formatting and presets
 are the same as **Bar Chart**.
 
-![preview](preview.png)
+<p>
+  <img src="examples/example-1.png" alt="Matrix example 1" width="49%">
+  <img src="examples/example-2.png" alt="Matrix example 2" width="49%">
+</p>
 
 ```
 matrix-table.trex  manifest: Marks card tiles + "Format Extension" button

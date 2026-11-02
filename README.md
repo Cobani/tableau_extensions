@@ -31,13 +31,13 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 
 | | Extension | What it draws | Marks card tiles | Manifest |
 |---|---|---|---|---|
-| <img src="kpi-card/preview.png" width="120"> | [**KPI Card**](#kpi-card) | Latest value, % / pp change and a trend line | Measure · Date | [`kpiCard.trex`](kpi-card/kpiCard.trex) |
-| <img src="kpi-card-multi/preview.png" width="120"> | [**KPI Card Multi**](#kpi-card-multi) | A row of KPI cards, one per measure, in one zone | Measures · Date | [`kpiCardMulti.trex`](kpi-card-multi/kpiCardMulti.trex) |
-| <img src="waterfall/preview.png" width="120"> | [**Waterfall**](#waterfall) | Start → changes → End bridge chart | Start · Changes · End · Breakdown | [`waterfall.trex`](waterfall/waterfall.trex) |
-| <img src="line-chart/preview.png" width="120"> | [**Line Chart**](#line-chart) | Lines and areas over a date, dual axis | Date · Measures · Color | [`line-chart.trex`](line-chart/line-chart.trex) |
-| <img src="bar-chart/preview.png" width="120"> | [**Bar Chart**](#bar-chart) | Every common bar design, with drill-down | Dimension · Measure · Line · Target | [`bar-chart.trex`](bar-chart/bar-chart.trex) |
-| <img src="matrix-table/preview.png" width="120"> | [**Matrix**](#matrix) | Crosstab with heat map, totals and Excel export | Rows · Columns · Measure · Color | [`matrix-table.trex`](matrix-table/matrix-table.trex) |
-| <img src="data-lineage/preview.png" width="120"> | [**Data Lineage**](#data-lineage) | Sankey-style lineage flow with search | Levels · Details | [`data-lineage.trex`](data-lineage/data-lineage.trex) |
+| <img src="kpi-card/examples/example-1.png" width="120"> | [**KPI Card**](#kpi-card) | Latest value, % / pp change and a trend line | Measure · Date | [`kpiCard.trex`](kpi-card/kpiCard.trex) |
+| <img src="kpi-card-multi/examples/example-1.png" width="120"> | [**KPI Card Multi**](#kpi-card-multi) | A row of KPI cards, one per measure, in one zone | Measures · Date | [`kpiCardMulti.trex`](kpi-card-multi/kpiCardMulti.trex) |
+| <img src="waterfall/examples/example-1.png" width="120"> | [**Waterfall**](#waterfall) | Start → changes → End bridge chart | Start · Changes · End · Breakdown | [`waterfall.trex`](waterfall/waterfall.trex) |
+| <img src="line-chart/examples/example-1.png" width="120"> | [**Line Chart**](#line-chart) | Lines and areas over a date, dual axis | Date · Measures · Color | [`line-chart.trex`](line-chart/line-chart.trex) |
+| <img src="bar-chart/examples/example-1.png" width="120"> | [**Bar Chart**](#bar-chart) | Every common bar design, with drill-down | Dimension · Measure · Line · Target | [`bar-chart.trex`](bar-chart/bar-chart.trex) |
+| <img src="matrix-table/examples/example-1.png" width="120"> | [**Matrix**](#matrix) | Crosstab with heat map, totals and Excel export | Rows · Columns · Measure · Color | [`matrix-table.trex`](matrix-table/matrix-table.trex) |
+| <img src="data-lineage/examples/example-1.png" width="120"> | [**Data Lineage**](#data-lineage) | Sankey-style lineage flow with search | Levels · Details | [`data-lineage.trex`](data-lineage/data-lineage.trex) |
 
 ## What every extension can do
 
@@ -53,7 +53,10 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 
 ## KPI Card
 
-<img src="kpi-card/preview.png" alt="KPI Card" width="420" align="right">
+<p>
+  <img src="kpi-card/examples/example-1.png" alt="KPI Card example 1" width="340">
+  <img src="kpi-card/examples/example-2.png" alt="KPI Card example 2" width="340">
+</p>
 
 A single KPI: icon, title, explanation, **big number with unit**, **% or pp change** and a **trend line** (or "vs previous period" text).
 
@@ -68,11 +71,15 @@ A single KPI: icon, title, explanation, **big number with unit**, **% or pp chan
 
 [Full documentation →](kpi-card/README.md)
 
-<br clear="right">
 
 ## KPI Card Multi
 
-<img src="kpi-card-multi/preview.png" alt="KPI Card Multi" width="420" align="right">
+<p>
+  <img src="kpi-card-multi/examples/example-1.png" alt="KPI Card Multi example 1" width="100%">
+</p>
+<p>
+  <img src="kpi-card-multi/examples/example-2.png" alt="KPI Card Multi example 2" width="100%">
+</p>
 
 Up to **12 KPI cards in one extension zone**: each measure on the Measures tile becomes a card that looks and works like the single KPI Card.
 
@@ -85,11 +92,15 @@ Up to **12 KPI cards in one extension zone**: each measure on the Measures tile 
 
 [Full documentation →](kpi-card-multi/README.md)
 
-<br clear="right">
 
 ## Waterfall
 
-<img src="waterfall/preview.png" alt="Waterfall" width="100%">
+<p>
+  <img src="waterfall/examples/example-1.png" alt="Waterfall example 1" width="100%">
+</p>
+<p>
+  <img src="waterfall/examples/example-2.png" alt="Waterfall example 2" width="100%">
+</p>
 
 A bridge chart from a **Start** value through any number of **changes** to an **End** value.
 
@@ -106,7 +117,12 @@ A bridge chart from a **Start** value through any number of **changes** to an **
 
 ## Line Chart
 
-<img src="line-chart/preview.png" alt="Line Chart" width="100%">
+<p>
+  <img src="line-chart/examples/example-1.png" alt="Line Chart example 1" width="100%">
+</p>
+<p>
+  <img src="line-chart/examples/example-2.png" alt="Line Chart example 2" width="100%">
+</p>
 
 Lines and areas for any number of measures over a date (or any dimension).
 
@@ -123,7 +139,17 @@ Lines and areas for any number of measures over a date (or any dimension).
 
 ## Bar Chart
 
-<img src="bar-chart/preview.png" alt="Bar Chart" width="100%">
+<p>
+  <img src="bar-chart/examples/example-1.png" alt="Bar Chart example 1" width="100%">
+</p>
+<p>
+  <img src="bar-chart/examples/example-2.png" alt="Bar Chart example 2" width="49%">
+  <img src="bar-chart/examples/example-3.png" alt="Bar Chart example 3" width="49%">
+</p>
+<p>
+  <img src="bar-chart/examples/example-4.png" alt="Bar Chart example 4" width="49%">
+  <img src="bar-chart/examples/example-5.png" alt="Bar Chart example 5" width="49%">
+</p>
 
 A bar chart for every common bar design, with 22 one-click **Quick looks**.
 
@@ -143,7 +169,10 @@ A bar chart for every common bar design, with 22 one-click **Quick looks**.
 
 ## Matrix
 
-<img src="matrix-table/preview.png" alt="Matrix" width="100%">
+<p>
+  <img src="matrix-table/examples/example-1.png" alt="Matrix example 1" width="49%">
+  <img src="matrix-table/examples/example-2.png" alt="Matrix example 2" width="49%">
+</p>
 
 A crosstab with tile-style cells, built for reports that end up in Excel.
 
@@ -160,7 +189,12 @@ A crosstab with tile-style cells, built for reports that end up in Excel.
 
 ## Data Lineage
 
-<img src="data-lineage/preview.png" alt="Data Lineage" width="100%">
+<p>
+  <img src="data-lineage/examples/example-1.png" alt="Data Lineage example 1" width="100%">
+</p>
+<p>
+  <img src="data-lineage/examples/example-2.png" alt="Data Lineage example 2" width="100%">
+</p>
 
 A lineage flow: every row is one path, such as *table → data source → workbook → view*.
 
@@ -204,6 +238,7 @@ tableau_extensions/
 ├── data-lineage/              icons.js, icons/ built-in icon set
 │                              dev/             browser preview with sample data
 │                              presets/         sample presets (bar chart, matrix, data lineage)
+│                              examples/        README screenshots (made-up data)
 ├── serve.py / serve.sh      local server for all extensions (port 8766)
 ├── stamp-versions.py        cache-busting for GitHub Pages
 └── index.html               landing page

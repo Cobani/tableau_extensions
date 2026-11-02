@@ -3,7 +3,12 @@
 A waterfall chart (Start → changes → End) based on the *Balance flow* mockup (`balance-flow-figma.html`). The icon,
 title, explanation and card options are the same as **KPI Card 3**, and so is the number formatting.
 
-![preview](preview.png)
+<p>
+  <img src="examples/example-1.png" alt="Waterfall example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Waterfall example 2" width="100%">
+</p>
 
 ```
 waterfall.trex   manifest: Marks card tiles + "Format Extension" button

@@ -5,7 +5,12 @@ dimension on **Levels** becomes a column of nodes, linked to the next column wit
 path through it turns blue, and its value is selected in Tableau for dashboard actions. The icon, title and explanation
 are the same as **KPI Card**; the card options and presets are the same as **Bar Chart**.
 
-![preview](preview.png)
+<p>
+  <img src="examples/example-1.png" alt="Data Lineage example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Data Lineage example 2" width="100%">
+</p>
 
 ```
 data-lineage.trex  manifest: Marks card tiles + "Format Extension" button

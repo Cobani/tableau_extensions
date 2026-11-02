@@ -2,6 +2,11 @@
 
 By [ilyas coban](https://www.linkedin.com/in/ilyascoban/).
 
+<p>
+  <img src="examples/example-1.png" alt="KPI Card example 1" width="340">
+  <img src="examples/example-2.png" alt="KPI Card example 2" width="340">
+</p>
+
 A Tableau viz extension built from the Figma component **KPI Card 3**
 (file *Tableau-Dashboards*, node `9:2939`): an icon, a title, optional explanation text, a big number with a unit,
 a % / pp change, and a 30-day trend line or "vs previous period" text.

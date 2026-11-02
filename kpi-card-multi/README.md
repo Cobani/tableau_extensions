@@ -2,6 +2,13 @@
 
 By [ilyas coban](https://www.linkedin.com/in/ilyascoban/).
 
+<p>
+  <img src="examples/example-1.png" alt="KPI Card Multi example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="KPI Card Multi example 2" width="100%">
+</p>
+
 Several KPI cards in **one** extension zone. Each measure on the **Measures** tile becomes a card that looks and works
 like the single KPI Card (Figma *KPI Card 3*): icon, title, explanation, big number with unit, % / pp change, trend
 line or "vs previous period" text.
