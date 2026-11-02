@@ -1,0 +1,39 @@
+# Everything in this repo is published to GitHub Pages (https://cobani.github.io/tableau_extensions/),
+# so keep it to the files the extensions serve plus their small dev tools.
+
+# macOS
+.DS_Store
+._*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Office files (builder guides, feature lists) stay out of the published site
+*.pptx
+*.xlsx
+~$*
+
+# Local dev server / scripts
+__pycache__/
+*.pyc
+
+# Node / tooling, if ever added
+node_modules/
+npm-debug.log*
+*.log
+
+# Secrets
+.env
+.env.*
+
+# Original font sources — the extensions serve the WOFF2 files in shared/fonts/
+*.ttf
+
+# Design references and screenshots (not served)
+Development Resources/
+dev resources/
+dev-resources/
+SCR-*.png

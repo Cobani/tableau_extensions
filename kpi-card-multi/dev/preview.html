@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KPI Card Multi — dev preview</title>
+<style>
+  body { margin: 0; font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #263244; background: #eef0f2; }
+  .bar { display: flex; gap: 14px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e2e4e8; flex-wrap: wrap; }
+  .bar b { font-size: 14px; }
+  .wrap { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  .zone { resize: both; overflow: hidden; width: 1500px; height: 200px; background: #fff; border: 1px solid #d5d9df; }
+  .zone iframe, .dlg iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .dlg { flex: none; width: 540px; height: 760px; background: #fff; border: 1px solid #d5d9df; box-shadow: 0 6px 24px rgba(0,0,0,.12); display: none; }
+  button, select { font: inherit; padding: 4px 10px; }
+  .note { color: #68707d; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <b>KPI Card Multi — dev preview</b>
+    <label>Measures
+      <select id="n">
+        <option>1</option><option>3</option><option>4</option><option selected>6</option><option>9</option><option>12</option>
+      </select>
+    </label>
+    <button id="fmt" type="button">Format Extension</button>
+    <button id="filter" type="button">Filter change</button>
+    <button id="reverse" type="button">Reverse pill order</button>
+    <button id="reset" type="button">Reset settings</button>
+    <span class="note">Drag the zone's corner to resize (cards wrap below the minimum width).</span>
+  </div>
+  <div class="wrap">
+    <div class="dlg" id="dlg"><iframe id="dialog" title="Format dialog"></iframe></div>
+    <div class="zone"><iframe id="card" title="cards"></iframe></div>
+  </div>
+<script>
+  var n = document.getElementById('n');
+  try { n.value = localStorage.getItem('kcmMockN') || '6'; } catch (e) {}
+  function load () { document.getElementById('card').src = '../index.html?mock&n=' + n.value + (/debug/.test(location.search) ? '&debug' : ''); }
+  n.addEventListener('change', function () { localStorage.setItem('kcmMockN', n.value); closeDlg(); load(); });
+  document.getElementById('reset').addEventListener('click', function () { localStorage.removeItem('kcmMockSettings'); closeDlg(); load(); });
+  document.getElementById('reverse').addEventListener('click', function () {
+    localStorage.setItem('kcmMockReverse', localStorage.getItem('kcmMockReverse') === '1' ? '0' : '1');
+    document.getElementById('card').contentWindow.mockDataChanged(); // Tableau fires SummaryDataChanged on a reorder
+  });
+  document.getElementById('filter').addEventListener('click', function () { document.getElementById('card').contentWindow.mockDataChanged(); });
+  document.getElementById('fmt').addEventListener('click', function () {
+    document.getElementById('card').contentWindow.postMessage({ type: 'kcm-configure' }, '*');
+  });
+  function closeDlg () {
+    document.getElementById('dlg').style.display = 'none';
+    document.getElementById('dialog').src = 'about:blank';
+    var c = document.getElementById('card').contentWindow;
+    if (c) c.postMessage({ type: 'kcm-dialog-closed' }, '*');
+  }
+  window.addEventListener('message', function (e) {
+    if (!e.data) return;
+    if (e.data.type === 'kcm-open-dialog') {
+      document.getElementById('dlg').style.display = 'block';
+      document.getElementById('dialog').src = e.data.url;
+    }
+    if (e.data.type === 'kcm-close-dialog') closeDlg();
+  });
+  load();
+</script>
+</body>
+</html>

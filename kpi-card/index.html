@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KPI Card</title>
+    <script>
+      // Automatic recovery: if a file doesn't arrive or Tableau rejects the handshake, reload this
+      // frame, up to 3 times. The count rides in the URL hash. (A slow handshake is never reloaded.)
+      (function () {
+        var m = /kpiRetry=(\d+)/.exec(location.hash);
+        var n = m ? +m[1] : 0;
+        var base = location.pathname + location.search;
+        var pending = 0;
+        function go (k) {
+          try { history.replaceState(null, '', base + (k ? '#kpiRetry=' + k : '')); } catch (e) { /* ignore */ }
+          location.reload();
+        }
+        window.KpiBoot = {
+          attempt: n,
+          retry: function (why) {
+            if (pending) return true;
+            if (n >= 3) return false;
+            console.warn('KPI Card: ' + why + ', reloading (attempt ' + (n + 1) + ' of 3)');
+            pending = setTimeout(function () { go(n + 1); }, 200 + Math.random() * 1300);
+            return true;
+          },
+          reload: function () { go(0); },
+          ok: function () {
+            clearTimeout(pending);
+            pending = 0;
+            if (n) { try { history.replaceState(null, '', base); } catch (e) { /* ignore */ } }
+          }
+        };
+      })();
+    </script>
+    <!-- Start the biggest download (the API library, loaded at the end of body) right away. -->
+    <link rel="preload" as="script" href="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" />
+    <link rel="stylesheet" href="../shared/fonts/fonts.css?v=22ceb76171" />
+    <link rel="stylesheet" href="./card.css?v=cf0068d4d6" />
+    <script src="../shared/timing.js?v=666dc99b7c"></script>
+    <script src="./icons.js?v=6a0dce9bfa"></script>
+    <script src="./config.js?v=16e0120a5e"></script>
+    <script src="./card.js?v=37c4d9ab79"></script>
+  </head>
+
+  <body>
+    <div id="card" class="card is-empty">
+      <div class="head">
+        <div id="icon" class="icon" aria-hidden="true"></div>
+        <div id="title" class="title"></div>
+        <div id="explanation" class="explanation"></div>
+      </div>
+
+      <div class="metric">
+        <div id="metric-row" class="metric-row">
+          <div id="number" class="number">
+            <span id="unit-pre" class="unit unit--pre"></span><span id="value" class="value"></span><span id="unit-post" class="unit unit--post"></span>
+          </div>
+          <div id="change" class="change" hidden>
+            <span id="change-arrow" class="change-arrow"></span><span id="change-text" class="change-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="bottom" class="bottom">
+        <svg id="chart" class="chart" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div id="bottom-text" class="bottom-text"></div>
+      </div>
+
+      <div id="hint" class="hint"></div>
+    </div>
+
+    <div id="tooltip" class="tooltip" role="tooltip"></div>
+
+    <script>
+      // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.
+      if (!(window.tableau && window.tableau.extensions)) {
+        document.write('<script src="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7"><\/script>');
+      }
+    </script>
+    <script>
+      if (window.ExtTiming) ExtTiming.mark('Tableau API library loaded');
+      if (window.tableau && window.tableau.extensions && window.KpiCard) {
+        window.KpiCard.init();
+      } else if (!window.KpiBoot.retry('a file did not load')) {
+        document.getElementById('hint').textContent =
+            'Could not load the KPI Card files. Refresh the page to try again.';
+      }
+    </script>
+  </body>
+</html>

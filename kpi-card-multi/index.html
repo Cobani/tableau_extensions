@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KPI Card Multi</title>
+    <script>
+      // Automatic recovery: if a file doesn't arrive or Tableau rejects the handshake, reload this
+      // frame, up to 3 times. The count rides in the URL hash. (A slow handshake is never reloaded.)
+      (function () {
+        var m = /kpiRetry=(\d+)/.exec(location.hash);
+        var n = m ? +m[1] : 0;
+        var base = location.pathname + location.search;
+        var pending = 0;
+        function go (k) {
+          try { history.replaceState(null, '', base + (k ? '#kpiRetry=' + k : '')); } catch (e) { /* ignore */ }
+          location.reload();
+        }
+        window.KpiBoot = {
+          attempt: n,
+          retry: function (why) {
+            if (pending) return true;
+            if (n >= 3) return false;
+            console.warn('KPI Card Multi: ' + why + ', reloading (attempt ' + (n + 1) + ' of 3)');
+            pending = setTimeout(function () { go(n + 1); }, 200 + Math.random() * 1300);
+            return true;
+          },
+          reload: function () { go(0); },
+          ok: function () {
+            clearTimeout(pending);
+            pending = 0;
+            if (n) { try { history.replaceState(null, '', base); } catch (e) { /* ignore */ } }
+          }
+        };
+      })();
+    </script>
+    <!-- Start the biggest download (the API library, loaded at the end of body) right away. -->
+    <link rel="preload" as="script" href="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" />
+    <script>
+      // Dev preview only (dev/preview.html): a stand-in for Tableau when the URL has ?mock.
+      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=b415593746"><\/script>');
+    </script>
+    <link rel="stylesheet" href="../shared/fonts/fonts.css?v=22ceb76171" />
+    <link rel="stylesheet" href="./card.css?v=ef4848391a" />
+    <script src="../shared/timing.js?v=666dc99b7c"></script>
+    <script src="./icons.js?v=6a0dce9bfa"></script>
+    <script src="./config.js?v=dac91709ac"></script>
+    <script src="./card.js?v=bd0ed5eb8a"></script>
+  </head>
+
+  <body>
+    <div id="row" class="row" hidden></div>
+    <div id="hint" class="zone-hint"></div>
+
+    <!-- One card; cloned once per measure on the Measures tile. -->
+    <template id="card-template">
+      <div class="card is-empty">
+        <div class="head">
+          <div data-el="icon" class="icon" aria-hidden="true"></div>
+          <div data-el="title" class="title"></div>
+          <div data-el="explanation" class="explanation"></div>
+        </div>
+
+        <div class="metric">
+          <div data-el="metric-row" class="metric-row">
+            <div data-el="number" class="number">
+              <span data-el="unit-pre" class="unit unit--pre"></span><span data-el="value" class="value"></span><span data-el="unit-post" class="unit unit--post"></span>
+            </div>
+            <div data-el="change" class="change" hidden>
+              <span data-el="change-arrow" class="change-arrow"></span><span data-el="change-text" class="change-text"></span>
+            </div>
+          </div>
+        </div>
+
+        <div data-el="bottom" class="bottom">
+          <svg data-el="chart" class="chart" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div data-el="bottom-text" class="bottom-text"></div>
+        </div>
+
+        <div data-el="hint" class="hint"></div>
+      </div>
+    </template>
+
+    <div id="tooltip" class="tooltip" role="tooltip"></div>
+
+    <script>
+      // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.
+      if (!(window.tableau && window.tableau.extensions)) {
+        document.write('<script src="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7"><\/script>');
+      }
+    </script>
+    <script>
+      if (window.ExtTiming) ExtTiming.mark('Tableau API library loaded');
+      if (window.tableau && window.tableau.extensions && window.KpiCardMulti) {
+        window.KpiCardMulti.init();
+      } else if (!window.KpiBoot.retry('a file did not load')) {
+        document.getElementById('hint').textContent =
+            'Could not load the KPI Card Multi files. Refresh the page to try again.';
+      }
+    </script>
+  </body>
+</html>
