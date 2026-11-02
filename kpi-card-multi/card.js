@@ -289,8 +289,10 @@
     ui.hint.hidden = true;
     ui.row.hidden = false;
     arrange(); // sizes first, so each card draws its chart at its final size
-    cards.forEach(function (c) {
-      var data = extract(lastTable, { value: [c.field], date: lastFields.date });
+    var res = resolveColumns(lastTable, lastFields);
+    cards.forEach(function (c, i) {
+      var data = extract(lastTable, { value: [c.field], date: lastFields.date },
+        { value: [res.value[i]], date: res.date, mn: res.mn, mv: res.mv });
       c.inst.update(KpiCardMultiConfig.cardConfig(store, c.key), data);
     });
   }
@@ -504,25 +506,85 @@
     return a.i - b.i; // Tableau's own order as the tie-breaker
   }
 
-  /** Summary data → ordered series of { label, v, fv }. */
-  function extract (table, fields) {
-    var rows = table.data || [];
-    var taken = [];
-    var cValue = findColumn(table, fields.value[0], taken);
-    if (cValue) taken.push(cValue);
+  function isMN (c) { return /^measure (names|values)$/i.test(String(c.fieldName || '')); }
+  function isNumericCol (c) { return /^(float|int|real|integer|number)$/i.test(String(c.dataType || '')); }
+  function normName (s) { return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase(); }
 
-    var cDates = [];
-    fields.date.forEach(function (f) {
-      var c = findColumn(table, f, taken);
-      if (c) { taken.push(c); cDates.push(c); }
+  /**
+   * Finds the summary-data column of every pill at once, so measures that don't
+   * match by id or name still get a column:
+   *  - the same measure twice on the tile comes as one column (both cards read it);
+   *  - renamed pills / table calcs (column name ≠ pill name) take the free columns in order;
+   *  - Measure Names / Measure Values in the data: a card reads Measure Values on its own rows.
+   */
+  function resolveColumns (table, fields) {
+    var taken = [];
+    var cMN = table.columns.find(function (c) { return /^measure names$/i.test(String(c.fieldName || '')); }) || null;
+    var cMV = table.columns.find(function (c) { return /^measure values$/i.test(String(c.fieldName || '')); }) || null;
+    var pivoted = !!(cMN && cMV);
+    var find = function (f) {
+      if (!f) return null;
+      var cols = table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); });
+      var fid = f.id || f.fieldId;
+      return cols.find(function (c) { return fid && c.fieldId && c.fieldId === fid; }) ||
+        cols.find(function (c) { return c.fieldName === f.name; }) ||
+        cols.find(function (c) { return normName(c.fieldName) === normName(f.name); }) ||
+        null;
+    };
+    var dates = (fields.date || []).map(function (f) { var c = find(f); if (c) taken.push(c); return c; });
+    var vals = (fields.value || []).map(function (f) { var c = find(f); if (c) taken.push(c); return c; });
+    // Same field twice on the tile: one column, read by both cards.
+    vals = vals.map(function (c, i) {
+      if (c) return c;
+      var f = fields.value[i];
+      var j = fields.value.findIndex(function (o, k) { return k !== i && vals[k] && (o.id && o.id === f.id || o.name === f.name); });
+      return j >= 0 ? vals[j] : null;
     });
+    var free = function () { return table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); }); };
+    var guessed = [];
+    dates = dates.map(function (c, i) {
+      if (c) return c;
+      var x = free().find(function (y) { return !isNumericCol(y); });
+      if (x) { taken.push(x); guessed.push(fields.date[i].name + ' → ' + x.fieldName); }
+      return x || null;
+    });
+    if (!pivoted) {
+      vals = vals.map(function (c, i) {
+        if (c) return c;
+        var x = free().find(isNumericCol) || free()[0];
+        if (x) { taken.push(x); guessed.push(fields.value[i].name + ' → ' + x.fieldName); }
+        return x || null;
+      });
+    }
+    if (guessed.length) console.info('KPI Card Multi: matched renamed fields by position:', guessed);
+    return { value: vals, date: dates.filter(Boolean), mn: cMN, mv: cMV };
+  }
+
+  /** Summary data → ordered series of { label, v, fv }. */
+  function extract (table, fields, res) {
+    var rows = table.data || [];
+    res = res || resolveColumns(table, fields);
+    var cValue = res.value[0] || null;
+    var cDates = res.date.slice();
+    // Measure Names / Measure Values: this card reads Measure Values on its own rows.
+    var cMV = null;
+    if (!cValue && res.mn && res.mv) {
+      var f0 = fields.value[0];
+      var want = [normName(f0.name), normName(cleanName(f0.name))];
+      var mine = rows.filter(function (r) {
+        var c = r[res.mn.index];
+        var n = normName(c && (c.formattedValue != null ? c.formattedValue : c.value));
+        return want.indexOf(n) >= 0;
+      });
+      if (mine.length) { rows = mine; cMV = res.mv; }
+    }
     // Coarse → fine, so YEAR + MONTH sorts by year first.
     cDates = cDates
       .map(function (c, k) { return { c: c, k: k, g: granularity(c.fieldName) }; })
       .sort(function (a, b) { return a.g - b.g || a.k - b.k; })
       .map(function (o) { return o.c; });
 
-    var label = cleanName(cValue ? cValue.fieldName : fields.value[0].name);
+    var label = cleanName(cValue && !cMV ? cValue.fieldName : fields.value[0].name);
 
     // The finest date column that holds real dates drives the calendar logic
     // (Points shown window, same day last month, month to date).
@@ -537,7 +599,9 @@
       }
     }
 
+    if (!cValue && cMV) cValue = cMV;
     if (!cValue) {
+      console.warn('KPI Card Multi: no column for', fields.value[0], 'in', table.columns.map(function (c) { return c.fieldName + ' [' + c.fieldId + ']'; }));
       return { label: label, points: [], hasDate: !!fields.date.length, dateIssue: 'Couldn’t find the measure in the sheet data.' };
     }
 
