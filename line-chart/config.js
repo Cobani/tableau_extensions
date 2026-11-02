@@ -86,7 +86,19 @@
     labelWeight: 600,
     labelColorMode: 'series', // series | custom
     labelColor: '#17202B',
-    dashLast: 0 // last N segments dashed (e.g. an incomplete month)
+    dashLast: 0, // last N segments dashed (e.g. an incomplete month)
+    // Tooltip: change vs the previous point (as KPI Card's % Change → Change / Colors)
+    change: {
+      show: true,
+      type: 'percent', // percent | pp
+      ppFromRatio: true, // pp: metric is a 0–1 ratio, multiply the difference by 100
+      decimals: 2,
+      higherIsBetter: true,
+      showPrevious: true, // previous point's value next to the change
+      positiveColor: '#2E9E6A',
+      negativeColor: '#E35263',
+      neutralColor: '#68707D'
+    }
   };
 
   /** One reference line (cfg.refs is a list of these). */

@@ -1770,6 +1770,7 @@
     var L = cfg.legend;
     var lg = el.legend;
     lg.innerHTML = '';
+    lg.style.maxHeight = ''; lg.style.overflowY = ''; lg.style.overflowX = '';
     el.body.className = 'body legend-' + L.position;
     if (!L.show) return;
     var items = legendItems(v);
@@ -1830,6 +1831,36 @@
       }
       lg.appendChild(d);
     });
+    capLegend(lg, vertical);
+  }
+
+  /**
+   * Keeps the legend from eating the chart: a horizontal legend shows at most
+   * two rows and a vertical one stays a single column; the rest scrolls.
+   */
+  function capLegend (lg, vertical) {
+    var s = lg.style;
+    s.maxHeight = ''; s.overflowY = ''; s.overflowX = '';
+    if (!lg.children.length || lg.offsetParent === null) return;
+    if (vertical) {
+      s.maxHeight = '100%'; s.overflowY = 'auto'; s.overflowX = 'hidden';
+      if (lg.scrollHeight > lg.clientHeight + 1) s.justifyContent = 'flex-start'; // centred content can't scroll to its top
+      return;
+    }
+    var rects = Array.prototype.map.call(lg.children, function (c) { return c.getBoundingClientRect(); })
+      .filter(function (r) { return r.height > 0; })
+      .sort(function (a, b) { return a.top - b.top; });
+    var rows = [];
+    rects.forEach(function (r) {
+      var last = rows[rows.length - 1];
+      if (!last || r.top >= last.bottom - 1) rows.push({ top: r.top, bottom: r.bottom });
+      else last.bottom = Math.max(last.bottom, r.bottom);
+    });
+    if (rows.length <= 2) return;
+    var cs = getComputedStyle(lg);
+    var h = rows[1].bottom - lg.getBoundingClientRect().top + (parseFloat(cs.paddingBottom) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+    s.maxHeight = Math.ceil(h + 1) + 'px';
+    s.overflowY = 'auto'; s.overflowX = 'hidden';
   }
 
   function legendMark (it) {

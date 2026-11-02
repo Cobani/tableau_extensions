@@ -49,7 +49,8 @@ show off a feature. **Reset settings** brings those back.
 
 - **Hover** anywhere in the chart: a crosshair snaps to the nearest date and the tooltip lists every series at that
   point with full, unabbreviated values (Tableau's own format when the point is a single value), plus the stacked
-  total, each area's share with 100% stacking, and the band range.
+  total, each area's share with 100% stacking, and the band range. Under each series: the change vs the previous
+  point (▲ +3.25%, coloured good / bad) and the previous value — set per series on the Series tab.
 - **Legend**: click an item to hide or show that series, hover to highlight it, double-click to format it. Hiding
   is for this session only; to hide a series for everyone, set it to *Hidden* in Format → Series.
 - **Right-click** a line, an area or a legend item → *Format "Deposits"…*, *Hide "Deposits"*, Series…, Areas &
@@ -64,7 +65,7 @@ opened, and **Reset tab** restores the defaults for that tab.
 | --- | --- |
 | Icon | as KPI Card 3: built-in Figma icons, Tableau shapes, upload, size, colour. Default icon: line chart |
 | Title & text | as KPI Card 3. An empty title shows the measure names ("Deposits vs Withdrawals") |
-| Series | pick **All series (defaults)** or one series, then: label · **draw as line, area or hidden** · colour (or the palette colour) · **left or right axis** (dual axis) · width · solid / dashed / dotted · straight / smooth / step · **dash the last N segments** (e.g. an incomplete month) · markers (none, every point, last, highest and lowest) and their size · **value labels** (none, last value right of the line, every point, highest and lowest, first and last) with size, weight and colour. **Chart:** palette (House, Tableau 10, Color blind, Blues, Warm), missing values, even or by-date spacing |
+| Series | pick **All series (defaults)** or one series, then: label · **draw as line, area or hidden** · colour (or the palette colour) · **left or right axis** (dual axis) · width · solid / dashed / dotted · straight / smooth / step · **dash the last N segments** (e.g. an incomplete month) · markers (none, every point, last, highest and lowest) and their size · **value labels** (none, last value right of the line, every point, highest and lowest, first and last) with size, weight and colour · **tooltip change** vs the previous point (as KPI Card's % Change: show, % or pp change, 0–1 ratio, decimals, increase is good, previous value, positive / negative / no-change colours). **Chart:** palette (House, Tableau 10, Color blind, Blues, Warm), missing values, even or by-date spacing |
 | Areas | overlap · **stacked** · **100% stacked** · fill opacity · gradient fill · outline on/off · a quick line / area / hidden switch for every series |
 | Reference lines | any number of horizontal lines: **constant (target)**, average, median, min, max or latest value, of one series or of every visible series on an axis · label, show value, label side, colour, width, style, text size. **Band between two measures:** pick a lower and an upper measure (e.g. *Forecast Low* / *Forecast High*), name, colour, opacity, hide the two lines, dashed edges. **Forecast / projection:** pick the first forecast point; from there lines are dashed on a shaded background with a label |
 | Axes | **Left and right axis**, each: starts at zero / close to the data (room around the data, %) / fixed value · fixed or automatic maximum · tick count · title (e.g. *SAR M*) · font, size, weight, colour · axis line · own number format or the shared one. **Horizontal:** labels on/off, horizontal / angled / vertical (labels that don't fit are skipped; the last point is always labelled), title, font, axis line, tick marks |

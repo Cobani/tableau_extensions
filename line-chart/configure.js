@@ -62,12 +62,12 @@
           return { key: k, name: k, color: Lc.paletteColor(cfg.chart.palette, i, cfg.chart.paletteEdits) };
         });
       }
-      if (info.series.length) selected = info.series[0].key;
+      // Open on "All series (defaults)"; a right-click/double-click on a line still jumps to that series.
       if (info.focus) {
         if (info.focus.tab) activeTab = info.focus.tab;
         if (info.focus.item) selected = info.focus.item;
       }
-      if (selected !== '__defaults' && !seriesInfo(selected)) selected = info.series.length ? info.series[0].key : '__defaults';
+      if (selected !== '__defaults' && !seriesInfo(selected)) selected = '__defaults';
 
       buildTabs();
       document.getElementById('cancel').addEventListener('click', function () {
@@ -235,6 +235,27 @@
       g4.appendChild(help('Values use the format on the Numbers tab.'));
     }
 
+    var c0 = P(base, 'change');
+    var g6 = group(p, 'Tooltip: change');
+    g6.appendChild(checkboxRow('Show change', P(c0, 'show'), rebuild));
+    if (get(P(c0, 'show'))) {
+      g6.appendChild(segRow('Type', P(c0, 'type'), [['percent', '% change'], ['pp', 'pp change']], rebuild));
+      if (get(P(c0, 'type')) === 'pp') {
+        g6.appendChild(checkboxRow('Metric is a 0–1 ratio', P(c0, 'ppFromRatio')));
+        g6.appendChild(help('On: 0.45 vs 0.40 → +5.00 pp. Off: 45 vs 40 → +5.00 pp.'));
+      }
+      g6.appendChild(numberRow('Decimal places', P(c0, 'decimals'), 0, 6, 1));
+      g6.appendChild(checkboxRow('Increase is good', P(c0, 'higherIsBetter')));
+      g6.appendChild(help('Untick for cost, churn or defect metrics so an increase shows in the negative colour.'));
+      g6.appendChild(checkboxRow('Previous value', P(c0, 'showPrevious')));
+      g6.appendChild(help('Compared with the previous point of this series. Shown in the tooltip under the value.'));
+
+      var g7 = group(p, 'Tooltip: change colors');
+      g7.appendChild(colorRow('Positive', P(c0, 'positiveColor')));
+      g7.appendChild(colorRow('Negative', P(c0, 'negativeColor')));
+      g7.appendChild(colorRow('No change', P(c0, 'neutralColor')));
+    }
+
     if (!isDef && cfg.series[selected]) {
       var btn = h('button', { type: 'button', className: 'btn', textContent: 'Use the defaults for this series' });
       btn.addEventListener('click', function () { delete cfg.series[selected]; changed(); rebuild(); });
@@ -272,12 +293,12 @@
     var frag = h('div');
     var wrap = h('div', { className: 'swatches' });
     Lc.paletteColors(name, cfg.chart.paletteEdits).forEach(function (c, i) {
-      var b = h('button', { type: 'button', className: 'swatch', title: c.toUpperCase() + ' – click to change' });
+      // A real colour input sized over the swatch: clicking it opens the picker directly
+      // (no scripted click, which Tableau's dialog browser can ignore).
+      var b = h('label', { className: 'swatch', title: c.toUpperCase() + ' – click to change' });
       b.style.background = c;
-      var inp = h('input', { type: 'color', value: c });
-      inp.style.cssText = 'position:absolute;opacity:0;width:0;height:0;pointer-events:none';
+      var inp = h('input', { type: 'color', value: c, className: 'swatch-input' });
       b.appendChild(inp);
-      b.addEventListener('click', function () { inp.click(); });
       inp.addEventListener('input', function () {
         var E = cfg.chart.paletteEdits;
         var arr = (E[name] = Array.isArray(E[name]) ? E[name] : []);
@@ -513,6 +534,7 @@
       g2.appendChild(checkboxRow('Full numbers', 'numbers.tooltipFull'));
       g2.appendChild(help('Unabbreviated values (Tableau’s own format when a point is a single value) instead of the chart format.'));
       g2.appendChild(checkboxRow('Total of stacked areas', 'chart.tooltipTotal'));
+      g2.appendChild(help('Change vs the previous point is set per series on the Series tab (Tooltip: change).'));
     }
 
     var g3 = group(p, 'Interaction');

@@ -95,7 +95,8 @@
     hideMenu();
     hideTooltip();
     var url = window.location.href.split(/[?#]/)[0].replace(/[^/]*$/, '') + 'configure.html' +
-      (/[?&]mock\b/.test(location.search) ? '?mock' : '');
+      // A fresh query on every open: Tableau caches the dialog page hard, which kept old Format windows after a deploy.
+      '?t=' + Date.now() + (/[?&]mock\b/.test(location.search) ? '&mock' : '');
     var list = model && cfg ? resolveSeries() : [];
     var payload = JSON.stringify({
       focus: focus || null,
@@ -836,6 +837,7 @@
     if (!lg.show || items.length < 1 || (items.length < 2 && !lg.showLatest)) {
       el.legend.style.display = 'none';
       el.legend.innerHTML = '';
+      capLegend(el.legend, false);
       return;
     }
     el.legend.style.display = '';
@@ -852,6 +854,36 @@
         ' title="' + esc(lg.interactive ? 'Click to hide or show. Double-click to format.' : s.name) + '">' +
         '<span class="lg-sw">' + swatch(s) + '</span><span class="lg-name">' + esc(s.name) + '</span>' + latest + '</button>';
     }).join('');
+    capLegend(el.legend, lg.position === 'right');
+  }
+
+  /**
+   * Keeps the legend from eating the chart: a horizontal legend shows at most
+   * two rows and a vertical one stays a single column; the rest scrolls.
+   */
+  function capLegend (lg, vertical) {
+    var s = lg.style;
+    s.maxHeight = ''; s.overflowY = ''; s.overflowX = '';
+    if (!lg.children.length || lg.offsetParent === null) return;
+    if (vertical) {
+      s.maxHeight = '100%'; s.overflowY = 'auto'; s.overflowX = 'hidden';
+      if (lg.scrollHeight > lg.clientHeight + 1) s.justifyContent = 'flex-start'; // centred content can't scroll to its top
+      return;
+    }
+    var rects = Array.prototype.map.call(lg.children, function (c) { return c.getBoundingClientRect(); })
+      .filter(function (r) { return r.height > 0; })
+      .sort(function (a, b) { return a.top - b.top; });
+    var rows = [];
+    rects.forEach(function (r) {
+      var last = rows[rows.length - 1];
+      if (!last || r.top >= last.bottom - 1) rows.push({ top: r.top, bottom: r.bottom });
+      else last.bottom = Math.max(last.bottom, r.bottom);
+    });
+    if (rows.length <= 2) return;
+    var cs = getComputedStyle(lg);
+    var h = rows[1].bottom - lg.getBoundingClientRect().top + (parseFloat(cs.paddingBottom) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+    s.maxHeight = Math.ceil(h + 1) + 'px';
+    s.overflowY = 'auto'; s.overflowX = 'hidden';
   }
 
   function legendKey (e) {
@@ -1591,17 +1623,22 @@
     var x = model.xs[i];
     var rows = view.act.filter(function (a) { return isFinite(a.s.vals[i]); }).map(function (a) {
       var share = view.mode === 'percent' && a.s.stacked ? a.s.y1[i] - a.s.y0[i] : null;
-      return { name: a.s.name, color: a.s.color, v: a.s.vals[i], fv: a.s.fvs[i], share: share, area: a.s.isArea, stacked: a.s.stacked };
+      return { name: a.s.name, color: a.s.color, v: a.s.vals[i], fv: a.s.fvs[i], share: share, area: a.s.isArea, stacked: a.s.stacked,
+        ch: pointChange(a.s, i) };
     });
+    var prevLabel = i > 0 && model.xs[i - 1] ? model.xs[i - 1].label : '';
     var sort = cfg.chart.tooltipSort;
     if (sort === 'valDesc') rows.sort(function (a, b) { return b.v - a.v; });
     else if (sort === 'valAsc') rows.sort(function (a, b) { return a.v - b.v; });
 
-    var html = '<div class="tt-name">' + esc(x.label || model.xName || '') + '</div><div class="tt-rows">';
+    var anyCh = rows.some(function (r) { return r.ch; });
+    var html = '<div class="tt-name">' + esc(x.label || model.xName || '') +
+      (anyCh && prevLabel ? '<span class="tt-vs">vs ' + esc(prevLabel) + '</span>' : '') + '</div><div class="tt-rows">';
     html += rows.map(function (r) {
-      return '<div class="tt-row"><span class="sw' + (r.area ? '' : ' sw--line') + '" style="background:' + r.color + '"></span><span class="nm">' +
+      return '<div class="tt-item"><div class="tt-row"><span class="sw' + (r.area ? '' : ' sw--line') + '" style="background:' + r.color + '"></span><span class="nm">' +
         esc(r.name) + '</span><span class="vl">' + esc(fullText(r.v, r.fv)) +
-        (r.share != null ? ' <span class="pc">' + esc(Lc.fixed(r.share * 100, 1)) + '%</span>' : '') + '</span></div>';
+        (r.share != null ? ' <span class="pc">' + esc(Lc.fixed(r.share * 100, 1)) + '%</span>' : '') + '</span></div>' +
+        (r.ch ? changeHtml(r.ch, i) : '') + '</div>';
     }).join('');
     var stacked = rows.filter(function (r) { return r.stacked; });
     if (cfg.chart.tooltipTotal && stacked.length > 1) {
@@ -1633,6 +1670,56 @@
 
   function hideTooltip () {
     if (el.tooltip) el.tooltip.style.display = 'none';
+  }
+
+  var CH_ARROWS = {
+    up: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8H1z" fill="currentColor"/></svg>',
+    down: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5 1 2h8z" fill="currentColor"/></svg>',
+    flat: '<svg viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="4.25" width="7" height="1.5" rx=".75" fill="currentColor"/></svg>'
+  };
+
+  /**
+   * Change of series `s` at point `i` vs its previous point with a value
+   * (KPI Card's % Change logic) → { dir, color, text, prev, prevFv, prevIdx } or null.
+   */
+  function pointChange (s, i) {
+    var c = s.sc.change;
+    if (!c || !c.show) return null;
+    var cur = s.vals[i];
+    if (!isFinite(cur)) return null;
+    var j = i - 1;
+    while (j >= 0 && !isFinite(s.vals[j])) j--;
+    if (j < 0) return null;
+    var prev = s.vals[j];
+    var diff = cur - prev;
+    var amount, suffix;
+    if (c.type === 'pp') {
+      amount = c.ppFromRatio ? diff * 100 : diff;
+      suffix = ' pp';
+    } else {
+      if (prev === 0) return null;
+      amount = diff / Math.abs(prev) * 100;
+      suffix = '%';
+    }
+    var dec = Math.max(0, Math.min(6, Number(c.decimals) || 0));
+    var isZero = Number(Math.abs(amount).toFixed(dec)) === 0;
+    var dir = isZero ? 'flat' : amount > 0 ? 'up' : 'down';
+    var good = c.higherIsBetter ? dir === 'up' : dir === 'down';
+    return {
+      dir: dir,
+      color: Lc.normalizeHex(dir === 'flat' ? c.neutralColor : good ? c.positiveColor : c.negativeColor) || '#68707D',
+      text: (dir === 'up' ? '+' : dir === 'down' ? '-' : '') + Lc.fixed(Math.abs(amount), dec) + suffix,
+      prev: c.showPrevious ? fullText(prev, s.fvs[j]) : null,
+      prevIdx: j
+    };
+  }
+
+  /** Second tooltip line under a series: ▲ +3.25%   vs 1,195,000 (date only when it isn't the previous point). */
+  function changeHtml (ch, i) {
+    var gap = ch.prevIdx !== i - 1 && model.xs[ch.prevIdx] ? model.xs[ch.prevIdx].label : '';
+    var vs = ch.prev != null ? 'vs ' + ch.prev + (gap ? ' (' + gap + ')' : '') : (gap ? 'vs ' + gap : '');
+    return '<div class="tt-ch"><span class="tt-delta" style="color:' + ch.color + '">' + CH_ARROWS[ch.dir] + esc(ch.text) + '</span>' +
+      (vs ? '<span class="tt-prev">' + esc(vs) + '</span>' : '') + '</div>';
   }
 
   // ---------------------------------------------------------------------------
