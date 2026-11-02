@@ -50,11 +50,21 @@
 
   /** Series colours. A series without its own colour takes the next palette colour. */
   var PALETTES = {
+    main: { label: 'Main', colors: ['#4FC4D9', '#FFB914', '#B8428B', '#4FD9A9', '#E35263', '#EB644C', '#263244', '#1A89FF', '#68707D', '#9D7660'] },
     house: { label: 'House (navy, coral, teal)', colors: ['#2F4B7C', '#EB644C', '#0E7C66', '#F2A541', '#7A5195', '#4E9CB5', '#B4431E', '#8C9AAB', '#D45087', '#3A4656'] },
     tableau10: { label: 'Tableau 10', colors: ['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC'] },
     colorblind: { label: 'Color blind', colors: ['#1170AA', '#FC7D0B', '#A3ACB9', '#57606C', '#5FA2CE', '#C85200', '#7B848F', '#A3CCE9', '#FFBC79', '#C8D0D9'] },
     blues: { label: 'Blues', colors: ['#1F3A60', '#2F5C8F', '#4A7FB5', '#76A3CF', '#A6C6E4', '#5D6B7D', '#0E3150', '#3C6E9C'] },
-    warm: { label: 'Warm', colors: ['#EB644C', '#F2A541', '#B4431E', '#D45087', '#8A3B12', '#F5C26B', '#C9302C', '#7A5195'] }
+    warm: { label: 'Warm', colors: ['#EB644C', '#F2A541', '#B4431E', '#D45087', '#8A3B12', '#F5C26B', '#C9302C', '#7A5195'] },
+    // From the Bar Chart's palette list
+    tableau20: { label: 'Tableau 20', colors: ['#4E79A7', '#A0CBE8', '#F28E2B', '#FFBE7D', '#59A14F', '#8CD17D', '#B6992D', '#F1CE63', '#499894', '#86BCB6', '#E15759', '#FF9D9A', '#79706E', '#BAB0AC', '#D37295', '#FABFD2', '#B07AA1', '#D4A6C8', '#9D7660', '#D7B5A6'] },
+    vivid: { label: 'Infographic vivid', colors: ['#F45B69', '#F7A541', '#6A5ACD', '#3BB2B8', '#9B59B6', '#2ECC71', '#E67E22', '#1ABC9C', '#E84393', '#0984E3'] },
+    cool: { label: 'Cool gradient', colors: ['#8B5CF6', '#6E8BFF', '#4FB0FF', '#3EE6F5', '#3DF0C8', '#34D399', '#22C55E', '#84CC16'] },
+    pastel: { label: 'Pastel', colors: ['#A0CBE8', '#FFBE7D', '#8CD17D', '#F1CE63', '#86BCB6', '#FF9D9A', '#D4A6C8', '#D7B5A6', '#BAB0AC', '#FABFD2'] },
+    office: { label: 'Office', colors: ['#7CC4FA', '#3A8DDE', '#F0812F', '#FFD966', '#8BC34A', '#B39DDB', '#4DB6AC', '#E57373'] },
+    duo: { label: 'Blue / pink', colors: ['#3A7FD5', '#FF85C0', '#7FB3F5', '#FFC2DF'] },
+    dusk: { label: 'Dusk', colors: ['#E07B9B', '#D7C4BE', '#5F9BA8', '#9C89B8', '#F0A6CA', '#B8BEDD'] },
+    grays: { label: 'Seattle grays', colors: ['#767F8B', '#B3B7B8', '#5C6068', '#D3D3D3', '#989CA3', '#4A4E55', '#C7C9CC'] }
   };
 
   /**
@@ -170,6 +180,7 @@
     // ---- Chart ------------------------------------------------------------
     chart: {
       palette: 'house',
+      paletteEdits: {}, // palette name → edited colours (array, empty slots = unchanged)
       missing: 'gap', // gap | zero | connect
       xSpacing: 'even', // even | time (by real date distance)
       tooltip: true,
@@ -368,9 +379,17 @@
   }
 
   /** Default colour of the i-th series in a palette. */
-  function paletteColor (name, i) {
-    var p = PALETTES[name] || PALETTES.house;
-    return p.colors[((i % p.colors.length) + p.colors.length) % p.colors.length];
+  function paletteColor (name, i, edits) {
+    var cols = paletteColors(name, edits);
+    return cols[((i % cols.length) + cols.length) % cols.length];
+  }
+
+  /** Palette colours with the user's edits applied (edits: name → [colour | null]). */
+  function paletteColors (name, edits) {
+    var base = (PALETTES[name] || PALETTES.house).colors.slice();
+    var e = edits && edits[name];
+    if (Array.isArray(e)) e.forEach(function (c, i) { if (i < base.length && normalizeHex(c)) base[i] = normalizeHex(c); });
+    return base;
   }
 
   // -------------------------------------------------------------------------
@@ -519,6 +538,7 @@
     seriesCfg: seriesCfg,
     refCfg: refCfg,
     paletteColor: paletteColor,
+    paletteColors: paletteColors,
     pickScale: pickScale,
     fixed: fixed,
     formatScaled: formatScaled,

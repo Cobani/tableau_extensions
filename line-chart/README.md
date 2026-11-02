@@ -79,6 +79,10 @@ Areas always fill down to zero, so an axis with an area on it starts at zero eve
 Stacking happens per axis, in Marks card order. With **100% stacked**, the areas take the left axis (0–100%) and any
 lines move to the right axis.
 
+### Presets tab
+
+The last tab of the Format window saves and loads every setting of the chart. **Export** a preset as "Look only" (leaves out per-series colours and styles, the band's lower / upper series, the forecast start, title and explanation text, export file name) or "Everything"; download it as .json, copy it, or keep it under **My presets** on this computer. **Import** from a file or pasted text; "Keep this chart's…" keeps the sheet-specific settings. Presets store only values that differ from the defaults, and carry a version so older files keep working.
+
 ## Settings and deploying
 
 Series settings are stored by the pill's name (e.g. `SUM(Deposits)`), or `SUM(Transactions) · App` with a Color

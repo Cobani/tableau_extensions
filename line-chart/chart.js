@@ -657,7 +657,7 @@
         vals: s.vals,
         fvs: s.fvs || [],
         sc: sc,
-        color: Lc.normalizeHex(sc.color) || Lc.paletteColor(cfg.chart.palette, i),
+        color: Lc.normalizeHex(sc.color) || Lc.paletteColor(cfg.chart.palette, i, cfg.chart.paletteEdits),
         i: i
       };
     });
