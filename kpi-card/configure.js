@@ -426,10 +426,11 @@
   // Currency signs offered under the Unit box (clicking one fills the box).
   // Saudi riyal and Turkish lira first, then by how widely the currency is used.
   var UNIT_SIGNS = [
-    ['⃁', 'Saudi riyal'], ['₺', 'Turkish lira'], ['$', 'US dollar'],
+    ['⃁', 'Saudi riyal'], ['₺', 'Turkish lira'], ['৳', 'Bangladeshi taka'],
+    ['$', 'US dollar'],
     ['€', 'Euro'], ['£', 'Pound sterling'], ['¥', 'Japanese yen / Chinese yuan'],
     ['₹', 'Indian rupee'], ['₩', 'Korean won'], ['₽', 'Russian ruble'],
-    ['₱', 'Philippine peso'], ['฿', 'Thai baht'], ['₫', 'Vietnamese dong']
+    ['₱', 'Philippine peso'], ['฿', 'Thai baht']
   ];
 
   function unitRow (label, path, placeholder) {
