@@ -303,7 +303,7 @@
       g1.appendChild(h('div', { className: 'help', textContent: 'On: 0.4523 \u2192 45.23%. Off: 45.23 \u2192 45.23%. The % sign is the same size as the number.' }));
     }
     g1.appendChild(numberRow('Decimal places', 'number.decimals', 0, 6, 1));
-    g1.appendChild(textRow('Unit', 'number.unit', 'e.g. SAR, %, users'));
+    g1.appendChild(unitRow('Unit', 'number.unit', 'e.g. SAR, %, users'));
     g1.appendChild(selectRow('Unit position', 'number.unitPosition', [['suffix', 'After number'], ['prefix', 'Before number']]));
     g1.appendChild(numberRow('Unit size (px)', 'number.unitSize', 6, 120, 1));
 
@@ -420,6 +420,35 @@
     var input = h('input', { type: 'text', value: get(path), placeholder: placeholder || '' });
     input.addEventListener('input', function () { set(path, input.value); });
     r.appendChild(input);
+    return r;
+  }
+
+  // Currency signs offered under the Unit box (clicking one fills the box).
+  // Saudi riyal and Turkish lira first, then by how widely the currency is used.
+  var UNIT_SIGNS = [
+    ['⃁', 'Saudi riyal'], ['₺', 'Turkish lira'], ['$', 'US dollar'],
+    ['€', 'Euro'], ['£', 'Pound sterling'], ['¥', 'Japanese yen / Chinese yuan'],
+    ['₹', 'Indian rupee'], ['₩', 'Korean won'], ['₽', 'Russian ruble'],
+    ['₱', 'Philippine peso'], ['฿', 'Thai baht'], ['₫', 'Vietnamese dong']
+  ];
+
+  function unitRow (label, path, placeholder) {
+    var r = textRow(label, path, placeholder);
+    var input = r.querySelector('input[type="text"]');
+    var field = h('div', { className: 'unit-field' });
+    r.replaceChild(field, input);
+    field.appendChild(input);
+    var signs = h('div', { className: 'unit-signs' });
+    UNIT_SIGNS.forEach(function (s) {
+      var b = h('button', { type: 'button', className: 'unit-sign', textContent: s[0], title: s[1] });
+      b.addEventListener('click', function () {
+        input.value = s[0];
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.focus();
+      });
+      signs.appendChild(b);
+    });
+    field.appendChild(signs);
     return r;
   }
 

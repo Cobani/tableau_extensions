@@ -143,7 +143,7 @@
     if (scale === 'workbook') g.appendChild(help('Uses Tableau’s format when a bar is a single value; sums (stacks, groups, Others) fall back to Dynamic.'));
     g.appendChild(numberRow('Decimal places', P(base, 'decimals'), 0, 6, 1));
     g.appendChild(checkboxRow('Thousands separator', P(base, 'thousands')));
-    g.appendChild(textRow('Unit', P(base, 'unit'), 'e.g. SAR, M, %'));
+    g.appendChild(unitRow('Unit', P(base, 'unit'), 'e.g. SAR, M, %'));
     g.appendChild(selectRow('Unit position', P(base, 'unitPosition'), [['suffix', 'After number'], ['prefix', 'Before number']]));
     g.appendChild(checkboxRow('Space before / after unit', P(base, 'unitSpace')));
     if (!opts.noSign) g.appendChild(checkboxRow('“+” on positive values', P(base, 'plusSign')));
@@ -2655,6 +2655,35 @@
     var input = h('input', { type: 'text', value: cur == null ? '' : cur, placeholder: placeholder || '' });
     input.addEventListener('input', function () { set(path, input.value); });
     r.appendChild(input);
+    return r;
+  }
+
+  // Currency signs offered under the Unit box (clicking one fills the box).
+  // Saudi riyal and Turkish lira first, then by how widely the currency is used.
+  var UNIT_SIGNS = [
+    ['⃁', 'Saudi riyal'], ['₺', 'Turkish lira'], ['$', 'US dollar'],
+    ['€', 'Euro'], ['£', 'Pound sterling'], ['¥', 'Japanese yen / Chinese yuan'],
+    ['₹', 'Indian rupee'], ['₩', 'Korean won'], ['₽', 'Russian ruble'],
+    ['₱', 'Philippine peso'], ['฿', 'Thai baht'], ['₫', 'Vietnamese dong']
+  ];
+
+  function unitRow (label, path, placeholder) {
+    var r = textRow(label, path, placeholder);
+    var input = r.querySelector('input[type="text"]');
+    var field = h('div', { className: 'unit-field' });
+    r.replaceChild(field, input);
+    field.appendChild(input);
+    var signs = h('div', { className: 'unit-signs' });
+    UNIT_SIGNS.forEach(function (s) {
+      var b = h('button', { type: 'button', className: 'unit-sign', textContent: s[0], title: s[1] });
+      b.addEventListener('click', function () {
+        input.value = s[0];
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.focus();
+      });
+      signs.appendChild(b);
+    });
+    field.appendChild(signs);
     return r;
   }
 

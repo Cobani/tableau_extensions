@@ -306,3 +306,19 @@ input[type="range"] { flex: 1; accent-color: var(--accent); }
   line-height: 15px;
   vertical-align: 1px;
 }
+
+/* ---- Unit currency signs ---------------------------------------------------- */
+.unit-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.unit-signs { display: flex; flex-wrap: wrap; gap: 4px; }
+.unit-sign {
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  font: 13px/1 var(--font);
+  color: var(--text);
+  cursor: pointer;
+}
+.unit-sign:hover { background: var(--soft); border-color: var(--muted); }
