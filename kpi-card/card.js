@@ -416,6 +416,13 @@
       var c = findColumn(table, f, taken);
       if (c) { taken.push(c); cDates.push(c); }
     });
+    // Date tile reported empty: only Measure and Date tiles exist, so any other column is a date.
+    if (!fields.date.length) {
+      cDates = table.columns.filter(function (c) {
+        return taken.indexOf(c) < 0 && !/^measure (names|values)$/i.test(String(c.fieldName || ''));
+      });
+      cDates.forEach(function (c) { taken.push(c); });
+    }
     // Coarse → fine, so YEAR + MONTH sorts by year first.
     cDates = cDates
       .map(function (c, k) { return { c: c, k: k, g: granularity(c.fieldName) }; })
@@ -438,7 +445,7 @@
     }
 
     if (!cValue) {
-      return { label: label, points: [], hasDate: !!fields.date.length, dateIssue: 'Couldn’t find the measure in the sheet data.' };
+      return { label: label, points: [], hasDate: cDates.length > 0, dateIssue: 'Couldn’t find the measure in the sheet data.' };
     }
 
     // Many rows share the same date (extra detail on the sheet), so each
@@ -519,7 +526,7 @@
     var issue = '';
     if (fields.date.length && !cDates.length) {
       issue = 'Couldn’t find the date field in the sheet data. Try removing and re-adding it.';
-    } else if (!fields.date.length) {
+    } else if (!cDates.length) {
       issue = 'Drag a date field onto the Date tile to show the trend and the change.';
     } else if (pts.length < 2) {
       issue = 'Only one date in the data, so there’s no trend or change to show yet.';

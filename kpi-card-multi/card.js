@@ -507,6 +507,13 @@
   }
 
   function isMN (c) { return /^measure (names|values)$/i.test(String(c.fieldName || '')); }
+  // A date pill from a published data source can come back from the Marks card without
+  // its field (or under another id), so the Date tile looks empty although the sheet data
+  // has the date column. Such columns are recognised by their type or date-part name.
+  var DATE_PART_RE = /^(YEAR|YR|TYEAR|QUARTER|QR|TQUARTER|MONTH|MN|MY|TMONTH|WEEK|WK|TWEEK|DAY|DY|MDY|TDAY|WEEKDAY|HOUR|MINUTE|SECOND|ISO[A-Z]*|DATETRUNC|DATEPART)\(/i;
+  function looksLikeDateCol (c) {
+    return /^date(-?time)?$/i.test(String(c.dataType || '')) || DATE_PART_RE.test(String(c.fieldName || ''));
+  }
   function isNumericCol (c) { return /^(float|int|real|integer|number)$/i.test(String(c.dataType || '')); }
   function normName (s) { return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase(); }
 
@@ -542,6 +549,12 @@
     });
     var free = function () { return table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); }); };
     var guessed = [];
+    var noDatePills = !(fields.date || []).length;
+    // Date tile reported empty but the data has date columns: use them before
+    // unmatched measures can claim one (YEAR(...) is a number too).
+    if (noDatePills) {
+      free().filter(looksLikeDateCol).forEach(function (c) { taken.push(c); dates.push(c); });
+    }
     dates = dates.map(function (c, i) {
       if (c) return c;
       var x = free().find(function (y) { return !isNumericCol(y); });
@@ -555,6 +568,11 @@
         if (x) { taken.push(x); guessed.push(fields.value[i].name + ' → ' + x.fieldName); }
         return x || null;
       });
+    }
+    // Still Date tile reported empty: only Measures and Date tiles exist, so what's left is a date.
+    if (noDatePills) {
+      free().filter(function (c) { return !isNumericCol(c) || !/^[A-Z_]+\(/.test(String(c.fieldName || '')) || looksLikeDateCol(c); })
+        .forEach(function (c) { taken.push(c); dates.push(c); });
     }
     if (guessed.length) console.info('KPI Card Multi: matched renamed fields by position:', guessed);
     return { value: vals, date: dates.filter(Boolean), mn: cMN, mv: cMV };
@@ -602,7 +620,7 @@
     if (!cValue && cMV) cValue = cMV;
     if (!cValue) {
       console.warn('KPI Card Multi: no column for', fields.value[0], 'in', table.columns.map(function (c) { return c.fieldName + ' [' + c.fieldId + ']'; }));
-      return { label: label, points: [], hasDate: !!fields.date.length, dateIssue: 'Couldn’t find the measure in the sheet data.' };
+      return { label: label, points: [], hasDate: cDates.length > 0, dateIssue: 'Couldn’t find the measure in the sheet data.' };
     }
 
     // Many rows share the same date (extra detail on the sheet), so each
@@ -683,7 +701,7 @@
     var issue = '';
     if (fields.date.length && !cDates.length) {
       issue = 'Couldn’t find the date field in the sheet data. Try removing and re-adding it.';
-    } else if (!fields.date.length) {
+    } else if (!cDates.length) {
       issue = 'Drag a date field onto the Date tile to show the trend and the change.';
     } else if (pts.length < 2) {
       issue = 'Only one date in the data, so there’s no trend or change to show yet.';
