@@ -292,7 +292,7 @@
     var res = resolveColumns(lastTable, lastFields);
     cards.forEach(function (c, i) {
       var data = extract(lastTable, { value: [c.field], date: lastFields.date },
-        { value: [res.value[i]], date: res.date, mn: res.mn, mv: res.mv });
+        { value: [res.value[i]], date: res.date, mn: res.mn, mv: res.mv, mnLabels: [res.mnLabels[i]] });
       c.inst.update(KpiCardMultiConfig.cardConfig(store, c.key), data);
     });
   }
@@ -354,7 +354,7 @@
 
   // Marks card fields per column set: in memory, and in this browser's localStorage so the
   // next page load skips that call too. Same columns => same fields on the same tiles.
-  var FIELDS_KEY = 'kpi-card-multi:fields:v1';
+  var FIELDS_KEY = 'kpi-card-multi:fields:v2';
   var fieldsMem = null;
 
   function fieldsStore () {
@@ -371,7 +371,7 @@
 
   function storeFields (sig, fields) {
     var all = fieldsStore();
-    var slim = function (list) { return (list || []).map(function (f) { return { id: f.id, name: f.name }; }); };
+    var slim = function (list) { return (list || []).map(function (f) { return { id: f.id || f.fieldId, name: f.name || f.fieldName }; }); };
     all[sig] = { value: slim(fields.value), date: slim(fields.date), t: Date.now() };
     var keys = Object.keys(all);
     if (keys.length > 60) { // keep the newest 60 column sets
@@ -506,76 +506,138 @@
     return a.i - b.i; // Tableau's own order as the tie-breaker
   }
 
+  // ---------------------------------------------------------------------------
+  // Pill → summary-data column matching
+  // ---------------------------------------------------------------------------
+  // The Marks card (pills) and the sheet data (columns) don't always describe a field the
+  // same way: a published data source gives them different data-source ids
+  // ([sqlproxy.x].[sum:Sales:qk] vs [federated.y].[sum:Sales:qk]), a renamed field shows its
+  // new caption on one side and the original name on the other, and a date pill can come back
+  // without its field at all. So pills are matched in rounds — exact id, id without the data
+  // source, exact name, name without aggregation, underlying field name — each round over all
+  // pills before the next, and whatever is still unmatched is filled by role from the free
+  // columns: date-like columns for the Date tile, numbers for measures.
   function isMN (c) { return /^measure (names|values)$/i.test(String(c.fieldName || '')); }
-  // A date pill from a published data source can come back from the Marks card without
-  // its field (or under another id), so the Date tile looks empty although the sheet data
-  // has the date column. Such columns are recognised by their type or date-part name.
   var DATE_PART_RE = /^(YEAR|YR|TYEAR|QUARTER|QR|TQUARTER|MONTH|MN|MY|TMONTH|WEEK|WK|TWEEK|DAY|DY|MDY|TDAY|WEEKDAY|HOUR|MINUTE|SECOND|ISO[A-Z]*|DATETRUNC|DATEPART)\(/i;
   function looksLikeDateCol (c) {
     return /^date(-?time)?$/i.test(String(c.dataType || '')) || DATE_PART_RE.test(String(c.fieldName || ''));
   }
-  function isNumericCol (c) { return /^(float|int|real|integer|number)$/i.test(String(c.dataType || '')); }
+  function isNumericCol (c) { return /^(float|int|real|integer|number|double)$/i.test(String(c.dataType || '')); }
+  function looksAggregated (c) { return /^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR|STDEV|STDEVP|VAR|VARP|PCT\d+)\(/i.test(String(c.fieldName || '')); }
   function normName (s) { return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase(); }
+  function pillId (f) { return f ? String(f.id || f.fieldId || '') : ''; }
+  function pillName (f) { return f ? String(f.name || f.fieldName || f.caption || '') : ''; }
+  /** "[federated.x].[sum:Sales:qk]" → "sum:sales:qk" */
+  function idTail (id) {
+    var s = String(id || '').trim();
+    var m = /\[((?:[^\]]|\]\])*)\]\s*$/.exec(s);
+    return (m ? m[1] : s).trim().toLowerCase();
+  }
+  /** "[federated.x].[sum:Sales:qk]" → "sales"; "[Calculation_12]" → "calculation_12" */
+  function idBase (id) {
+    var parts = idTail(id).split(':');
+    return (parts.length >= 3 ? parts.slice(1, -1).join(':') : parts.join(':')).trim();
+  }
 
   /**
-   * Finds the summary-data column of every pill at once, so measures that don't
-   * match by id or name still get a column:
-   *  - the same measure twice on the tile comes as one column (both cards read it);
-   *  - renamed pills / table calcs (column name ≠ pill name) take the free columns in order;
-   *  - Measure Names / Measure Values in the data: a card reads Measure Values on its own rows.
+   * Finds the column of every pill at once. Returns { value: [column|null per value pill],
+   * date: [columns, coarse order not applied], mn, mv }.
+   *  - the same measure twice on the tile comes as one column (both read it);
+   *  - Measure Names / Measure Values in the data: measures stay null (read from MV rows).
    */
   function resolveColumns (table, fields) {
-    var taken = [];
-    var cMN = table.columns.find(function (c) { return /^measure names$/i.test(String(c.fieldName || '')); }) || null;
-    var cMV = table.columns.find(function (c) { return /^measure values$/i.test(String(c.fieldName || '')); }) || null;
+    var cols = table.columns || [];
+    var cMN = cols.find(function (c) { return /^measure names$/i.test(String(c.fieldName || '')); }) || null;
+    var cMV = cols.find(function (c) { return /^measure values$/i.test(String(c.fieldName || '')); }) || null;
     var pivoted = !!(cMN && cMV);
-    var find = function (f) {
-      if (!f) return null;
-      var cols = table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); });
-      var fid = f.id || f.fieldId;
-      return cols.find(function (c) { return fid && c.fieldId && c.fieldId === fid; }) ||
-        cols.find(function (c) { return c.fieldName === f.name; }) ||
-        cols.find(function (c) { return normName(c.fieldName) === normName(f.name); }) ||
-        null;
-    };
-    var dates = (fields.date || []).map(function (f) { var c = find(f); if (c) taken.push(c); return c; });
-    var vals = (fields.value || []).map(function (f) { var c = find(f); if (c) taken.push(c); return c; });
-    // Same field twice on the tile: one column, read by both cards.
-    vals = vals.map(function (c, i) {
-      if (c) return c;
-      var f = fields.value[i];
-      var j = fields.value.findIndex(function (o, k) { return k !== i && vals[k] && (o.id && o.id === f.id || o.name === f.name); });
-      return j >= 0 ? vals[j] : null;
+    var taken = [];
+    var free = function () { return cols.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); }); };
+    var pills = [];
+    (fields.date || []).forEach(function (f, i) { pills.push({ tile: 'date', i: i, f: f, col: null }); });
+    (fields.value || []).forEach(function (f, i) { pills.push({ tile: 'value', i: i, f: f, col: null }); });
+
+    var rounds = [
+      function (f, c) { var id = pillId(f); return !!id && !!c.fieldId && c.fieldId === id; },
+      function (f, c) { var t = idTail(pillId(f)); return !!t && t === idTail(c.fieldId); },
+      function (f, c) { var n = pillName(f); return !!n && c.fieldName === n; },
+      function (f, c) { var n = normName(pillName(f)); return !!n && normName(c.fieldName) === n; },
+      function (f, c) {
+        var pb = idBase(pillId(f));
+        var cb = idBase(c.fieldId);
+        var pn = normName(pillName(f));
+        var cn = normName(c.fieldName);
+        return (!!pb && (pb === cn || pb === cb)) || (!!cb && cb === pn);
+      }
+    ];
+    rounds.forEach(function (test) {
+      pills.forEach(function (p) {
+        if (p.col || (!pillId(p.f) && !pillName(p.f))) return;
+        var hits = free().filter(function (c) { return test(p.f, c); });
+        var fits = p.tile === 'date'
+          ? function (c) { return looksLikeDateCol(c) || !(isNumericCol(c) || looksAggregated(c)); }
+          : function (c) { return !looksLikeDateCol(c); };
+        var x = hits.find(fits) || hits[0];
+        if (x) { p.col = x; taken.push(x); }
+      });
     });
-    var free = function () { return table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); }); };
+
+    var values = pills.filter(function (p) { return p.tile === 'value'; });
+    // Same field twice on the tile: one column, read by both.
+    values.forEach(function (p) {
+      if (p.col) return;
+      var twin = values.find(function (o) {
+        return o !== p && o.col && ((pillId(o.f) && pillId(o.f) === pillId(p.f)) || (pillName(o.f) && pillName(o.f) === pillName(p.f)));
+      });
+      if (twin) p.col = twin.col;
+    });
+
     var guessed = [];
-    var noDatePills = !(fields.date || []).length;
-    // Date tile reported empty but the data has date columns: use them before
-    // unmatched measures can claim one (YEAR(...) is a number too).
-    if (noDatePills) {
-      free().filter(looksLikeDateCol).forEach(function (c) { taken.push(c); dates.push(c); });
-    }
-    dates = dates.map(function (c, i) {
-      if (c) return c;
-      var x = free().find(function (y) { return !isNumericCol(y); });
-      if (x) { taken.push(x); guessed.push(fields.date[i].name + ' → ' + x.fieldName); }
-      return x || null;
+    var take = function (p, x) { if (x) { p.col = x; taken.push(x); guessed.push(p.tile + ' "' + pillName(p.f) + '" → ' + x.fieldName); } };
+    // Unmatched date pills: a date-like column first, then any non-measure-looking one.
+    pills.forEach(function (p) {
+      if (p.tile !== 'date' || p.col) return;
+      take(p, free().find(looksLikeDateCol) || free().find(function (c) { return !isNumericCol(c) && !looksAggregated(c); }));
     });
+    // Unmatched measures: a number that isn't a date part, then anything that isn't date-like.
     if (!pivoted) {
-      vals = vals.map(function (c, i) {
-        if (c) return c;
-        var x = free().find(isNumericCol) || free()[0];
-        if (x) { taken.push(x); guessed.push(fields.value[i].name + ' → ' + x.fieldName); }
-        return x || null;
+      values.forEach(function (p) {
+        if (p.col) return;
+        take(p, free().find(function (c) { return isNumericCol(c) && !looksLikeDateCol(c); }) ||
+          free().find(function (c) { return !looksLikeDateCol(c); }));
       });
     }
-    // Still Date tile reported empty: only Measures and Date tiles exist, so what's left is a date.
-    if (noDatePills) {
-      free().filter(function (c) { return !isNumericCol(c) || !/^[A-Z_]+\(/.test(String(c.fieldName || '')) || looksLikeDateCol(c); })
-        .forEach(function (c) { taken.push(c); dates.push(c); });
+    var dates = pills.filter(function (p) { return p.tile === 'date' && p.col; }).map(function (p) { return p.col; });
+    // Only the Measure and Date tiles exist, so date-like columns left over (a date pill the
+    // Marks card didn't report) are dates, and so is anything that doesn't look like a measure.
+    free().forEach(function (c) {
+      if (looksLikeDateCol(c) || !(isNumericCol(c) || looksAggregated(c))) { taken.push(c); dates.push(c); guessed.push('extra date → ' + c.fieldName); }
+    });
+    if (guessed.length && !resolveColumns.logged) {
+      resolveColumns.logged = true;
+      console.info('KPI Card Multi: matched fields by role:', guessed, '\npills:', JSON.stringify({ value: (fields.value || []).map(function (f) { return [pillId(f), pillName(f)]; }), date: (fields.date || []).map(function (f) { return [pillId(f), pillName(f)]; }) }),
+        '\ncolumns:', JSON.stringify(cols.map(function (c) { return [c.fieldId, c.fieldName, c.dataType]; })));
     }
-    if (guessed.length) console.info('KPI Card Multi: matched renamed fields by position:', guessed);
-    return { value: vals, date: dates.filter(Boolean), mn: cMN, mv: cMV };
+    // Measure Names rows per measure: by name, else (renamed pill) by position on the tile.
+    var mnLabels = [];
+    if (pivoted) {
+      var seen = [];
+      (table.data || []).forEach(function (r) {
+        var c = r[cMN.index];
+        var n = c && (c.formattedValue != null ? c.formattedValue : c.value);
+        if (n != null && seen.indexOf(String(n)) < 0) seen.push(String(n));
+      });
+      seen.reverse(); // summary data arrives last-to-first
+      var used = [];
+      mnLabels = values.map(function (p) {
+        var want = normName(pillName(p.f));
+        var hit = seen.find(function (n) { return normName(n) === want; });
+        if (hit) used.push(hit);
+        return hit || null;
+      });
+      var rest = seen.filter(function (n) { return used.indexOf(n) < 0; });
+      mnLabels = mnLabels.map(function (n) { return n || rest.shift() || null; });
+    }
+    return { value: values.map(function (p) { return p.col; }), date: dates, mn: cMN, mv: cMV, mnLabels: mnLabels };
   }
 
   /** Summary data → ordered series of { label, v, fv }. */
@@ -589,6 +651,7 @@
     if (!cValue && res.mn && res.mv) {
       var f0 = fields.value[0];
       var want = [normName(f0.name), normName(cleanName(f0.name))];
+      if (res.mnLabels && res.mnLabels[0]) want.push(normName(res.mnLabels[0]));
       var mine = rows.filter(function (r) {
         var c = r[res.mn.index];
         var n = normName(c && (c.formattedValue != null ? c.formattedValue : c.value));
@@ -602,7 +665,7 @@
       .sort(function (a, b) { return a.g - b.g || a.k - b.k; })
       .map(function (o) { return o.c; });
 
-    var label = cleanName(cValue && !cMV ? cValue.fieldName : fields.value[0].name);
+    var label = cleanName(cValue && !cMV ? cValue.fieldName : (cMV && res.mnLabels && res.mnLabels[0]) || fields.value[0].name);
 
     // The finest date column that holds real dates drives the calendar logic
     // (Points shown window, same day last month, month to date).
