@@ -68,9 +68,9 @@ body {
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Long titles wrap onto the next line(s) instead of being cut off */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* ---- Optional explanation (lines up with the title text) ------------- */
