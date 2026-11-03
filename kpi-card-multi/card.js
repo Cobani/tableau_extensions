@@ -197,6 +197,7 @@
       // Measures tile keeps the same columns, so every later refresh (and a check shortly
       // after the first draw) asks the Marks card for the current card order.
       var fields = sig && first ? cachedFields(sig) : null;
+      if (fields && !fieldsComplete(fields, table)) fields = null;
       if (fields) {
         T.mark('fields from cache (Marks card not asked)');
         setTimeout(function () { verifyFields(sig); }, VERIFY_DELAY);
@@ -205,7 +206,7 @@
         tFields = ms();
         if (first) T.mark('fields received (Marks card)');
         if (token !== renderToken) return;
-        if (sig && fields.value.length) storeFields(sig, fields);
+        if (sig && fields.value.length && fieldsComplete(fields, table)) storeFields(sig, fields);
       }
 
       if (!fields.value.length) {
@@ -240,12 +241,18 @@
   // other extensions on the dashboard) and redraw if the measures were reordered.
   var VERIFY_DELAY = 4000;
 
+  /** Fields worth caching: a date pill was reported, or there's no column left over for one. */
+  function fieldsComplete (fields, table) {
+    var n = ((table && table.columns) || []).filter(function (c) { return !isMN(c); }).length;
+    return (fields.date || []).length > 0 || n <= (fields.value || []).length;
+  }
+
   async function verifyFields (sig) {
     try {
       var fields = await withRetry(getEncodedFields, 'getVisualSpecificationAsync');
       if (!lastFields || !lastTable || columnsSignature(lastTable) !== sig) return; // a newer refresh already ran
       var names = function (f) { return f.value.concat(f.date).map(function (x) { return x.id + '|' + x.name; }).join('\u0001'); };
-      if (fields.value.length) storeFields(sig, fields);
+      if (fields.value.length && fieldsComplete(fields, lastTable)) storeFields(sig, fields);
       if (names(fields) !== names(lastFields)) {
         lastFields = fields;
         renderAll();
@@ -354,7 +361,7 @@
 
   // Marks card fields per column set: in memory, and in this browser's localStorage so the
   // next page load skips that call too. Same columns => same fields on the same tiles.
-  var FIELDS_KEY = 'kpi-card-multi:fields:v2';
+  var FIELDS_KEY = 'kpi-card-multi:fields:v3';
   var fieldsMem = null;
 
   function fieldsStore () {

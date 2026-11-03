@@ -195,15 +195,19 @@
       if (token !== renderToken) return;
 
       var sig = table.error ? '' : columnsSignature(table);
-      var fields = sig ? cachedFields(sig) : null;
+      // The cache only speeds up the first draw of a page load; it's checked against the
+      // Marks card shortly after, and every later refresh asks the Marks card.
+      var fields = sig && first ? cachedFields(sig) : null;
+      if (fields && !fieldsComplete(fields, table)) fields = null;
       if (fields) {
-        if (first) T.mark('fields from cache (Marks card not asked)');
+        T.mark('fields from cache (Marks card not asked)');
+        setTimeout(function () { verifyFields(sig); }, VERIFY_DELAY);
       } else {
         fields = await withRetry(getEncodedFields, 'getVisualSpecificationAsync');
         tFields = ms();
         if (first) T.mark('fields received (Marks card)');
         if (token !== renderToken) return;
-        if (sig && fields.value.length) storeFields(sig, fields);
+        if (sig && fields.value.length && fieldsComplete(fields, table)) storeFields(sig, fields);
       }
 
       if (!fields.value.length) {
@@ -215,6 +219,8 @@
 
       if (table && table.error) throw table.error;
 
+      lastTable = table;
+      lastFields = fields;
       lastData = extract(table, fields);
       var tp = performance.now();
       paint();
@@ -230,6 +236,32 @@
       if (first) { T.mark('render failed', err && err.message); T.done('KPI Card load timings'); }
       if (token === renderToken) showEmpty('Could not read the worksheet data. See the console for details.');
     }
+  }
+
+  // After a draw from cached fields, ask the Marks card once (later, so it doesn't hold up
+  // other extensions on the dashboard) and redraw if the pills differ.
+  var VERIFY_DELAY = 4000;
+  var lastTable = null;
+  var lastFields = null;
+
+  async function verifyFields (sig) {
+    try {
+      var fields = await withRetry(getEncodedFields, 'getVisualSpecificationAsync');
+      if (!lastFields || !lastTable || columnsSignature(lastTable) !== sig) return; // a newer refresh already ran
+      var names = function (f) { return f.value.concat(f.date).map(function (x) { return x.id + '|' + x.name; }).join('\u0001'); };
+      if (fields.value.length && fieldsComplete(fields, lastTable)) storeFields(sig, fields);
+      if (fields.value.length && names(fields) !== names(lastFields)) {
+        lastFields = fields;
+        lastData = extract(lastTable, fields);
+        paint();
+      }
+    } catch (e) { /* keep the cached fields */ }
+  }
+
+  /** Fields worth caching: a date pill was reported, or there's no column left over for one. */
+  function fieldsComplete (fields, table) {
+    var n = ((table && table.columns) || []).filter(function (c) { return !isMN(c); }).length;
+    return (fields.date || []).length > 0 || n <= (fields.value || []).length;
   }
 
   /** { value: [field], date: [field, field, ...] } in the order they were dropped. */
@@ -252,7 +284,7 @@
 
   // Marks card fields per column set: in memory, and in this browser's localStorage so the
   // next page load skips that call too. Same columns => same fields on the same tiles.
-  var FIELDS_KEY = 'kpi-card:fields:v2';
+  var FIELDS_KEY = 'kpi-card:fields:v3';
   var fieldsMem = null;
 
   function fieldsStore () {
