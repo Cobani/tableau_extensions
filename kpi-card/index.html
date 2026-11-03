@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>KPI Card</title>
     <script>
-      // Automatic recovery: if a file doesn't arrive or Tableau rejects the handshake, reload this
-      // frame, up to 3 times. The count rides in the URL hash. (A slow handshake is never reloaded.)
+      // Automatic recovery: if a file doesn't arrive, Tableau rejects the handshake, or the handshake
+      // isn't answered in time (see INIT_TIMEOUT in the main JS), reload this frame, up to 3 times.
+      // The count rides in the URL hash.
       (function () {
         var m = /kpiRetry=(\d+)/.exec(location.hash);
         var n = m ? +m[1] : 0;
@@ -41,7 +42,7 @@
     <script src="../shared/timing.js?v=666dc99b7c"></script>
     <script src="./icons.js?v=6a0dce9bfa"></script>
     <script src="./config.js?v=16e0120a5e"></script>
-    <script src="./card.js?v=dbe5c4eb38"></script>
+    <script src="./card.js?v=ed2c1e6c6f"></script>
   </head>
 
   <body>

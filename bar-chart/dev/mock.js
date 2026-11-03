@@ -270,13 +270,16 @@
   };
 })();
 
-// Dev only: index.html?mock&failInit=N makes the first N handshakes fail, to test the automatic reload.
+// Dev only: index.html?mock&failInit=N makes the first N handshakes fail, and &hangInit=N makes the
+// first N never answer (timeout), to test the automatic reload.
 (function () {
-  var m = /[?&]failInit=(\d+)/.exec(location.search);
-  if (!m || !(window.tableau && tableau.extensions)) return;
+  var m = /[?&]failInit=(\d+)/.exec(location.search) || [0, 0];
+  var h = /[?&]hangInit=(\d+)/.exec(location.search) || [0, 0];
+  if (!(+m[1] || +h[1]) || !(window.tableau && tableau.extensions)) return;
   var tries = +((/(?:ext|kpi)Retry=(\d+)/.exec(location.hash) || [])[1] || 0);
   var real = tableau.extensions.initializeAsync;
   tableau.extensions.initializeAsync = function (opts) {
+    if (tries < +h[1]) return new Promise(function () {});
     if (tries < +m[1]) return Promise.reject(new Error('mock: handshake rejected (failInit)'));
     return real.call(tableau.extensions, opts);
   };

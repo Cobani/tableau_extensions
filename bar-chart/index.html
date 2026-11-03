@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bar Chart</title>
     <script>
-      // Automatic recovery: if a file doesn't arrive or Tableau rejects the handshake, reload this
-      // frame, up to 3 times. The count rides in the URL hash. (A slow handshake is never reloaded:
-      // Tableau answers every extension on the dashboard through one queue, and a reload would
-      // only put this one at the back of it.) Same logic as kpi-card.
+      // Automatic recovery: if a file doesn't arrive, Tableau rejects the handshake, or the handshake
+      // isn't answered in time (see INIT_TIMEOUT in the main JS), reload this frame, up to 3 times.
+      // The count rides in the URL hash.
       (function () {
         var m = /extRetry=(\d+)/.exec(location.hash);
         var n = m ? +m[1] : 0;
@@ -44,7 +43,7 @@
     <script src="./icons.js?v=58c76ce58f"></script>
     <script src="./config.js?v=0b0d71a5f1"></script>
     <script src="./export.js?v=fc7566d4d2"></script>
-    <script src="./chart.js?v=e62c7c67e8"></script>
+    <script src="./chart.js?v=5a0ae992a9"></script>
   </head>
 
   <body>
@@ -73,7 +72,7 @@
 
     <script>
       // Dev preview only: index.html?mock loads a stand-in for the Tableau API.
-      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=1f70cda1dc"><\/script>');
+      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=217cd0b383"><\/script>');
     </script>
     <script>
       // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.

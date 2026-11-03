@@ -49,19 +49,21 @@
     el.bottom.addEventListener('mousemove', onHover);
     el.bottom.addEventListener('mouseleave', hideTooltip);
 
-    // Tableau answers every extension call through ONE queue for the whole dashboard
-    // (handshakes first, then data requests, one after another). A slow answer is
-    // therefore normal on a dashboard with many cards and is never treated as lost:
-    // reloading would only put the card at the back of the queue again.
-    // The frame is reloaded only when Tableau rejects the handshake.
+    // Handshake recovery: the frame is reloaded (fresh handshake, up to 3 times in all) when
+    // Tableau rejects the handshake, or when it hasn't answered within the timeout. Tableau
+    // answers every extension through one queue for the whole dashboard, so each reload waits
+    // a little longer; if the answer arrives before the reload fires, the reload is cancelled.
+    // After the last reload it keeps waiting and offers a manual reload.
     var boot = window.KpiBoot || { attempt: 0, retry: function () { return false; }, ok: function () {} };
     var initDone = false;
     var hintTimer = setTimeout(function () {
       if (!initDone) showEmpty('Loading…');
     }, 2500);
+    var initTimeout = INIT_TIMEOUT + INIT_TIMEOUT_STEP * boot.attempt;
     var watchdog = setTimeout(function () {
-      if (!initDone) showRetry('Tableau has not answered yet.');
-    }, INIT_GIVE_UP);
+      if (initDone) return;
+      if (!boot.retry('no handshake after ' + initTimeout / 1000 + ' s')) showRetry('Tableau has not answered yet.');
+    }, initTimeout);
 
     if (window.ExtTiming) ExtTiming.mark('initializeAsync start', boot.attempt ? 'reload #' + boot.attempt : '');
     return tableau.extensions.initializeAsync({ configure: configure }).then(function () {
@@ -101,9 +103,10 @@
     });
   }
 
-  // After this long without a handshake the card offers a manual reload (the handshake
-  // keeps waiting meanwhile, and the card still draws if Tableau answers later).
-  var INIT_GIVE_UP = 90000;
+  // Handshake timeout: 4 s on the first load, +2 s per reload (4, 6, 8, 10 s → about 28 s
+  // before giving up). A late answer still draws the chart, even after giving up.
+  var INIT_TIMEOUT = 4000;
+  var INIT_TIMEOUT_STEP = 2000;
 
   /** A click reloads the card. */
   function showRetry (why) {
