@@ -43,6 +43,7 @@
       "highColor": "#5500FF"
     },
     "labels": {
+      "totalInLegend": false,
       "content": "valuePct",
       "size": 12,
       "weight": 500,

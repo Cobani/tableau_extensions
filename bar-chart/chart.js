@@ -1728,6 +1728,11 @@
     renameItems(items);
     if (L.sort === 'name') items = Bc.sortBy(items, function (a, b) { return String(a.name).localeCompare(String(b.name)); });
     if (L.sort === 'valDesc') items = Bc.sortBy(items, function (a, b) { return (b.value || 0) - (a.value || 0); });
+    if (cfg.labels.totalInLegend && items.length && (v.layout === 'stacked' || v.layout === 'stacked100')) {
+      var gt = 0; var gany = false;
+      v.nodes.forEach(function (n) { (n.bars || []).forEach(function (b) { if (isFinite(b.v)) { gt += b.v; gany = true; } }); });
+      items.push({ id: 'tot:', name: 'Total', color: cfg.labels.totalColor, value: gany ? gt : null });
+    }
     var barCount = items.length;
     if (L.includeLines && cfg.chart.showLines !== false) {
       raw.lines.forEach(function (l, i) {

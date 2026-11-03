@@ -317,6 +317,7 @@
       totalSize: 11,
       totalWeight: 700,
       totalColor: '#17202B',
+      totalInLegend: false, // stacked: a 'Total' item in the legend
       fmt: fmtCopy(),
       totalFmt: fmtCopy()
     },

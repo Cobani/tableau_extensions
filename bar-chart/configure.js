@@ -852,6 +852,8 @@
       g5.appendChild(selectRow('Total weight', 'labels.totalWeight', WEIGHTS));
       g5.appendChild(colorRow('Total color', 'labels.totalColor'));
     }
+    g5.appendChild(checkboxRow('Total in the legend', 'labels.totalInLegend'));
+    g5.appendChild(help('Adds a “Total” item to the legend (in the Total color), with the grand total when Legend → “Total next to each name” is on. Rename it in Legend → Item names.'));
 
   }
 

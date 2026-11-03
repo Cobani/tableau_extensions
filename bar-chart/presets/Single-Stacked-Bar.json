@@ -27,6 +27,7 @@
       "opacity": 100
     },
     "labels": {
+      "totalInLegend": false,
       "position": "center",
       "content": "valuePct",
       "segments": true,
