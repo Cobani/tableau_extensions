@@ -1734,7 +1734,7 @@
         var lc = Bc.lineCfg(cfg, l.key);
         var sum = 0; var any = false;
         v.nodes.forEach(function (n) { if (isFinite(n.l[l.key])) { sum += n.l[l.key]; any = true; } });
-        items.push({ key: 'l:' + l.key, hover: 'l:' + l.key, name: lineLabel(l), color: lineColor(l.key, i), line: lc, toggle: true, value: any ? sum : null, fmt: lc.fmt });
+        items.push({ key: 'l:' + l.key, hover: 'l:' + l.key, name: lineLabel(l), color: lineColor(l.key, i), line: lc, toggle: true, value: any ? sum : null, fmt: lineFmt() });
       });
     }
     if (L.includeTarget && targetInfo() && cfg.target.show && cfg.target.style !== 'none' && cfg.chart.showBars !== false) {
@@ -1812,7 +1812,7 @@
       if (L.showValues && it.value != null && isFinite(it.value)) {
         var vl = document.createElement('span');
         vl.className = 'lg-val';
-        vl.textContent = Bc.formatNumber(it.value, it.fmt ? fmtOf(it.fmt) : fmt);
+        vl.textContent = Bc.formatNumber(it.value, it.fmt || fmt);
         d.appendChild(vl);
       }
       if (it.key && state.off[it.key]) d.classList.add('is-off');
@@ -1898,6 +1898,12 @@
   /** Every number uses the chart's format (Value Text tab); tooltips can have their own (tipFmt). */
   function fmtOf (f) {
     return cfg.format;
+  }
+
+  /** Values on the lines + line axis: the chart's format unless Line Chart → "Use shared format" is off. */
+  function lineFmt () {
+    var LA = cfg.lineAxis || {};
+    return LA.useGlobalFormat === false && LA.fmt ? LA.fmt : cfg.format;
   }
 
   function tipFmt () {
@@ -2657,7 +2663,7 @@
           gl.appendChild(hit);
           drawn.push({ node: q.n, kind: 'line', line: l, v: q.v, color: col, i: q.n.idx, x: q.x, y: q.y });
           if (lc.labels) {
-            var lbl = boxLabel(Bc.formatNumber(q.v, fmtOf(lc.fmt)), lc.labelSize, lc.labelWeight, family, 'none');
+            var lbl = boxLabel(Bc.formatNumber(q.v, lineFmt()), lc.labelSize, lc.labelWeight, family, 'none');
             lbl.fill = col;
             lbl.prio = Math.abs(q.v) * 0.5;
             var dy = lc.markerSize / 2 + 3 + lbl.h / 2;

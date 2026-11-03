@@ -1672,10 +1672,11 @@
     if (el.tooltip) el.tooltip.style.display = 'none';
   }
 
+  // Same arrows as the KPI Card's change.
   var CH_ARROWS = {
-    up: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8H1z" fill="currentColor"/></svg>',
-    down: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5 1 2h8z" fill="currentColor"/></svg>',
-    flat: '<svg viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="4.25" width="7" height="1.5" rx=".75" fill="currentColor"/></svg>'
+    up: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 8L8 2M3.2 2H8V6.8" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    down: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 2L8 8M8 3.2V8H3.2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    flat: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5H8.5M5.8 2.3L8.5 5L5.8 7.7" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
 
   /**

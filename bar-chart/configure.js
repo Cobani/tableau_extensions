@@ -1100,6 +1100,7 @@
       base = ['lineDefaults'];
     }
     var L = get(base);
+    var A = cfg.lineAxis;
     var g1 = group(p, 'Line');
     g1.appendChild(optColorRow('Color', P(base, 'color'), '#17202B'));
     g1.appendChild(numberRow('Width (px)', P(base, 'width'), 0.5, 10, 0.5));
@@ -1120,6 +1121,9 @@
       g3.appendChild(selectRow('Weight', P(base, 'labelWeight'), WEIGHTS));
       labelFmt(g3, P(base, 'fmt'));
     }
+    g3.appendChild(checkboxRow('Use shared format', 'lineAxis.useGlobalFormat', rebuild));
+    if (!A.useGlobalFormat) fmtRows(g3, 'lineAxis.fmt', { noSign: true });
+    g3.appendChild(help(A.useGlobalFormat ? 'Line values and the line axis use the chart’s number format (Value Text tab).' : 'This format is used by the values on every line and by the line axis.'));
     if (info.lines.length > 1) {
       var gc = group(p, 'Copy');
       var cp = h('button', { type: 'button', className: 'btn', textContent: 'Apply these settings to every line' });
@@ -1132,7 +1136,6 @@
       gc.appendChild(cp);
     }
 
-    var A = cfg.lineAxis;
     var g4 = group(p, 'Line axis');
     g4.appendChild(segRow('Axis', 'lineAxis.mode', [['secondary', 'Its own axis'], ['shared', 'The bars’ axis']], rebuild));
     if (A.mode === 'secondary') {
@@ -1148,8 +1151,6 @@
         g4.appendChild(textRow('Axis title', 'lineAxis.title', ''));
         g4.appendChild(numberRow('Size (px)', 'lineAxis.size', 6, 30, 1));
         g4.appendChild(colorRow('Color', 'lineAxis.color'));
-        g4.appendChild(checkboxRow('Use shared format', 'lineAxis.useGlobalFormat', rebuild));
-        if (!A.useGlobalFormat) fmtRows(g4, 'lineAxis.fmt', { noSign: true });
       }
     }
   }

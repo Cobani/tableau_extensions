@@ -112,7 +112,7 @@ defaults.
 | Gridlines & Target | measure and dimension axis lines · value gridlines · lines between categories · zero line · target markers · reference lines and bands |
 | Sort & Top N | sort · Top N of any Dimension field, within each parent or overall, by any measure, with Others |
 | Legend | position, order, markers, totals, included items, Top N naming, item names, title, text, interaction, box |
-| Line Chart | **show / hide the lines** · per Line measure: name, colour, shape, markers, values · line axis |
+| Line Chart | **show / hide the lines** · per Line measure: name, colour, shape, markers, values · shared or own number format for line values + line axis · line axis |
 | Tooltip & Actions | tooltip parts, sorting, rows, pin on click · **own number format** (else the chart's) · right-click menu · double-click · click selects in Tableau |
 | Comments | show, marker or callout, style, author · edit, recolour, delete, add |
 | Card | padding, space above the chart (default 0), background and chart-area background |
