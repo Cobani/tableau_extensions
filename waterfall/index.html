@@ -4,6 +4,38 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Waterfall</title>
+    <script>
+      // Automatic recovery: if a file doesn't arrive or Tableau rejects the handshake, reload this
+      // frame, up to 3 times. The count rides in the URL hash. (A slow handshake is never reloaded:
+      // Tableau answers every extension on the dashboard through one queue, and a reload would
+      // only put this one at the back of it.) Same logic as kpi-card.
+      (function () {
+        var m = /extRetry=(\d+)/.exec(location.hash);
+        var n = m ? +m[1] : 0;
+        var base = location.pathname + location.search;
+        var pending = 0;
+        function go (k) {
+          try { history.replaceState(null, '', base + (k ? '#extRetry=' + k : '')); } catch (e) { /* ignore */ }
+          location.reload();
+        }
+        window.ExtBoot = {
+          attempt: n,
+          retry: function (why) {
+            if (pending) return true;
+            if (n >= 3) return false;
+            console.warn('Waterfall: ' + why + ', reloading (attempt ' + (n + 1) + ' of 3)');
+            pending = setTimeout(function () { go(n + 1); }, 200 + Math.random() * 1300);
+            return true;
+          },
+          reload: function () { go(0); },
+          ok: function () {
+            clearTimeout(pending);
+            pending = 0;
+            if (n) { try { history.replaceState(null, '', base); } catch (e) { /* ignore */ } }
+          }
+        };
+      })();
+    </script>
     <!-- Start downloading the shared Tableau API library early; the same URL is cached for every extension. -->
     <link rel="preload" as="script" href="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" />
     <link rel="stylesheet" href="../shared/fonts/fonts.css?v=22ceb76171" />
@@ -11,7 +43,7 @@
     <script src="../shared/timing.js?v=666dc99b7c"></script>
     <script src="./icons.js?v=899a3f9c7f"></script>
     <script src="./config.js?v=b384c3d1ff"></script>
-    <script src="./chart.js?v=47c6b2e027"></script>
+    <script src="./chart.js?v=57e3d28826"></script>
   </head>
 
   <body>
@@ -34,7 +66,7 @@
 
     <script>
       // Dev preview only: index.html?mock loads a stand-in for the Tableau API.
-      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=a35447667e"><\/script>');
+      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=37a20ad2a1"><\/script>');
     </script>
     <script>
       // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.
@@ -44,11 +76,11 @@
     </script>
     <script>
       if (window.ExtTiming) ExtTiming.mark('Tableau API library loaded');
-      if (window.tableau && window.tableau.extensions) {
+      if (window.tableau && window.tableau.extensions && window.Waterfall) {
         window.Waterfall.init();
-      } else {
+      } else if (!window.ExtBoot.retry('a file did not load')) {
         document.getElementById('hint').textContent =
-            'Could not load the Tableau Extensions API library.';
+            'Could not load the Waterfall files. Refresh the page to try again.';
       }
     </script>
   </body>

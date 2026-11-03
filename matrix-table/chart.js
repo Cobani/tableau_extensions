@@ -58,8 +58,26 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { hideMenu(); hideTooltip(); } });
     window.addEventListener('blur', hideMenu);
 
-    if (window.ExtTiming) ExtTiming.mark('initializeAsync start');
+    // Tableau answers every extension call through ONE queue for the whole dashboard
+    // (handshakes first, then data requests, one after another). A slow answer is
+    // therefore normal on a dashboard with many extensions and is never treated as lost:
+    // reloading would only put this one at the back of the queue again.
+    // The frame is reloaded only when Tableau rejects the handshake (see ExtBoot in index.html).
+    var boot = window.ExtBoot || { attempt: 0, retry: function () { return false; }, ok: function () {} };
+    var initDone = false;
+    var hintTimer = setTimeout(function () {
+      if (!initDone) showEmpty('Loading…');
+    }, 2500);
+    var watchdog = setTimeout(function () {
+      if (!initDone) showRetry('Tableau has not answered yet.');
+    }, INIT_GIVE_UP);
+
+    if (window.ExtTiming) ExtTiming.mark('initializeAsync start', boot.attempt ? 'reload #' + boot.attempt : '');
     return tableau.extensions.initializeAsync({ configure: function () { return openDialog(null); } }).then(function () {
+      initDone = true;
+      clearTimeout(watchdog);
+      clearTimeout(hintTimer);
+      boot.ok();
       if (window.ExtTiming) ExtTiming.mark('initializeAsync done (Tableau handshake)');
       worksheet = tableau.extensions.worksheetContent.worksheet;
       cfg = Mx.read();
@@ -77,9 +95,28 @@
       }
       return refresh();
     }).catch(function (err) {
+      if (initDone) {
+        console.error('Matrix Table failed to start:', err);
+        showEmpty('Could not initialize the extension. See the console for details.');
+        return;
+      }
+      initDone = true;
+      clearTimeout(watchdog);
+      clearTimeout(hintTimer);
       console.error('Matrix Table failed to initialize:', err);
-      showEmpty('Could not initialize the extension. See the console for details.');
+      if (!boot.retry('handshake failed')) showRetry();
     });
+  }
+
+  // After this long without a handshake the extension offers a manual reload (the handshake
+  // keeps waiting meanwhile, and the chart still draws if Tableau answers later).
+  var INIT_GIVE_UP = 90000;
+
+  /** A click reloads the extension. */
+  function showRetry (why) {
+    showEmpty((why || 'Could not connect to Tableau.') + '<br><u>Click to reload.</u>');
+    el.hint.style.cursor = 'pointer';
+    el.hint.onclick = function () { if (window.ExtBoot) ExtBoot.reload(); else location.reload(); };
   }
 
   var queued = false;
