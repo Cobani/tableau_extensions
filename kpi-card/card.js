@@ -253,7 +253,7 @@
     try {
       var fields = await withRetry(getEncodedFields, 'getVisualSpecificationAsync');
       if (!lastFields || !lastTable || columnsSignature(lastTable) !== sig) return; // a newer refresh already ran
-      var names = function (f) { return f.value.concat(f.date, f.details || []).map(function (x) { return x.id + '|' + x.name; }).join('\u0001'); };
+      var names = function (f) { return f.value.concat(f.date, f.details || [], f.extra || []).map(function (x) { return x.id + '|' + x.name; }).join('\u0001'); };
       if (fields.value.length && fieldsComplete(fields, lastTable)) storeFields(sig, fields);
       if (fields.value.length && names(fields) !== names(lastFields)) {
         lastFields = fields;
@@ -266,19 +266,33 @@
   /** Fields worth caching: a date pill was reported, or there's no column left over for one. */
   function fieldsComplete (fields, table) {
     var n = ((table && table.columns) || []).filter(function (c) { return !isMN(c); }).length;
-    return (fields.date || []).length > 0 || n <= (fields.value || []).length + (fields.details || []).length;
+    return (fields.date || []).length > 0 || n <= (fields.value || []).length + (fields.details || []).length + (fields.extra || []).length;
   }
 
   /** { value: [field], date: [field, field, ...] } in the order they were dropped. */
   async function getEncodedFields () {
     var spec = await worksheet.getVisualSpecificationAsync();
     var marks = spec.marksSpecifications[spec.activeMarksSpecificationIndex];
-    var fields = { value: [], date: [], details: [] };
+    var fields = { value: [], date: [], details: [], extra: [] };
     marks.encodings.forEach(function (enc) {
       if (!enc.field) return;
-      (fields[enc.id] = fields[enc.id] || []).push(enc.field);
+      // Tableau's own Tooltip tile: its measures are listed in the tooltip (fields.details).
+      // Anything else on a built-in tile (Detail, dimensions on Tooltip) only adds rows: those
+      // columns are kept out of the date/measure matching (fields.extra).
+      var type = String(enc.type || '').toLowerCase();
+      var id = type && type !== 'custom' ? type : enc.id;
+      if (id === 'tooltip' && isMeasureField(enc.field)) id = 'details';
+      else if (id !== 'value' && id !== 'date') id = 'extra';
+      fields[id].push(enc.field);
     });
     return fields;
+  }
+
+  function isMeasureField (f) {
+    var role = String(f.role || '').toLowerCase();
+    if (role === 'measure') return true;
+    if (role === 'dimension') return false;
+    return /^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|STDEV|STDEVP|VAR|VARP|PCT\d+)\(/i.test(String(f.name || ''));
   }
 
   // One call (get-summary-data) instead of three for the reader (create, page, release).
@@ -289,7 +303,7 @@
 
   // Marks card fields per column set: in memory, and in this browser's localStorage so the
   // next page load skips that call too. Same columns => same fields on the same tiles.
-  var FIELDS_KEY = 'kpi-card:fields:v3';
+  var FIELDS_KEY = 'kpi-card:fields:v4';
   var fieldsMem = null;
 
   function fieldsStore () {
@@ -301,14 +315,14 @@
 
   function cachedFields (sig) {
     var f = fieldsStore()[sig];
-    if (f && f.value && f.date && !f.details) f.details = [];
+    if (f && f.value && f.date) { f.details = f.details || []; f.extra = f.extra || []; }
     return f && f.value && f.date ? f : null;
   }
 
   function storeFields (sig, fields) {
     var all = fieldsStore();
     var slim = function (list) { return (list || []).map(function (f) { return { id: f.id || f.fieldId, name: f.name || f.fieldName }; }); };
-    all[sig] = { value: slim(fields.value), date: slim(fields.date), details: slim(fields.details), t: Date.now() };
+    all[sig] = { value: slim(fields.value), date: slim(fields.date), details: slim(fields.details), extra: slim(fields.extra), t: Date.now() };
     var keys = Object.keys(all);
     if (keys.length > 60) { // keep the newest 60 column sets
       keys.sort(function (a, b) { return (all[a].t || 0) - (all[b].t || 0); });
@@ -384,6 +398,7 @@
     (fields.date || []).forEach(function (f, i) { pills.push({ tile: 'date', i: i, f: f, col: null }); });
     (fields.value || []).forEach(function (f, i) { pills.push({ tile: 'value', i: i, f: f, col: null }); });
     (fields.details || []).forEach(function (f, i) { pills.push({ tile: 'details', i: i, f: f, col: null }); });
+    (fields.extra || []).forEach(function (f, i) { pills.push({ tile: 'extra', i: i, f: f, col: null }); });
 
     var rounds = [
       function (f, c) { var id = pillId(f); return !!id && !!c.fieldId && c.fieldId === id; },
@@ -402,7 +417,7 @@
       pills.forEach(function (p) {
         if (p.col || (!pillId(p.f) && !pillName(p.f))) return;
         var hits = free().filter(function (c) { return test(p.f, c); });
-        var fits = p.tile === 'date'
+        var fits = p.tile === 'date' || p.tile === 'extra'
           ? function (c) { return looksLikeDateCol(c) || !(isNumericCol(c) || looksAggregated(c)); }
           : function (c) { return !looksLikeDateCol(c); };
         var x = hits.find(fits) || hits[0];
@@ -438,7 +453,7 @@
       });
     }
     var dates = pills.filter(function (p) { return p.tile === 'date' && p.col; }).map(function (p) { return p.col; });
-    // Only the Measure(s), Date and Details tiles exist (no dimensions), so date-like columns left over (a date pill the
+    // Built-in tile fields were matched above, so date-like columns left over (a date pill the
     // Marks card didn't report) are dates, and so is anything that doesn't look like a measure.
     free().forEach(function (c) {
       if (looksLikeDateCol(c) || !(isNumericCol(c) || looksAggregated(c))) { taken.push(c); dates.push(c); guessed.push('extra date → ' + c.fieldName); }

@@ -87,16 +87,19 @@ When it starts, the server prints the palettes it found. When you pick a shape, 
 extension is hosted somewhere without `serve.py`, the Tableau shapes tab shows a note. Upload still works there, and you
 can upload any `.png` file from a Shapes folder.
 
-## Details tile → tooltip
+## Tooltip tile → tooltip
 
-Measures dropped on the **Details** tile (up to 10) are listed in the tooltip, in tile order:
+Measures dropped on Tableau's own **Tooltip** tile (Marks card) are listed in the tooltip, in tile order:
 hovering the trend line shows their values at that date; hovering anywhere else on the card shows the
 latest date (turn that off with *Tooltip on the card*). Rows that share a date are added up, like the main measure.
+Dimensions on the Detail / Tooltip tiles only add rows; they are never read as dates.
 
-Format Extension → **Tooltip**: pick a measure, then set
-- **Name** (empty = the field name) and whether it's shown;
-- **Value format**: dynamic K/M/B, fixed K/M/B, full number, percentage (with the 0–1 ratio option), workbook format; decimals, unit and its position;
-- **Name color** and **Value color**, each by *Single* color, *+ / −* (positive / negative / zero by the value's sign) or *Conditional* rules (`>`, `≥`, `<`, `≤`, `=`, `≠`, `between`; first match wins, else *Otherwise*). Rules compare the raw value (a ratio stays 0.45, not 45%).
+Format Extension → **Tooltip**:
+- **Measure names / Measure values / Heading**: font, size, weight, italic (heading also color), shared by all tooltip measures;
+- per measure (pick it from the list): **Name** (empty = the field name) and whether it's shown;
+  **Value format** (dynamic K/M/B, fixed K/M/B, full number, percentage with the 0–1 ratio option, workbook format; decimals, unit and position);
+  **Name color** and **Value color**, each by *Single* color, *+ / −* (positive / negative / zero by the value's sign) or *Conditional* rules
+  (`>`, `≥`, `<`, `≤`, `=`, `≠`, `between`; first match wins, else *Otherwise*). Rules compare the raw value (a ratio stays 0.45, not 45%).
 
 Settings are stored per measure name without aggregation (`details.items`), so SUM → AVG keeps them.
 

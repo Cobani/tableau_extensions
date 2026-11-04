@@ -471,17 +471,22 @@
   // Controls
   // ---------------------------------------------------------------------------
   // ---------------------------------------------------------------------------
-  // Tooltip tab: measures on the Details tile (list sent by the extension)
+  // Tooltip tab: measures on Tableau's Tooltip tile (list sent by the extension)
   // ---------------------------------------------------------------------------
   function buildDetailsTab (p) {
     var g = group(p, 'Tooltip');
-    g.appendChild(checkboxRow('Show Details measures', 'details.show', function () { buildTabs(); }));
+    g.appendChild(checkboxRow('Show Tooltip-tile measures', 'details.show', function () { buildTabs(); }));
     g.appendChild(checkboxRow('Tooltip on the card', 'details.onCard'));
-    g.appendChild(h('div', { className: 'help', textContent: 'Measures on the Details tile are listed in the tooltip. On the trend line: the hovered date. Anywhere else on the card: the latest date.' }));
+    g.appendChild(h('div', { className: 'help', textContent: 'Measures on the Tooltip tile (Marks card) are listed in the tooltip. On the trend line: the hovered date. Anywhere else on the card: the latest date.' }));
     g.appendChild(textRow('Heading', 'details.title', 'optional, e.g. Details'));
     g.appendChild(h('div', { className: 'help', textContent: 'Applies to every card.' }));
+
+    textStyleGroup(p, 'Measure names', 'details.nameStyle', false);
+    textStyleGroup(p, 'Measure values', 'details.valueStyle', false);
+    textStyleGroup(p, 'Heading', 'details.headingStyle', true);
+
     if (!detailList.length) {
-      p.appendChild(h('p', { className: 'note', innerHTML: 'No measures on the <b>Details</b> tile yet. Drag measures there on the Marks card, then open Format Extension again.' }));
+      p.appendChild(h('p', { className: 'note', innerHTML: 'No measures on the <b>Tooltip</b> tile yet. Drag measures there on the Marks card, then open Format Extension again.' }));
       return;
     }
 
@@ -520,6 +525,16 @@
 
     colorSpecGroup(p, 'Name color', base + '.name');
     colorSpecGroup(p, 'Value color', base + '.value');
+  }
+
+  /** Font, size, weight, italic (and color for the heading) of the tooltip measure text. */
+  function textStyleGroup (p, title, path, withColor) {
+    var g = group(p, title);
+    g.appendChild(fontFamilyRow('Font', path + '.font'));
+    g.appendChild(numberRow('Size (px)', path + '.size', 6, 48, 1));
+    g.appendChild(selectRow('Weight', path + '.weight', WEIGHTS));
+    if (withColor) g.appendChild(colorRow('Color', path + '.color'));
+    g.appendChild(checkboxRow('Italic', path + '.italic'));
   }
 
   /** Index of the measure's entry in details.items (added with defaults when missing). */

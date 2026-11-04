@@ -127,10 +127,13 @@
       gap: 0 // px between cards
     },
     details: {
-      show: true, // measures on the Details tile appear in the tooltip
+      show: true, // measures on Tableau's Tooltip tile appear in the tooltip
       onCard: true, // hovering the card (outside the trend line) shows the latest date's details
       title: '', // optional heading above the details
-      items: [] // per measure, see DETAIL_ITEM
+      items: [], // per measure, see DETAIL_ITEM
+      headingStyle: { font: 'Lato', size: 11, weight: 400, color: '#68707D', italic: false },
+      nameStyle: { font: 'Lato', size: 12, weight: 400, italic: false },
+      valueStyle: { font: 'Lato', size: 12, weight: 700, italic: false }
     }
   };
 
@@ -353,7 +356,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // Details tile → tooltip. One entry per measure on the Details tile, matched
+  // Tooltip tile → tooltip. One entry per measure on Tableau's Tooltip tile, matched
   // by key (the measure's name without aggregation, so SUM → AVG keeps it).
   // Colors (name and value each): single | posneg (by the value's sign) |
   // conditional (first matching rule wins, else `other`).
@@ -446,24 +449,33 @@
     });
   }
 
+  /** Inline font CSS for a style { font, size, weight, italic, color? }. */
+  function styleCss (st) {
+    if (!st) return '';
+    return 'font-family:' + fontStack(st.font).replace(/"/g, "'") + ';font-size:' + (Number(st.size) || 12) + 'px;font-weight:' +
+      (Number(st.weight) || 400) + ';font-style:' + (st.italic ? 'italic' : 'normal') + ';' + (st.color ? 'color:' + st.color + ';' : '');
+  }
+
   /**
-   * Tooltip block for the Details measures. `list` = [{ key, label }] in tile
+   * Tooltip block for the Tooltip-tile measures. `list` = [{ key, label }] in tile
    * order; `vals` = { v: [number], fv: [string|null] } aligned with it.
    */
   function detailsHtml (details, list, vals) {
     if (!details || details.show === false || !list || !list.length) return '';
     var rows = '';
+    var nameCss = styleCss(details.nameStyle);
+    var valueCss = styleCss(details.valueStyle);
     list.forEach(function (d, i) {
       var it = detailItem(details, d.key);
       if (!it.show) return;
       var v = vals && vals.v ? vals.v[i] : NaN;
       var fv = vals && vals.fv ? vals.fv[i] : null;
-      rows += '<div class="tt-drow"><span class="tt-dn" style="color:' + escHtml(detailColor(it.name, v)) + '">' +
-        escHtml(it.label || d.label) + '</span><span class="tt-dv" style="color:' + escHtml(detailColor(it.value, v)) + '">' +
+      rows += '<div class="tt-drow"><span class="tt-dn" style="' + escHtml(nameCss + 'color:' + detailColor(it.name, v)) + '">' +
+        escHtml(it.label || d.label) + '</span><span class="tt-dv" style="' + escHtml(valueCss + 'color:' + detailColor(it.value, v)) + '">' +
         escHtml(formatDetail(it, v, fv)) + '</span></div>';
     });
     if (!rows) return '';
-    return '<div class="tt-details">' + (details.title ? '<div class="tt-dh">' + escHtml(details.title) + '</div>' : '') + rows + '</div>';
+    return '<div class="tt-details">' + (details.title ? '<div class="tt-dh" style="' + escHtml(styleCss(details.headingStyle)) + '">' + escHtml(details.title) + '</div>' : '') + rows + '</div>';
   }
 
   window.KpiCardMultiConfig = {

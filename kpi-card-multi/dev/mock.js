@@ -38,7 +38,7 @@
   var n = Math.max(1, Math.min(12, Number(params.get('n')) || 6));
   var days = Math.max(2, Number(params.get('days')) || 60);
   var meas = MEASURES.slice(0, n);
-  // Details tile (tooltip only): ?details=N (default 2, max 3). Net Flow swings around zero for +/− colors.
+  // Tooltip tile measures: ?details=N (default 2, max 3). Net Flow swings around zero for +/− colors.
   var DETAILS = [['SUM(Net Flow)', 0, 4e6], ['AVG(Cost of Funds)', 0.031, 0.002], ['SUM(Active Customers)', 312000, 900]];
   var nd = Math.max(0, Math.min(3, params.has('details') ? Number(params.get('details')) : 2));
   var dets = DETAILS.slice(0, nd);
@@ -96,7 +96,8 @@
       var enc = meas.map(function (m, i) { return { id: 'value', field: { id: '[m' + i + ']', name: m[0] } }; });
       if (localStorage.getItem('kcmMockReverse') === '1') enc.reverse(); // pills reordered on the tile, same columns
       enc.push({ id: 'date', field: { id: '[snap].[dy]', name: 'DAY(Snapshot Date)' } });
-      dets.forEach(function (m, i) { enc.push({ id: 'details', field: { id: '[d' + i + ']', name: m[0] } }); });
+      // Tableau's own Tooltip tile: built-in encodings come with a type.
+      dets.forEach(function (m, i) { enc.push({ id: 'tooltip', type: 'tooltip', field: { id: '[d' + i + ']', name: m[0], role: 'measure' } }); });
       return Promise.resolve({ activeMarksSpecificationIndex: 0, marksSpecifications: [{ encodings: enc }] });
     },
     addEventListener: function (t, h) { if (t === 'summary-data-changed') dataHandlers.push(h); return function () {}; }

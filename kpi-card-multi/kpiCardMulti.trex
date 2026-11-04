@@ -37,17 +37,6 @@
       <fields max-count="4"/>
       <tooltip resource-id="date-tooltip">Shared by all cards. Any date level: year, quarter, month, week, day or exact date. Add several (e.g. YEAR + MONTH) to combine.</tooltip>
     </encoding>
-    <encoding id="details">
-      <display-name resource-id="details-name">Details</display-name>
-      <data-spec>
-        <data-type>numeric</data-type>
-      </data-spec>
-      <role-spec>
-        <role-type>continuous-measure</role-type>
-      </role-spec>
-      <fields max-count="10"/>
-      <tooltip resource-id="details-tooltip">Extra measures shown in the tooltip (hover the trend line: that date; hover every card elsewhere: the latest date). Name, format and colors per measure in Format Extension → Tooltip.</tooltip>
-    </encoding>
   </worksheet-extension>
 
   <resources>
@@ -56,7 +45,5 @@
     <resource id="value-tooltip"><text locale="en_US">One card per measure, in the order on this tile (up to 12). Big number = latest value by Date; change = latest vs previous date.</text></resource>
     <resource id="date-name"><text locale="en_US">Date</text></resource>
     <resource id="date-tooltip"><text locale="en_US">Shared by all cards. Any date level: year, quarter, month, week, day or exact date. Add several (e.g. YEAR + MONTH) to combine.</text></resource>
-    <resource id="details-name"><text locale="en_US">Details</text></resource>
-    <resource id="details-tooltip"><text locale="en_US">Extra measures shown in the tooltip (hover the trend line: that date; hover every card elsewhere: the latest date). Name, format and colors per measure in Format Extension → Tooltip.</text></resource>
   </resources>
 </manifest>
