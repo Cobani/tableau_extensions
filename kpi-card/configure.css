@@ -294,3 +294,22 @@ input[type="range"] { flex: 1; accent-color: var(--accent); }
   cursor: pointer;
 }
 .unit-sign:hover { background: var(--soft); border-color: var(--muted); }
+
+/* ---- Tooltip tab: conditional color rules ------------------------------ */
+.rule { gap: 6px; }
+.rule .rule-op { width: 104px; flex: none; }
+.rule .rule-num { width: 76px; flex: 1 1 60px; }
+.rule-and { color: var(--muted); font-size: 12px; }
+.rule-del {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.rule-del:hover { color: #e35263; border-color: #e35263; }

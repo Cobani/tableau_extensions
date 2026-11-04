@@ -77,6 +77,19 @@ settings. Settings are one JSON string under the key `kpiCardMulti1` in the work
 - A slow handshake is never reloaded (Tableau's queue is just busy); the frame reloads only when a file didn't load or
   Tableau rejected the handshake, and offers *Click to reload* after 90 s.
 
+## Details tile → tooltip
+
+Measures dropped on the **Details** tile (up to 10) are listed in the tooltip, in tile order:
+hovering the trend line shows their values at that date; hovering anywhere else on the card shows the
+latest date (turn that off with *Tooltip on the card*). Rows that share a date are added up, like the main measure.
+
+Format Extension → **Tooltip** (shared by every card): pick a measure, then set
+- **Name** (empty = the field name) and whether it's shown;
+- **Value format**: dynamic K/M/B, fixed K/M/B, full number, percentage (with the 0–1 ratio option), workbook format; decimals, unit and its position;
+- **Name color** and **Value color**, each by *Single* color, *+ / −* (positive / negative / zero by the value's sign) or *Conditional* rules (`>`, `≥`, `<`, `≤`, `=`, `≠`, `between`; first match wins, else *Otherwise*). Rules compare the raw value (a ratio stays 0.45, not 45%).
+
+Settings are stored per measure name without aggregation (`details.items`), so SUM → AVG keeps them.
+
 ## Number and change logic
 
 - **Big number**: `1336040000` with format *M* and 2 decimals shows as `1,336.04M`. *Dynamic* picks K, M or B from the size of the number.

@@ -132,7 +132,10 @@
     if (tableau.DialogStyle && tableau.DialogStyle.Modal) {
       options.dialogStyle = tableau.DialogStyle.Modal; // stays in front of Tableau until Done; the cards behind it still update live
     }
-    var payload = JSON.stringify({ cards: cards.map(function (c) { return { key: c.key, label: c.label }; }) });
+    var payload = JSON.stringify({
+      cards: cards.map(function (c) { return { key: c.key, label: c.label }; }),
+      details: detailKeys(lastFields ? lastFields.details : []) // the dialog can't read the Marks card itself
+    });
     return tableau.extensions.ui.displayDialogAsync(url, payload, options).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.error('KPI Card Multi dialog error:', err);
@@ -249,14 +252,14 @@
   /** Fields worth caching: a date pill was reported, or there's no column left over for one. */
   function fieldsComplete (fields, table) {
     var n = ((table && table.columns) || []).filter(function (c) { return !isMN(c); }).length;
-    return (fields.date || []).length > 0 || n <= (fields.value || []).length;
+    return (fields.date || []).length > 0 || n <= (fields.value || []).length + (fields.details || []).length;
   }
 
   async function verifyFields (sig) {
     try {
       var fields = await withRetry(getEncodedFields, 'getVisualSpecificationAsync');
       if (!lastFields || !lastTable || columnsSignature(lastTable) !== sig) return; // a newer refresh already ran
-      var names = function (f) { return f.value.concat(f.date).map(function (x) { return x.id + '|' + x.name; }).join('\u0001'); };
+      var names = function (f) { return f.value.concat(f.date, f.details || []).map(function (x) { return x.id + '|' + x.name; }).join('\u0001'); };
       if (fields.value.length && fieldsComplete(fields, lastTable)) storeFields(sig, fields);
       if (names(fields) !== names(lastFields)) {
         lastFields = fields;
@@ -302,9 +305,11 @@
     ui.row.hidden = false;
     arrange(); // sizes first, so each card draws its chart at its final size
     var res = resolveColumns(lastTable, lastFields);
+    var det = detailData(lastTable, res, lastFields.details || []); // Details tile → every card's tooltip
     cards.forEach(function (c, i) {
       var data = extract(lastTable, { value: [c.field], date: lastFields.date },
         { value: [res.value[i]], date: res.date, mn: res.mn, mv: res.mv, mnLabels: [res.mnLabels[i]] });
+      data.details = det;
       c.inst.update(KpiCardMultiConfig.cardConfig(store, c.key), data);
     });
   }
@@ -350,7 +355,7 @@
   async function getEncodedFields () {
     var spec = await worksheet.getVisualSpecificationAsync();
     var marks = spec.marksSpecifications[spec.activeMarksSpecificationIndex];
-    var fields = { value: [], date: [] };
+    var fields = { value: [], date: [], details: [] };
     marks.encodings.forEach(function (enc) {
       if (!enc.field) return;
       (fields[enc.id] = fields[enc.id] || []).push(enc.field);
@@ -378,13 +383,14 @@
 
   function cachedFields (sig) {
     var f = fieldsStore()[sig];
+    if (f && f.value && f.date && !f.details) f.details = [];
     return f && f.value && f.date ? f : null;
   }
 
   function storeFields (sig, fields) {
     var all = fieldsStore();
     var slim = function (list) { return (list || []).map(function (f) { return { id: f.id || f.fieldId, name: f.name || f.fieldName }; }); };
-    all[sig] = { value: slim(fields.value), date: slim(fields.date), t: Date.now() };
+    all[sig] = { value: slim(fields.value), date: slim(fields.date), details: slim(fields.details), t: Date.now() };
     var keys = Object.keys(all);
     if (keys.length > 60) { // keep the newest 60 column sets
       keys.sort(function (a, b) { return (all[a].t || 0) - (all[b].t || 0); });
@@ -567,6 +573,7 @@
     var pills = [];
     (fields.date || []).forEach(function (f, i) { pills.push({ tile: 'date', i: i, f: f, col: null }); });
     (fields.value || []).forEach(function (f, i) { pills.push({ tile: 'value', i: i, f: f, col: null }); });
+    (fields.details || []).forEach(function (f, i) { pills.push({ tile: 'details', i: i, f: f, col: null }); });
 
     var rounds = [
       function (f, c) { var id = pillId(f); return !!id && !!c.fieldId && c.fieldId === id; },
@@ -594,10 +601,12 @@
     });
 
     var values = pills.filter(function (p) { return p.tile === 'value'; });
-    // Same field twice on the tile: one column, read by both.
-    values.forEach(function (p) {
+    var dets = pills.filter(function (p) { return p.tile === 'details'; });
+    var measures = values.concat(dets);
+    // Same field twice (on a tile, or on Measure and Details): one column, read by both.
+    measures.forEach(function (p) {
       if (p.col) return;
-      var twin = values.find(function (o) {
+      var twin = measures.find(function (o) {
         return o !== p && o.col && ((pillId(o.f) && pillId(o.f) === pillId(p.f)) || (pillName(o.f) && pillName(o.f) === pillName(p.f)));
       });
       if (twin) p.col = twin.col;
@@ -612,14 +621,14 @@
     });
     // Unmatched measures: a number that isn't a date part, then anything that isn't date-like.
     if (!pivoted) {
-      values.forEach(function (p) {
+      measures.forEach(function (p) {
         if (p.col) return;
         take(p, free().find(function (c) { return isNumericCol(c) && !looksLikeDateCol(c); }) ||
           free().find(function (c) { return !looksLikeDateCol(c); }));
       });
     }
     var dates = pills.filter(function (p) { return p.tile === 'date' && p.col; }).map(function (p) { return p.col; });
-    // Only the Measure and Date tiles exist, so date-like columns left over (a date pill the
+    // Only the Measure(s), Date and Details tiles exist (no dimensions), so date-like columns left over (a date pill the
     // Marks card didn't report) are dates, and so is anything that doesn't look like a measure.
     free().forEach(function (c) {
       if (looksLikeDateCol(c) || !(isNumericCol(c) || looksAggregated(c))) { taken.push(c); dates.push(c); guessed.push('extra date → ' + c.fieldName); }
@@ -631,6 +640,7 @@
     }
     // Measure Names rows per measure: by name, else (renamed pill) by position on the tile.
     var mnLabels = [];
+    var detLabels = [];
     if (pivoted) {
       var seen = [];
       (table.data || []).forEach(function (r) {
@@ -648,8 +658,15 @@
       });
       var rest = seen.filter(function (n) { return used.indexOf(n) < 0; });
       mnLabels = mnLabels.map(function (n) { return n || rest.shift() || null; });
+      detLabels = dets.map(function (p) {
+        var want = normName(pillName(p.f));
+        return seen.find(function (n) { return normName(n) === want; }) || null;
+      });
     }
-    return { value: values.map(function (p) { return p.col; }), date: dates, mn: cMN, mv: cMV, mnLabels: mnLabels };
+    return {
+      value: values.map(function (p) { return p.col; }), date: dates, mn: cMN, mv: cMV, mnLabels: mnLabels,
+      details: dets.map(function (p) { return p.col; }), detLabels: detLabels
+    };
   }
 
   /** Summary data → ordered series of { label, v, fv }. */
@@ -793,6 +810,66 @@
     };
   }
 
+  /** Details tile: [{ key, label }] in tile order. Key = name without aggregation (SUM → AVG keeps its settings). */
+  function detailKeys (detailFields) {
+    var seen = {};
+    return (detailFields || []).map(function (f) {
+      var name = pillName(f);
+      var base = cleanName(name) || name || 'Measure';
+      seen[base] = (seen[base] || 0) + 1;
+      return { key: seen[base] > 1 ? base + ' #' + seen[base] : base, label: cleanName(name) || base };
+    });
+  }
+
+  /**
+   * Values of the Details measures per date: { list: [{ key, label }], byLabel: Map(point label →
+   * { v: [number], fv: [string|null] }) }. Rows sharing a date are added up, like the main measure;
+   * the point label is built the same way as in extract() so the two line up.
+   */
+  function detailData (table, res, detailFields) {
+    var list = detailKeys(detailFields);
+    var byLabel = new Map();
+    if (!list.length) return { list: list, byLabel: byLabel };
+    var cDates = (res.date || [])
+      .map(function (c, k) { return { c: c, k: k, g: granularity(c.fieldName) }; })
+      .sort(function (a, b) { return a.g - b.g || a.k - b.k; })
+      .map(function (o) { return o.c; });
+    var cols = res.details || [];
+    var pivot = !!(res.mn && res.mv);
+    var wants = list.map(function (d, i) {
+      var w = [normName(pillName(detailFields[i])), normName(d.label)];
+      if (res.detLabels && res.detLabels[i]) w.push(normName(res.detLabels[i]));
+      return w;
+    });
+    (table.data || []).forEach(function (r) {
+      var lab = cDates.map(function (c) { var cell = r[c.index]; return cell ? cell.formattedValue : undefined; }).join(' · ');
+      var acc = byLabel.get(lab);
+      if (!acc) {
+        acc = { v: list.map(function () { return NaN; }), fv: list.map(function () { return null; }), n: list.map(function () { return 0; }) };
+        byLabel.set(lab, acc);
+      }
+      var mnName = null;
+      list.forEach(function (d, i) {
+        var cell = null;
+        if (cols[i]) {
+          cell = r[cols[i].index];
+        } else if (pivot) {
+          if (mnName === null) {
+            var m = r[res.mn.index];
+            mnName = normName(m && (m.formattedValue != null ? m.formattedValue : m.value));
+          }
+          if (wants[i].indexOf(mnName) >= 0) cell = r[res.mv.index];
+        }
+        var v = toNumber(cell);
+        if (!isFinite(v)) return;
+        acc.v[i] = acc.n[i] ? acc.v[i] + v : v;
+        acc.fv[i] = acc.n[i] ? null : cell.formattedValue;
+        acc.n[i]++;
+      });
+    });
+    return { list: list, byLabel: byLabel };
+  }
+
   function cleanName (name) {
     return String(name || '').replace(/^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR)\((.*)\)$/i, '$2');
   }
@@ -811,8 +888,8 @@
     var shown = [];      // points currently drawn: [{ x, y, idx }]
     var rowEnd = false;
 
-    el.bottom.addEventListener('mousemove', onHover);
-    el.bottom.addEventListener('mouseleave', hideTooltip);
+    el.card.addEventListener('mousemove', onCardHover);
+    el.card.addEventListener('mouseleave', hideTooltip);
     // ---------------------------------------------------------------------------
     // Change logic (shared by the card and the tooltip)
     // ---------------------------------------------------------------------------
@@ -1335,6 +1412,8 @@
         html += '<div class="tt-note">' + (best.idx === 0 ? 'First date in the data' : 'No value to compare with') + '</div>';
       }
 
+      html += detailsBlock(p);
+
       var tt = el.tooltip;
       tt.innerHTML = html;
       tt.style.fontFamily = KpiCardMultiConfig.fontStack(cfg.explanation.font);
@@ -1352,6 +1431,44 @@
       if (top < 4) top = Math.min(py + 12, vh - th - 4);
       tt.style.left = left + 'px';
       tt.style.top = Math.max(4, top) + 'px';
+    }
+
+    /** Details block for a point (the Details tile measures at that date). */
+    function detailsBlock (p) {
+      var det = lastData && lastData.details;
+      if (!det || !det.list.length || !p) return '';
+      return KpiCardMultiConfig.detailsHtml(cfg.details, det.list, det.byLabel.get(p.label));
+    }
+
+    /**
+     * Hover anywhere on the card: the trend line keeps its own tooltip; elsewhere (or when the
+     * trend tooltip is off) the latest date's Details measures are shown next to the pointer.
+     */
+    function onCardHover (e) {
+      if (!cfg || !lastData || !lastData.points.length || el.card.classList.contains('is-empty')) return;
+      var chartTip = cfg.bottom.showTooltip && cfg.bottom.mode === 'chart' && shown.length >= 2;
+      if (chartTip && el.bottom.contains(e.target)) { onHover(e); return; }
+      var all = lastData.points;
+      var p = all[all.length - 1];
+      var body = cfg.details.onCard ? detailsBlock(p) : '';
+      if (!body) { hideTooltip(); return; }
+      var dot = el.chart.querySelector('.hover-dot');
+      if (dot) dot.style.display = 'none';
+
+      var tt = el.tooltip;
+      tt.innerHTML = (p.label ? '<div class="tt-date">' + esc(p.label) + '</div>' : '') + body;
+      tt.style.fontFamily = KpiCardMultiConfig.fontStack(cfg.explanation.font);
+      tt.style.display = 'block';
+      var tw = tt.offsetWidth;
+      var th = tt.offsetHeight;
+      var vw = document.documentElement.clientWidth;
+      var vh = document.documentElement.clientHeight;
+      var left = e.clientX + 14;
+      if (left + tw > vw - 4) left = e.clientX - tw - 14;
+      var top = e.clientY + 14;
+      if (top + th > vh - 4) top = e.clientY - th - 14;
+      tt.style.left = Math.max(4, Math.min(left, vw - tw - 4)) + 'px';
+      tt.style.top = Math.max(4, Math.min(top, vh - th - 4)) + 'px';
     }
 
     function hideTooltip () {

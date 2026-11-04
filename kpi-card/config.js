@@ -120,6 +120,12 @@
       bgOpacity: 0,
       divider: true, // dashed right border, as in Figma
       dividerColor: '#E2E4E8' // Neutrals/Neptune Pale
+    },
+    details: {
+      show: true, // measures on the Details tile appear in the tooltip
+      onCard: true, // hovering the card (outside the trend line) shows the latest date's details
+      title: '', // optional heading above the details
+      items: [] // per measure, see DETAIL_ITEM
     }
   };
 
@@ -277,7 +283,128 @@
       ', ' + parseInt(h.slice(5, 7), 16) + ', ' + alpha + ')';
   }
 
+  // -------------------------------------------------------------------------
+  // Details tile → tooltip. One entry per measure on the Details tile, matched
+  // by key (the measure's name without aggregation, so SUM → AVG keeps it).
+  // Colors (name and value each): single | posneg (by the value's sign) |
+  // conditional (first matching rule wins, else `other`).
+  // -------------------------------------------------------------------------
+  var DETAIL_ITEM = {
+    key: '',
+    label: '', // empty → the measure's name
+    show: true,
+    scale: 'dynamic', // dynamic | K | M | B | none | percent | percentDynamic | workbook
+    decimals: 2,
+    pctFromRatio: true,
+    unit: '',
+    unitPosition: 'suffix', // suffix | prefix
+    name: { mode: 'single', color: '#68707D', pos: '#2E9E6A', neg: '#E35263', zero: '#68707D', rules: [], other: '#68707D' },
+    value: { mode: 'single', color: '#263244', pos: '#2E9E6A', neg: '#E35263', zero: '#263244', rules: [], other: '#263244' }
+  };
+
+  var DETAIL_RULE = { op: 'gt', v: 0, v2: 0, color: '#E35263' };
+
+  /** Comparison operators for conditional colors: [id, label]. */
+  var DETAIL_OPS = [
+    ['gt', '>'], ['gte', '≥'], ['lt', '<'], ['lte', '≤'],
+    ['eq', '='], ['ne', '≠'], ['between', 'between']
+  ];
+
+  /** Settings of one Details measure (defaults filled in). */
+  function detailItem (details, key) {
+    var items = details && Array.isArray(details.items) ? details.items : [];
+    var hit = null;
+    for (var i = 0; i < items.length; i++) { if (items[i] && items[i].key === key) { hit = items[i]; break; } }
+    var it = merge(DETAIL_ITEM, hit);
+    it.key = key;
+    ['name', 'value'].forEach(function (s) {
+      it[s].rules = (Array.isArray(it[s].rules) ? it[s].rules : []).map(function (r) { return merge(DETAIL_RULE, r); });
+    });
+    return it;
+  }
+
+  function ruleMatches (r, v) {
+    var a = Number(r.v);
+    var b = Number(r.v2);
+    switch (r.op) {
+      case 'gt': return v > a;
+      case 'gte': return v >= a;
+      case 'lt': return v < a;
+      case 'lte': return v <= a;
+      case 'eq': return v === a;
+      case 'ne': return v !== a;
+      case 'between': return v >= Math.min(a, b) && v <= Math.max(a, b);
+    }
+    return false;
+  }
+
+  /** Color for a value under a color spec { mode, color, pos, neg, zero, rules, other }. */
+  function detailColor (spec, v) {
+    if (!spec) return '';
+    if (spec.mode === 'posneg') {
+      if (!isFinite(v)) return spec.zero;
+      return v > 0 ? spec.pos : v < 0 ? spec.neg : spec.zero;
+    }
+    if (spec.mode === 'conditional') {
+      if (isFinite(v)) {
+        var rules = spec.rules || [];
+        for (var i = 0; i < rules.length; i++) { if (ruleMatches(rules[i], v)) return rules[i].color; }
+      }
+      return spec.other;
+    }
+    return spec.color;
+  }
+
+  /** A Details value as text, with its own format and unit. `fv` = Tableau's formatted value. */
+  function formatDetail (item, v, fv) {
+    if (!isFinite(v)) return '—';
+    var s = item.scale;
+    var text;
+    if (s === 'percent' || s === 'percentDynamic') {
+      text = formatScaled(item.pctFromRatio ? v * 100 : v, s === 'percentDynamic' ? 'dynamic' : 'none', item.decimals) + '%';
+    } else if (s === 'workbook' && fv) {
+      text = fv;
+    } else {
+      text = formatScaled(v, s === 'workbook' ? 'dynamic' : s, item.decimals);
+    }
+    if (item.unit) text = item.unitPosition === 'prefix' ? item.unit + ' ' + text : text + ' ' + item.unit;
+    return text;
+  }
+
+  function escHtml (s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /**
+   * Tooltip block for the Details measures. `list` = [{ key, label }] in tile
+   * order; `vals` = { v: [number], fv: [string|null] } aligned with it.
+   */
+  function detailsHtml (details, list, vals) {
+    if (!details || details.show === false || !list || !list.length) return '';
+    var rows = '';
+    list.forEach(function (d, i) {
+      var it = detailItem(details, d.key);
+      if (!it.show) return;
+      var v = vals && vals.v ? vals.v[i] : NaN;
+      var fv = vals && vals.fv ? vals.fv[i] : null;
+      rows += '<div class="tt-drow"><span class="tt-dn" style="color:' + escHtml(detailColor(it.name, v)) + '">' +
+        escHtml(it.label || d.label) + '</span><span class="tt-dv" style="color:' + escHtml(detailColor(it.value, v)) + '">' +
+        escHtml(formatDetail(it, v, fv)) + '</span></div>';
+    });
+    if (!rows) return '';
+    return '<div class="tt-details">' + (details.title ? '<div class="tt-dh">' + escHtml(details.title) + '</div>' : '') + rows + '</div>';
+  }
+
   window.KpiCardConfig = {
+    DETAIL_ITEM: DETAIL_ITEM,
+    DETAIL_RULE: DETAIL_RULE,
+    DETAIL_OPS: DETAIL_OPS,
+    detailItem: detailItem,
+    detailColor: detailColor,
+    formatDetail: formatDetail,
+    detailsHtml: detailsHtml,
     STORAGE_KEY: STORAGE_KEY,
     DEFAULTS: DEFAULTS,
     FONTS: FONTS,

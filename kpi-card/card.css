@@ -203,7 +203,7 @@ body {
   z-index: 10;
   pointer-events: none;
   min-width: 120px;
-  max-width: 240px;
+  max-width: 320px;
   padding: 8px 10px;
   background: #ffffff;
   border: 1px solid #e2e4e8;
@@ -221,6 +221,14 @@ body {
 .tt-change { margin-top: 3px; }
 .tt-abs { opacity: 0.85; }
 .tt-note { color: #68707d; font-size: 11px; }
+
+/* Details tile measures (name left, value right; colors set per measure) */
+.tt-details { margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e4e8; }
+.tooltip > .tt-details:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.tt-dh { color: #68707d; font-size: 11px; margin-bottom: 2px; }
+.tt-drow { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
+.tt-dn { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tt-dv { font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .tt-arrow svg {
   display: inline-block;

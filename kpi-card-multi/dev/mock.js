@@ -38,6 +38,10 @@
   var n = Math.max(1, Math.min(12, Number(params.get('n')) || 6));
   var days = Math.max(2, Number(params.get('days')) || 60);
   var meas = MEASURES.slice(0, n);
+  // Details tile (tooltip only): ?details=N (default 2, max 3). Net Flow swings around zero for +/− colors.
+  var DETAILS = [['SUM(Net Flow)', 0, 4e6], ['AVG(Cost of Funds)', 0.031, 0.002], ['SUM(Active Customers)', 312000, 900]];
+  var nd = Math.max(0, Math.min(3, params.has('details') ? Number(params.get('details')) : 2));
+  var dets = DETAILS.slice(0, nd);
 
   function pad (x) { return (x < 10 ? '0' : '') + x; }
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -46,6 +50,7 @@
     var end = Date.UTC(2026, 10, 1);
     var cols = [{ fieldName: 'DAY(Snapshot Date)', fieldId: '[snap].[dy]', index: 0, dataType: 'date' }];
     meas.forEach(function (m, i) { cols.push({ fieldName: m[0], fieldId: '[m' + i + ']', index: i + 1, dataType: 'float' }); });
+    dets.forEach(function (m, i) { cols.push({ fieldName: m[0], fieldId: '[d' + i + ']', index: meas.length + 1 + i, dataType: 'float' }); });
     var level = meas.map(function (m) { return m[1]; });
     var rows = [];
     for (var d = days - 1; d >= 0; d--) {
@@ -55,6 +60,10 @@
       meas.forEach(function (m, i) {
         level[i] = level[i] * (1 + (rnd() - 0.5) * m[2] * 0.3);
         row.push({ value: level[i], nativeValue: level[i], formattedValue: String(Math.round(level[i] * 100) / 100) });
+      });
+      dets.forEach(function (m) {
+        var v = m[1] + (rnd() - 0.5) * 2 * m[2];
+        row.push({ value: v, nativeValue: v, formattedValue: String(Math.round(v * 10000) / 10000) });
       });
       rows.push(row);
     }
@@ -87,6 +96,7 @@
       var enc = meas.map(function (m, i) { return { id: 'value', field: { id: '[m' + i + ']', name: m[0] } }; });
       if (localStorage.getItem('kcmMockReverse') === '1') enc.reverse(); // pills reordered on the tile, same columns
       enc.push({ id: 'date', field: { id: '[snap].[dy]', name: 'DAY(Snapshot Date)' } });
+      dets.forEach(function (m, i) { enc.push({ id: 'details', field: { id: '[d' + i + ']', name: m[0] } }); });
       return Promise.resolve({ activeMarksSpecificationIndex: 0, marksSpecifications: [{ encodings: enc }] });
     },
     addEventListener: function (t, h) { if (t === 'summary-data-changed') dataHandlers.push(h); return function () {}; }

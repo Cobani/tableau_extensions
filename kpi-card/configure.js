@@ -12,6 +12,8 @@
   var saveTimer = null;
   var activeTab = 'icon';
   var shapeIndex = null; // { palettes: [{ name, files: [{ name, url }] }] }
+  var detailList = [];   // [{ key, label }] Details tile measures, sent by the extension
+  var detailIdx = 0;     // measure open on the Tooltip tab
 
   var WEIGHTS = [[300, 'Light'], [400, 'Regular'], [500, 'Medium'], [600, 'Semibold'], [700, 'Bold'], [900, 'Black']];
 
@@ -21,14 +23,16 @@
     { id: 'number', label: 'Big number', build: buildNumberTab, keys: ['number'] },
     { id: 'change', label: '% Change', build: buildChangeTab, keys: ['change'] },
     { id: 'bottom', label: 'Bottom', build: buildBottomTab, keys: ['bottom'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card'] }
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card'] },
+    { id: 'details', label: 'Tooltip', build: buildDetailsTab, keys: ['details'] }
   ];
 
   // ---------------------------------------------------------------------------
   // Init
   // ---------------------------------------------------------------------------
   function init () {
-    return tableau.extensions.initializeDialogAsync().then(function () {
+    return tableau.extensions.initializeDialogAsync().then(function (payload) {
+      try { detailList = (JSON.parse(payload || '{}').details) || []; } catch (e) { detailList = []; }
       cfg = KpiCardConfig.read();
       original = KpiCardConfig.clone(cfg);
       buildTabs();
@@ -388,6 +392,128 @@
   // ---------------------------------------------------------------------------
   // Controls
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Tooltip tab: measures on the Details tile (list sent by the extension)
+  // ---------------------------------------------------------------------------
+  function buildDetailsTab (p) {
+    var g = group(p, 'Tooltip');
+    g.appendChild(checkboxRow('Show Details measures', 'details.show', function () { buildTabs(); }));
+    g.appendChild(checkboxRow('Tooltip on the card', 'details.onCard'));
+    g.appendChild(h('div', { className: 'help', textContent: 'Measures on the Details tile are listed in the tooltip. On the trend line: the hovered date. Anywhere else on the card: the latest date.' }));
+    g.appendChild(textRow('Heading', 'details.title', 'optional, e.g. Details'));
+    if (!detailList.length) {
+      p.appendChild(h('p', { className: 'note', innerHTML: 'No measures on the <b>Details</b> tile yet. Drag measures there on the Marks card, then open Format Extension again.' }));
+      return;
+    }
+
+    if (detailIdx >= detailList.length) detailIdx = 0;
+    var d = detailList[detailIdx];
+    var idx = ensureDetailItem(d.key);
+    var base = 'details.items.' + idx;
+
+    var g1 = group(p, 'Measure');
+    var r = row('Measure');
+    var sel = h('select');
+    detailList.forEach(function (x, i) { sel.appendChild(h('option', { value: String(i), textContent: (i + 1) + '. ' + x.label })); });
+    sel.value = String(detailIdx);
+    sel.addEventListener('change', function () { detailIdx = Number(sel.value); buildTabs(); });
+    r.appendChild(sel);
+    g1.appendChild(r);
+    g1.appendChild(checkboxRow('Show in tooltip', base + '.show'));
+    g1.appendChild(textRow('Name', base + '.label', d.label));
+
+    var g2 = group(p, 'Value format');
+    var fmtRow = selectRow('Number format', base + '.scale', [
+      ['dynamic', 'Dynamic (K / M / B)'], ['K', 'Thousands (K)'], ['M', 'Millions (M)'],
+      ['B', 'Billions (B)'], ['none', 'Full number'],
+      ['percent', 'Percentage (%)'], ['percentDynamic', 'Percentage, dynamic (K / M / B %)'],
+      ['workbook', 'Workbook format']
+    ]);
+    fmtRow.querySelector('select').addEventListener('change', function () { buildTabs(); });
+    g2.appendChild(fmtRow);
+    var sc = get(base + '.scale');
+    if (sc === 'percent' || sc === 'percentDynamic') {
+      g2.appendChild(checkboxRow('Value is a 0–1 ratio', base + '.pctFromRatio'));
+    }
+    g2.appendChild(numberRow('Decimal places', base + '.decimals', 0, 6, 1));
+    g2.appendChild(unitRow('Unit', base + '.unit', 'e.g. SAR, users'));
+    g2.appendChild(selectRow('Unit position', base + '.unitPosition', [['suffix', 'After number'], ['prefix', 'Before number']]));
+
+    colorSpecGroup(p, 'Name color', base + '.name');
+    colorSpecGroup(p, 'Value color', base + '.value');
+  }
+
+  /** Index of the measure's entry in details.items (added with defaults when missing). */
+  function ensureDetailItem (key) {
+    if (!Array.isArray(cfg.details.items)) cfg.details.items = [];
+    var items = cfg.details.items;
+    var i = items.findIndex(function (it) { return it && it.key === key; });
+    var full = KpiCardConfig.detailItem(cfg.details, key);
+    if (i < 0) { items.push(full); return items.length - 1; }
+    items[i] = full; // fills in settings added later
+    return i;
+  }
+
+  /** Single color, by sign (+ / − / 0) or conditional rules — for a measure's name or value. */
+  function colorSpecGroup (p, title, path) {
+    var g = group(p, title);
+    g.appendChild(segRow('Color by', path + '.mode', [['single', 'Single'], ['posneg', '+ / −'], ['conditional', 'Conditional']], function () { buildTabs(); }));
+    var mode = get(path + '.mode');
+    if (mode === 'posneg') {
+      g.appendChild(colorRow('Positive', path + '.pos'));
+      g.appendChild(colorRow('Negative', path + '.neg'));
+      g.appendChild(colorRow('Zero / no value', path + '.zero'));
+      return;
+    }
+    if (mode !== 'conditional') {
+      g.appendChild(colorRow('Color', path + '.color'));
+      return;
+    }
+    var rules = get(path + '.rules');
+    rules.forEach(function (rule, i) {
+      var rp = path + '.rules.' + i;
+      var rr = row(i === 0 ? 'If value' : 'Else if');
+      var wrap = h('div', { className: 'inline rule' });
+      var op = h('select', { className: 'rule-op' });
+      KpiCardConfig.DETAIL_OPS.forEach(function (o) { op.appendChild(h('option', { value: o[0], textContent: o[1] })); });
+      op.value = rule.op;
+      op.addEventListener('change', function () { set(rp + '.op', op.value); buildTabs(); });
+      wrap.appendChild(op);
+      var num = function (key) {
+        var inp = h('input', { type: 'number', step: 'any', value: rule[key], className: 'rule-num' });
+        inp.addEventListener('input', function () {
+          var n = Number(inp.value);
+          if (inp.value !== '' && isFinite(n)) set(rp + '.' + key, n);
+        });
+        return inp;
+      };
+      wrap.appendChild(num('v'));
+      if (rule.op === 'between') { wrap.appendChild(h('span', { className: 'rule-and', textContent: 'and' })); wrap.appendChild(num('v2')); }
+      var pick = h('input', { type: 'color', value: KpiCardConfig.normalizeHex(rule.color) || '#000000' });
+      pick.addEventListener('input', function () { set(rp + '.color', pick.value.toUpperCase()); });
+      wrap.appendChild(pick);
+      var del = h('button', { type: 'button', className: 'rule-del', title: 'Remove rule', textContent: '×' });
+      del.addEventListener('click', function () { rules.splice(i, 1); changed(); buildTabs(); });
+      wrap.appendChild(del);
+      rr.appendChild(wrap);
+      g.appendChild(rr);
+    });
+    var addRow = row('');
+    var add = h('button', { type: 'button', className: 'btn', textContent: '+ Add rule' });
+    add.addEventListener('click', function () {
+      var last = rules[rules.length - 1];
+      var nr = KpiCardConfig.clone(KpiCardConfig.DETAIL_RULE);
+      if (last) { nr.op = last.op === 'gt' ? 'lt' : last.op; nr.v = last.v; }
+      rules.push(nr);
+      changed();
+      buildTabs();
+    });
+    addRow.appendChild(h('div', { className: 'inline' }, [add]));
+    g.appendChild(addRow);
+    g.appendChild(colorRow(rules.length ? 'Otherwise' : 'Color', path + '.other'));
+    g.appendChild(h('div', { className: 'help', textContent: 'The first matching rule wins. Rules compare the raw value: a 0–1 ratio stays 0.45 (not 45%), and K / M / B are not applied.' }));
+  }
+
   function fontRows (g, section, withItalic) {
     g.appendChild(fontFamilyRow('Font', section + '.font'));
     g.appendChild(numberRow('Size (px)', section + '.size', 6, 160, 1));
