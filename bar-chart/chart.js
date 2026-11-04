@@ -25,7 +25,7 @@
   var cfg = null;
   var raw = null; // extracted data, see extract()
   var view = null; // what the last paint drew, see buildView()
-  var drawn = []; // hit areas: { node, s, kind, i, v (the view / panel it belongs to) }
+  var drawn = []; // hit areas: { node, s, kind, i, v (the view / panel it belongs to), lv (line point value) }
   var catRefs = []; // nodes of the names on the axis (data-cat), across panels
   var renderToken = 0;
   var uid = 0;
@@ -2706,7 +2706,7 @@
           if (lc.marker !== 'none') gl.appendChild(markerShape(lc.marker, q.x, q.y, lc.markerSize, col, lc.markerFill === 'white' ? '#FFFFFF' : col, Math.max(1.2, lc.width * 0.75)));
           var hit = node('circle', { cx: q.x, cy: q.y, r: Math.max(7, lc.markerSize), fill: 'transparent', class: 'bar', 'data-i': drawn.length, 'data-k': 'l:' + l.key });
           gl.appendChild(hit);
-          drawn.push({ node: q.n, kind: 'line', line: l, v: q.v, color: col, i: q.n.idx, x: q.x, y: q.y });
+          drawn.push({ node: q.n, kind: 'line', line: l, lv: q.v, color: col, i: q.n.idx, x: q.x, y: q.y });
           if (lc.labels) {
             var lbl = boxLabel(Bc.formatNumber(q.v, lineFmt()), lc.labelSize, lc.labelWeight, family, 'none');
             lbl.fill = col;
@@ -3808,7 +3808,7 @@
     if (d.kind === 'line') {
       var lc = Bc.lineCfg(cfg, d.line.key);
       html += '<div class="tt-series"><span class="sw" style="display:inline-block;width:12px;height:3px;background:' + d.color + '"></span>' + esc(lineLabel(d.line)) + '</div>';
-      html += '<div class="tt-value" style="color:' + d.color + '">' + esc(Bc.formatNumber(d.v, tipFmt(), { full: TT.fullNumbers })) + '</div>';
+      html += '<div class="tt-value" style="color:' + d.color + '">' + esc(Bc.formatNumber(d.lv, tipFmt(), { full: TT.fullNumbers })) + '</div>';
     } else if (d.b) {
       var b = d.b;
       if (V.series.length > 1 && TT.showSeries) {
