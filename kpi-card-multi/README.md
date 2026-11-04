@@ -86,7 +86,8 @@ Dimensions on the Detail / Tooltip tiles only add rows; they are never read as d
 
 Format Extension → **Tooltip** (shared by every card):
 - **Measure names / Measure values / Heading**: font, size, weight, italic (heading also color), shared by all tooltip measures;
-- per measure (pick it from the list): **Name** (empty = the field name) and whether it's shown;
+- **On this card** (per card): tick / untick each Tooltip-tile measure to customise the selected card's tooltip; *Apply to all* copies the list to every card (stored as `details.hidden` per card);
+- per measure (pick it from the list): **Name** (empty = the field name) and whether it's shown on all cards;
   **Value format** (dynamic K/M/B, fixed K/M/B, full number, percentage with the 0–1 ratio option, workbook format; decimals, unit and position);
   **Name color** and **Value color**, each by *Single* color, *+ / −* (positive / negative / zero by the value's sign) or *Conditional* rules
   (`>`, `≥`, `<`, `≤`, `=`, `≠`, `between`; first match wins, else *Otherwise*). Rules compare the raw value (a ratio stays 0.45, not 45%).

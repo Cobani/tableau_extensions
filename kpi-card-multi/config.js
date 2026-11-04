@@ -131,6 +131,7 @@
       onCard: true, // hovering the card (outside the trend line) shows the latest date's details
       title: '', // optional heading above the details
       items: [], // per measure, see DETAIL_ITEM
+      hidden: [], // per card: keys of Tooltip-tile measures left out of this card's tooltip
       headingStyle: { font: 'Lato', size: 11, weight: 400, color: '#68707D', italic: false },
       nameStyle: { font: 'Lato', size: 12, weight: 400, italic: false },
       valueStyle: { font: 'Lato', size: 12, weight: 700, italic: false }
@@ -148,7 +149,8 @@
     'number.unitPosition', 'number.pctFromRatio',
     'change.show', 'change.compareTo', 'change.period', 'change.mtdAgg', 'change.type',
     'change.decimals', 'change.ppFromRatio', 'change.higherIsBetter',
-    'card.weight'
+    'card.weight',
+    'details.hidden'
   ];
 
   // -------------------------------------------------------------------------
@@ -467,7 +469,7 @@
     var valueCss = styleCss(details.valueStyle);
     list.forEach(function (d, i) {
       var it = detailItem(details, d.key);
-      if (!it.show) return;
+      if (!it.show || (Array.isArray(details.hidden) && details.hidden.indexOf(d.key) >= 0)) return;
       var v = vals && vals.v ? vals.v[i] : NaN;
       var fv = vals && vals.fv ? vals.fv[i] : null;
       rows += '<div class="tt-drow"><span class="tt-dn" style="' + escHtml(nameCss + 'color:' + detailColor(it.name, v)) + '">' +

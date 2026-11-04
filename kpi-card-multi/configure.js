@@ -479,7 +479,28 @@
     g.appendChild(checkboxRow('Tooltip on the card', 'details.onCard'));
     g.appendChild(h('div', { className: 'help', textContent: 'Measures on the Tooltip tile (Marks card) are listed in the tooltip. On the trend line: the hovered date. Anywhere else on the card: the latest date.' }));
     g.appendChild(textRow('Heading', 'details.title', 'optional, e.g. Details'));
-    g.appendChild(h('div', { className: 'help', textContent: 'Applies to every card.' }));
+    g.appendChild(h('div', { className: 'help', textContent: 'Applies to every card, except the measures picked per card under "On this card".' }));
+
+    // Which Tooltip-tile measures this card's tooltip shows.
+    if (currentKey != null && detailList.length) {
+      var gc = group(p, 'On this card');
+      gc.firstChild.appendChild(h('span', { className: 'tag-card', textContent: 'this card' }));
+      if (!Array.isArray(cfg.details.hidden)) cfg.details.hidden = [];
+      detailList.forEach(function (x) {
+        var rc = row(x.label);
+        var cb = h('input', { type: 'checkbox' });
+        cb.checked = cfg.details.hidden.indexOf(x.key) < 0;
+        cb.addEventListener('change', function () {
+          var hid = cfg.details.hidden.filter(function (k) { return k !== x.key; });
+          if (!cb.checked) hid.push(x.key);
+          cfg.details.hidden = hid;
+          changed();
+        });
+        rc.appendChild(h('div', { className: 'inline' }, [cb]));
+        gc.appendChild(rc);
+      });
+      gc.appendChild(h('div', { className: 'help', textContent: 'Untick a measure to leave it out of this card\u2019s tooltip. Pick another card at the top to set its own list; "Apply to all" copies this list to every card.' }));
+    }
 
     textStyleGroup(p, 'Measure names', 'details.nameStyle', false);
     textStyleGroup(p, 'Measure values', 'details.valueStyle', false);
@@ -503,7 +524,7 @@
     sel.addEventListener('change', function () { detailIdx = Number(sel.value); buildTabs(); });
     r.appendChild(sel);
     g1.appendChild(r);
-    g1.appendChild(checkboxRow('Show in tooltip', base + '.show'));
+    g1.appendChild(checkboxRow('Show on all cards', base + '.show'));
     g1.appendChild(textRow('Name', base + '.label', d.label));
 
     var g2 = group(p, 'Value format');
