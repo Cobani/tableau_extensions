@@ -66,7 +66,9 @@ card too; every field there becomes a `name: value` tooltip row.
 - **Split bars**: set any Dimension fields to *Split bars* and their values split each bar (like dimensions on Tableau's
   Color; several fields combine, e.g. “West · Consumer”); with none, the measures split the bars. *Automatic split*
   uses the last field when there's one measure and the layout is stacked, 100%, left-right or overlapping. Left-right
-  needs exactly two values.
+  needs exactly two values (more alternate sides). Which side each value takes (Chart Type → Left-right comparison →
+  *Sides from*): **the data order** — measures in their Measure tile order, Dimension values in the worksheet's sort
+  order, the first going left / down (or right / up) — or **Pick each value's side** to set Left / Right per value.
 - **"Each bar is"**: Bars → Highlighted bars and Member icons let you say what a bar's name is — its own name,
   its measure name, or the value of any Dimension field (e.g. one icon per Category, shared by its Sub-Categories).
 - If Tableau delivers the measures as *Measure Names / Measure Values*, the extension pivots them back.

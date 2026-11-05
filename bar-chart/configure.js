@@ -18,7 +18,7 @@
   var saveTimer = null;
   var activeTab = 'type';
   var shapeIndex = null;
-  var info = { liveId: null, series: [], members: [], lines: [], dims: [], combos: [], measures: [], extras: [], levels: [], L: 1, bars: [], hasTarget: false, catCount: 0, axisType: 'dimension', focus: null, params: [], target: null, labels: {}, legendItems: [], barCandidates: null, seriesIdx: [], seriesName: null, isDate: false };
+  var info = { liveId: null, series: [], members: [], lines: [], dims: [], combos: [], measures: [], extras: [], levels: [], L: 1, bars: [], hasTarget: false, catCount: 0, axisType: 'dimension', focus: null, params: [], target: null, labels: {}, legendItems: [], barCandidates: null, seriesIdx: [], seriesName: null, isDate: false, divAuto: {}, divOrder: [] };
   var selectedLine = null;
 
   var WEIGHTS = [[300, 'Light'], [400, 'Regular'], [500, 'Medium'], [600, 'Semibold'], [700, 'Bold'], [900, 'Black']];
@@ -324,6 +324,7 @@
   function applyPreset (p) {
     var keep = {
       members: cfg.icons.members, custom: cfg.colors.custom, highlight: cfg.colors.highlight,
+      divSides: cfg.diverging.sides, divOrder: cfg.diverging.order,
       sort: cfg.axisC.sort, sortBy: cfg.axisC.sortBy, dateFormat: cfg.axisC.dateFormat, axisType: cfg.chart.axisType,
       fallback: cfg.icons.fallback, vTitle: cfg.axisV.title, vFmt: cfg.axisV.fmt,
       roles: { seriesBy: cfg.chart.seriesBy, seriesDims: cfg.chart.seriesDims, panelDims: cfg.chart.panelDims, panelMeasures: cfg.chart.panelMeasures, barLevel: cfg.chart.barLevel, showAll: cfg.chart.showAll }
@@ -334,6 +335,7 @@
     cfg.icons.members = keep.members;
     cfg.icons.fallback = keep.fallback;
     cfg.colors.custom = keep.custom;
+    if (keep.divOrder === 'custom' && !(p.patch && p.patch.diverging && p.patch.diverging.order)) { cfg.diverging.order = 'custom'; cfg.diverging.sides = keep.divSides || {}; }
     cfg.colors.highlight = keep.highlight;
     cfg.axisC.sort = keep.sort;
     cfg.axisC.sortBy = keep.sortBy;
@@ -397,10 +399,31 @@
     if (C.layout === 'regular' && two) g2.appendChild(help('Bars of the same category stand side by side (grouped). Their spacing is on the Bars tab.'));
     if (C.layout === 'diverging') {
       var gd = group(p, 'Left-right comparison');
-      gd.appendChild(help(C.orientation === 'horizontal'
-        ? 'The first value goes left, the second right — e.g. Cost vs Revenue, Males vs Females.'
-        : 'The first value goes down, the second up.'));
-      gd.appendChild(segRow('First value goes', 'diverging.firstSide', [['neg', C.orientation === 'horizontal' ? 'Left' : 'Down'], ['pos', C.orientation === 'horizontal' ? 'Right' : 'Up']]));
+      var hz = C.orientation === 'horizontal';
+      var sideOpts = [['neg', hz ? 'Left' : 'Down'], ['pos', hz ? 'Right' : 'Up']];
+      var D = cfg.diverging;
+      gd.appendChild(selectRow('Sides from', 'diverging.order', [
+        ['auto', 'The data order (Measure tile / Dimension sort)'],
+        ['custom', 'Pick each value’s side']
+      ], null, function () {
+        if (D.order === 'custom') { // start from the sides the chart shows now
+          D.sides = D.sides || {};
+          divKeys().forEach(function (k) { if (!D.sides[k] && info.divAuto && info.divAuto[k]) D.sides[k] = info.divAuto[k]; });
+          changed();
+        }
+        rebuild();
+      }));
+      if (D.order === 'custom' && info.series.length) {
+        gd.appendChild(help('Each value’s side. Values not listed here (new members) follow the data order.'));
+        divKeys().forEach(function (k) {
+          var s = info.series.find(function (x) { return x.key === k; });
+          if (s) gd.appendChild(segRow(s.name, ['diverging', 'sides', s.key], sideOpts));
+        });
+      } else {
+        gd.appendChild(help((hz ? 'The first value goes left, the second right' : 'The first value goes down, the second up') +
+          ' — measures in their Measure tile order, Dimension values in the worksheet’s sort order (sort the field in Tableau to change it). E.g. Cost vs Revenue, Males vs Females.'));
+        gd.appendChild(segRow('First value goes', 'diverging.firstSide', sideOpts, rebuild));
+      }
       gd.appendChild(segRow('Category labels', 'diverging.labels', [['axis', 'On the axis'], ['center', 'Between the two sides']]));
       gd.appendChild(checkboxRow('Same scale both sides', 'diverging.symmetric'));
     }
@@ -1677,7 +1700,7 @@
     'series', 'lineSeries', 'colors.custom', 'colors.highlight', 'colors.valueField', 'icons.members',
     'breakdown.dims', 'breakdown.colors', 'comments.items', 'chart.seriesDims', 'chart.panelDims', 'chart.panelMeasures',
     'interaction.hidden', 'topN.by', 'axisC.sortBy', 'title.text', 'explanation.text', 'export.fileName', 'layout',
-    'names', 'legend.names'
+    'names', 'legend.names', 'diverging.sides'
   ];
 
   var presetUi = { scope: 'look', name: '', keepFields: true, msg: null, pasted: '' };
@@ -2096,6 +2119,13 @@
   function mergeInto (to, from) {
     if (!to || !from) return;
     Array.prototype.slice.call(from.children).forEach(function (c) { if (!c.classList.contains('group-title')) to.appendChild(c); });
+  }
+
+  /** Left-right values in the order they take their sides (from the chart), then any others. */
+  function divKeys () {
+    var keys = (info.divOrder || []).slice();
+    info.series.forEach(function (s) { if (keys.indexOf(s.key) < 0) keys.push(s.key); });
+    return keys;
   }
 
   function tabChartType (p) {

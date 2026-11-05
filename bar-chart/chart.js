@@ -261,6 +261,11 @@
     if (!raw) return info;
     var v = view || buildView();
     info.series = v.series.map(function (s) { return { key: s.key, name: s.name, color: s.color }; });
+    var dvo = divOrder(v.visSeries);
+    var dvi = cfg.diverging.firstSide === 'neg' ? 0 : 1;
+    info.divAuto = {}; // left-right side each value takes from the data order (Format dialog: Pick each value's side)
+    dvo.forEach(function (s, i) { info.divAuto[s.key] = i % 2 === dvi ? 'neg' : 'pos'; });
+    info.divOrder = dvo.map(function (s) { return s.key; });
     var seen = {};
     v.allNodes.forEach(function (n) { if (!seen[n.label]) { seen[n.label] = 1; info.members.push(n.label); } });
     info.lines = raw.lines.map(function (l) { return { key: l.key, name: l.name }; });
@@ -1322,6 +1327,24 @@
     return v;
   }
 
+  /**
+   * Left-right: the order the values take their sides in — measures in Measure tile order,
+   * Dimension values in the worksheet's sort order. Tableau hands viz extensions the summary
+   * data last-to-first, so the rows are read backwards.
+   */
+  function divOrder (S) {
+    if (!S.some(function (s) { return s.member != null; })) return S;
+    var rank = {};
+    var k = 0;
+    for (var r = raw.rows.length - 1; r >= 0; r--) { var m = raw.rows[r].sm; if (m != null && !(m in rank)) rank[m] = k++; }
+    var mIdx = {};
+    S.forEach(function (s, i) { if (!(s.measure in mIdx)) mIdx[s.measure] = i; });
+    return S.map(function (s, i) { return { s: s, i: i }; }).sort(function (a, b) {
+      return (mIdx[a.s.measure] - mIdx[b.s.measure]) ||
+        ((a.s.memberOthers ? 1e9 : rank[a.s.member] != null ? rank[a.s.member] : 1e8) - (b.s.memberOthers ? 1e9 : rank[b.s.member] != null ? rank[b.s.member] : 1e8)) || a.i - b.i;
+    }).map(function (o) { return o.s; });
+  }
+
   // ---------------------------------------------------------------------------
   // Values as drawn (stacking, 100%, diverging) and colours
   // ---------------------------------------------------------------------------
@@ -1329,8 +1352,12 @@
     var S = v.visSeries;
     var divNeg = {};
     if (v.layout === 'diverging') {
-      var negIdx = cfg.diverging.firstSide === 'neg' ? 0 : 1;
-      S.forEach(function (s, i) { divNeg[s.key] = i === negIdx || (i > 1 && i % 2 === negIdx); });
+      var DV = cfg.diverging;
+      var negIdx = DV.firstSide === 'neg' ? 0 : 1;
+      divOrder(S).forEach(function (s, i) { divNeg[s.key] = i % 2 === negIdx; });
+      if (DV.order === 'custom' && DV.sides) {
+        S.forEach(function (s) { var side = DV.sides[s.key]; if (side === 'neg' || side === 'pos') divNeg[s.key] = side === 'neg'; });
+      }
     }
     v.divNeg = divNeg;
     var totalsBySeries = {};

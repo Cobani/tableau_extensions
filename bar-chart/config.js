@@ -221,7 +221,9 @@
     diverging: {
       labels: 'axis', // axis (category labels on the axis) | center (between the two sides)
       symmetric: true, // both sides share one scale
-      firstSide: 'neg' // neg: first series goes left / down
+      firstSide: 'neg', // neg: first value goes left / down (order: auto)
+      order: 'auto', // auto: Measure tile order / the Dimension's sort order | custom: each value's side picked in `sides`
+      sides: {} // series key → 'neg' (left / down) | 'pos' (right / up), used when order is custom
     },
 
     // ---- Bars: spacing, shape, fill, border, shadow ---------------------------
