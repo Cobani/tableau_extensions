@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
-  <worksheet-extension id="com.ilyascoban.vizext.kpicardmulti" extension-version="1.1.1">
+  <worksheet-extension id="com.ilyascoban.vizext.kpicardmulti" extension-version="1.1.2">
     <default-locale>en_US</default-locale>
     <name resource-id="name"/>
     <description>Several KPI cards in one zone: one card per measure on the Measures tile (latest value by date, % / pp change, trend line). One extension load for the whole row.</description>

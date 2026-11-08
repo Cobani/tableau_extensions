@@ -316,7 +316,7 @@
 
   /**
    * Row layout: as many cards per row as fit at the minimum width, widths by
-   * each card's weight, rows share the height. The divider (when on) is on each card's right.
+   * each card's weight, rows share the height. The divider (when on) is on each card's right; the row's last card only if card.dividerLast.
    */
   function arrange () {
     if (!store || !cards.length || ui.row.hidden) return;
@@ -1107,7 +1107,7 @@
       var c = cfg.card;
       el.card.style.padding = c.padding + 'px';
       el.card.style.backgroundColor = c.bgOpacity > 0 ? KpiCardMultiConfig.rgba(c.bgColor, c.bgOpacity / 100) : 'transparent';
-      var divider = c.divider; // dashed line on the right of every card, last in a row included
+      var divider = c.divider && (c.dividerLast !== false || !rowEnd); // right of each card; the row's last card only if dividerLast
       el.card.style.borderRightColor = divider ? c.dividerColor : 'transparent';
       el.card.style.borderRightWidth = divider ? '1px' : '0';
     }

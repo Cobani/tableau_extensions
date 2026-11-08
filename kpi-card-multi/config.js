@@ -118,7 +118,8 @@
       padding: 15, // Filter Icon Title Padding
       bgColor: '#FFFFFF',
       bgOpacity: 0,
-      divider: false, // dashed divider on the right of every card; off by default
+      divider: false, // dashed divider on the right of the cards; off by default
+      dividerLast: true, // also draw it after the last card of each row
       dividerColor: '#E2E4E8', // Neutrals/Neptune Pale
       weight: 1 // per card: share of the row width (2 = twice as wide as a 1)
     },
