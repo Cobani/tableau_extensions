@@ -723,7 +723,7 @@
     var g2 = group(p, 'Background');
     g2.appendChild(colorRow('Color', 'card.bgColor'));
     g2.appendChild(rangeRow('Opacity', 'card.bgOpacity', 0, 100, 1, '%'));
-    g2.appendChild(help('0% is fully transparent. Set worksheet and container shading to None in Tableau to see through.'));
+    g2.appendChild(help('0% is fully transparent. Set worksheet and container shading to None in Tableau to see through. When the matrix scrolls, frozen headers are filled with this colour so cells don\'t show through them: match it to the dashboard background.'));
 
     var g3 = group(p, 'Matrix area background');
     g3.appendChild(colorRow('Color', 'card.plotBg'));

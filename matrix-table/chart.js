@@ -1264,12 +1264,15 @@
       (s.letterSpacing ? ';letter-spacing:' + (s.letterSpacing / 100) + 'em' : '');
   }
 
+  /** Opaque fill for frozen headers: Card > Background colour, with the matrix-area and header
+   *  backgrounds layered on top at their opacities. Frozen headers need a solid fill so scrolled
+   *  cells don't show through; Card colour is the base (match it to the dashboard behind). */
   function solidBg () {
     var H = cfg.headers; var c = cfg.card;
-    if (H.bgOpacity >= 100) return H.bg;
-    if (c.plotBgOpacity >= 100) return c.plotBg;
-    if (c.bgOpacity >= 100) return c.bgColor;
-    return '#FFFFFF';
+    var bg = c.bgColor || '#FFFFFF';
+    if (c.plotBgOpacity > 0) bg = Mx.mix(bg, c.plotBg, Math.min(1, c.plotBgOpacity / 100));
+    if (H.bgOpacity > 0) bg = Mx.mix(bg, H.bg, Math.min(1, H.bgOpacity / 100));
+    return bg;
   }
 
   function css () {
@@ -1301,11 +1304,13 @@
     if (H.lines) s.push('.mx th.rh.o{border-top:1px solid ' + H.lineColor + '}.mx th.ch.o{border-bottom:1px solid ' + H.lineColor + '}');
     if (L.freeze) {
       s.push('.mx thead th,.mx th.rh{position:sticky}.mx thead th{z-index:2}.mx th.rh{z-index:1}.mx thead th.k{z-index:3}');
-      var sb = H.bgOpacity >= 100 ? H.bg : solidBg();
-      // the shifted shadows fill the spacing gaps, so scrolled cells don't show between frozen headers
-      s.push('.mx thead th,.mx th.rh{background:' + sb + '}');
-      s.push('.mx thead th{box-shadow:0 ' + L.gapY + 'px 0 0 ' + sb + ',0 -' + L.gapY + 'px 0 0 ' + sb + ',' + L.gapX + 'px 0 0 0 ' + sb + '}');
-      s.push('.mx th.rh{box-shadow:' + L.gapX + 'px 0 0 0 ' + sb + ',-' + L.gapX + 'px 0 0 0 ' + sb + ',0 ' + L.gapY + 'px 0 0 ' + sb + '}');
+      var sb = solidBg();
+      // Only when the matrix scrolls (.mx.scrolls): opaque headers so scrolled cells don't show through.
+      // The shifted shadows fill the spacing gaps between frozen headers. Otherwise headers keep the
+      // Card / matrix-area / header backgrounds as set, so a transparent card stays transparent.
+      s.push('.mx.scrolls thead th,.mx.scrolls th.rh{background:' + sb + '}');
+      s.push('.mx.scrolls thead th{box-shadow:0 ' + L.gapY + 'px 0 0 ' + sb + ',0 -' + L.gapY + 'px 0 0 ' + sb + ',' + L.gapX + 'px 0 0 0 ' + sb + '}');
+      s.push('.mx.scrolls th.rh{box-shadow:' + L.gapX + 'px 0 0 0 ' + sb + ',-' + L.gapX + 'px 0 0 0 ' + sb + ',0 ' + L.gapY + 'px 0 0 ' + sb + '}');
       s.push('.mx th.rh.o .hl,.mx th.rh[rowspan] .hl{position:sticky;top:calc(var(--thead-h, 0px) + ' + (L.gapY + 4) + 'px)}');
     }
     s.push('.mx td.c .ms .up{color:' + MT.posColor + '}');
@@ -1465,6 +1470,8 @@
         th.style.left = Math.max(0, th.offsetLeft - gx) + 'px';
       });
     }
+    var sc = el.scroll;
+    t.classList.toggle('scrolls', !!L.freeze && (sc.scrollHeight > sc.clientHeight + 1 || sc.scrollWidth > sc.clientWidth + 1));
   }
 
   /** Rows grow evenly (totals keep their height) so the matrix reaches the bottom of the worksheet. */
