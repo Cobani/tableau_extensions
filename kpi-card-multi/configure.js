@@ -458,7 +458,7 @@
   function buildCardTab (p) {
     var g1 = group(p, 'Card');
     g1.appendChild(numberRow('Padding (px)', 'card.padding', 0, 60, 1));
-    g1.appendChild(checkboxRow('Dashed divider between cards', 'card.divider'));
+    g1.appendChild(checkboxRow('Dashed right divider', 'card.divider'));
     g1.appendChild(colorRow('Divider color', 'card.dividerColor'));
 
     var g2 = group(p, 'Background');
