@@ -44,3 +44,15 @@
   cursor: pointer;
 }
 .rule-del:hover { color: #e35263; border-color: #e35263; }
+
+.btn--small { height: 24px; min-width: 0; padding: 0 10px; font-size: 12px; }
+.group .inline .btn { flex: none; }
+
+/* ---- presets tab ------------------------------------------------------- */
+.preset-btns { flex-wrap: wrap; margin: 4px 0 8px; }
+.preset-json { height: 120px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; white-space: pre; }
+.preset-msg { margin: 0 0 14px; padding: 8px 10px; border-radius: 4px; background: #EAF5EE; color: #1E6B3C; font-size: 12px; }
+.preset-msg.is-error { background: #FDECEA; color: #A1281C; }
+.preset-inline-help { margin: 0; }
+.preset-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.preset-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

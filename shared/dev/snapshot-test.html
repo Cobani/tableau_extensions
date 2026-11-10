@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ExtSnapshot browser test</title>
+<link rel="stylesheet" href="../fonts/fonts.css">
+<style>
+  body { margin: 16px; font-family: "Lato", sans-serif; background: #f3f4f6; color: #111; }
+  .fx { margin: 0 0 20px; }
+  /* Fixture 1: SVG bar chart */
+  #f1 { width: 400px; height: 240px; background: #fff; }
+  #f1 svg { display: block; }
+  /* Fixture 2: HTML card */
+  #f2 { position: relative; box-sizing: border-box; width: 320px; height: 180px; background: #fff; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; font-family: "Lato", sans-serif; }
+  #f2 .num { font-size: 44px; font-weight: 700; line-height: 1; }
+  #f2 .lbl { font-size: 13px; color: #4b5563; }
+  #f2 .row { display: flex; align-items: center; gap: 8px; }
+  #f2 img { width: 24px; height: 24px; }
+  #f2 .blue { position: absolute; left: 240px; top: 120px; width: 60px; height: 40px; background: #2563EB; }
+  /* Fixture 3: scroll box */
+  #f3 { width: 300px; height: 150px; overflow: auto; background: #fff; }
+  #f3 table { width: 280px; border-collapse: collapse; }
+  #f3 td { height: 50px; padding: 0 8px; font-size: 14px; }
+  #f3 tr:first-child td { background: #16A34A; }
+  #f3 tr:last-child td { background: #F59E0B; }
+  #f3 tr:nth-child(2) td { background: #e5e7eb; }
+  pre { background: #fff; padding: 8px; font-size: 12px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="fx" id="f1">
+  <svg id="f1svg" xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 400 240">
+    <rect x="0" y="0" width="400" height="240" fill="#ffffff"/>
+    <text x="20" y="28" font-family="Lato, sans-serif" font-size="16" font-weight="700" fill="#111827">Sales by store</text>
+    <line x1="40" y1="200" x2="380" y2="200" stroke="#9ca3af" stroke-width="1" stroke-dasharray="4 2"/>
+    <rect id="f1bar" x="40" y="60" width="80" height="120" fill="#E11D48"/>
+    <rect x="160" y="100" width="80" height="80" fill="#94a3b8"/>
+    <text x="80" y="218" text-anchor="middle" font-family="Lato, sans-serif" font-size="12" fill="#4b5563">North</text>
+    <text x="200" y="218" text-anchor="middle" font-family="Lato, sans-serif" font-size="12" font-style="italic" fill="#4b5563">South</text>
+  </svg>
+</div>
+
+<div class="fx" id="f2">
+  <div class="row"><img id="f2img" alt=""><span class="lbl">Total sales</span></div>
+  <div class="num">1,284</div>
+  <div class="lbl">Compared with last month</div>
+  <div class="blue" id="f2blue"></div>
+</div>
+
+<div class="fx" id="f3">
+  <table>
+    <tr><td>Row 1</td></tr><tr><td>Row 2</td></tr><tr><td>Row 3</td></tr>
+    <tr><td>Row 4</td></tr><tr><td>Row 5</td></tr><tr><td>Row 6</td></tr>
+    <tr><td>Row 7</td></tr><tr><td>Row 8</td></tr><tr><td>Row 9</td></tr>
+  </table>
+</div>
+
+<pre id="result"></pre>
+
+<script src="../core.js"></script>
+<script src="../snapshot.js"></script>
+<script>
+(function () {
+  'use strict';
+  const out = document.getElementById('result');
+  let allOk = true;
+  window.snapshotTestDone = false;
+  window.snapshotTestOk = false;
+
+  function log (ok, name, reason) {
+    if (!ok) allOk = false;
+    out.textContent += (ok ? 'PASS ' : 'FAIL ') + name + (ok ? '' : ' : ' + reason) + '\n';
+  }
+  function check (name, cond, reason) { log(!!cond, name, reason || 'condition false'); }
+  async function step (name, fn) {
+    try { await fn(); } catch (e) { log(false, name, 'error: ' + (e && e.message ? e.message : e)); }
+  }
+
+  function near (px, want, tol) {
+    return Math.abs(px[0] - want[0]) <= tol && Math.abs(px[1] - want[1]) <= tol && Math.abs(px[2] - want[2]) <= tol;
+  }
+  function hex (h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+
+  /** Loads a PNG blob; returns { w, h, px(x, y) } and throws when the canvas is tainted. */
+  async function open (blob) {
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = await new Promise(function (resolve, reject) {
+        const i = new Image();
+        i.onload = function () { resolve(i); };
+        i.onerror = function () { reject(new Error('the PNG could not be loaded')); };
+        i.src = url;
+      });
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      const g = c.getContext('2d');
+      g.drawImage(img, 0, 0);
+      g.getImageData(0, 0, 1, 1); // throws when tainted
+      return {
+        w: c.width,
+        h: c.height,
+        px: function (x, y) { const d = g.getImageData(Math.round(x), Math.round(y), 1, 1).data; return [d[0], d[1], d[2], d[3]]; }
+      };
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  function colourAt (name, pic, x, y, want) {
+    const p = pic.px(x, y);
+    log(near(p, want, 14), name, 'pixel (' + x + ',' + y + ') is rgb(' + p.slice(0, 3).join(',') + '), expected rgb(' + want.join(',') + ')');
+  }
+
+  function makeIcon () {
+    const c = document.createElement('canvas');
+    c.width = 24; c.height = 24;
+    const g = c.getContext('2d');
+    g.fillStyle = '#7C3AED';
+    g.fillRect(0, 0, 24, 24);
+    return c.toDataURL('image/png');
+  }
+
+  async function main () {
+    check('ExtSnapshot is loaded', window.ExtSnapshot && typeof window.ExtSnapshot.png === 'function', 'window.ExtSnapshot missing');
+    if (!window.ExtSnapshot) return;
+    const S = window.ExtSnapshot;
+    document.getElementById('f2img').src = makeIcon();
+    try { await Promise.all([document.fonts.load('400 16px Lato'), document.fonts.load('700 16px Lato'), document.fonts.load('italic 400 12px Lato')]); } catch (e) { /* ignore */ }
+    await document.fonts.ready;
+    await new Promise(function (r) { setTimeout(r, 100); });
+
+    // Fixture 1: SVG bar chart
+    await step('fixture 1', async function () {
+      const el = document.getElementById('f1');
+      const blob = await S.png(el, { scale: 2 });
+      check('f1 png is a Blob of type image/png', blob instanceof Blob && blob.type === 'image/png', 'got ' + (blob && blob.type));
+      const pic = await open(blob);
+      log(true, 'f1 canvas is not tainted');
+      check('f1 size is 800x480', pic.w === 800 && pic.h === 480, pic.w + 'x' + pic.h);
+      colourAt('f1 bar colour #E11D48 at the bar centre', pic, 80 * 2, 120 * 2, hex('#E11D48'));
+      colourAt('f1 grey bar colour', pic, 200 * 2, 140 * 2, hex('#94a3b8'));
+      colourAt('f1 white background pixel', pic, 300 * 2, 100 * 2, [255, 255, 255]);
+      // The title text is dark: some pixel in the title area must not be white.
+      let dark = false;
+      for (let x = 20 * 2; x < 100 * 2 && !dark; x += 2) for (let y = 14 * 2; y < 28 * 2; y += 2) { if (pic.px(x, y)[0] < 120) { dark = true; break; } }
+      check('f1 title text is drawn', dark, 'no dark pixel in the title area');
+
+      const small = await S.png(el, { scale: 1 });
+      const p1 = await open(small);
+      check('f1 scale 1 gives 400x240', p1.w === 400 && p1.h === 240, p1.w + 'x' + p1.h);
+      const lim = await S.png(el, { scale: 2, maxPixels: 100000 });
+      const p2 = await open(lim);
+      check('f1 maxPixels reduces the size', p2.w * p2.h <= 100000 && p2.w < 800, p2.w + 'x' + p2.h);
+      const padded = await S.png(el, { scale: 1, padding: 10, background: '#ff0000' });
+      const p3 = await open(padded);
+      check('f1 padding adds 10 px each side', p3.w === 420 && p3.h === 260, p3.w + 'x' + p3.h);
+      colourAt('f1 padding shows the given background', p3, 3, 3, [255, 0, 0]);
+
+      const vec = await S.svg(document.getElementById('f1svg'));
+      check('f1 svg() on the <svg> is kind vector', vec.kind === 'vector', 'kind ' + vec.kind);
+      check('f1 vector text has <svg and the bar colour', /<svg/.test(vec.text) && /#E11D48|rgb\(225, 29, 72\)/i.test(vec.text), 'colour or <svg not found');
+      check('f1 vector text has no foreignObject', !/foreignObject/.test(vec.text), 'foreignObject found');
+      const parsed = new DOMParser().parseFromString(vec.text, 'image/svg+xml');
+      check('f1 vector text is valid XML', !parsed.getElementsByTagName('parsererror').length, 'parser error');
+      const viaVector = await S.svg(el, { vector: document.getElementById('f1svg') });
+      check('f1 svg() with options.vector is kind vector', viaVector.kind === 'vector', 'kind ' + viaVector.kind);
+      const html = await S.svg(el);
+      check('f1 svg() on the wrapper div is kind html', html.kind === 'html' && /foreignObject/.test(html.text), 'kind ' + html.kind);
+      const hp = new DOMParser().parseFromString(html.text, 'image/svg+xml');
+      check('f1 html-kind text is valid XML', !hp.getElementsByTagName('parsererror').length, 'parser error');
+    });
+
+    // Fixture 2: HTML card
+    await step('fixture 2', async function () {
+      const el = document.getElementById('f2');
+      const blob = await S.png(el, { scale: 2 });
+      const pic = await open(blob);
+      log(true, 'f2 canvas is not tainted');
+      check('f2 size is 640x360', pic.w === 640 && pic.h === 360, pic.w + 'x' + pic.h);
+      colourAt('f2 blue block #2563EB at its centre', pic, 270 * 2, 140 * 2, hex('#2563EB'));
+      colourAt('f2 white background pixel', pic, 150 * 2, 150 * 2, [255, 255, 255]);
+      colourAt('f2 image icon colour #7C3AED', pic, 28 * 2, 28 * 2, hex('#7C3AED'));
+      let dark = false;
+      for (let x = 16 * 2; x < 120 * 2 && !dark; x += 2) for (let y = 70 * 2; y < 110 * 2; y += 2) { if (pic.px(x, y)[0] < 100) { dark = true; break; } }
+      check('f2 big number is drawn', dark, 'no dark pixel where the number should be');
+      const transparent = await S.png(el, { scale: 1, background: 'transparent' });
+      const pt = await open(transparent);
+      check('f2 transparent background keeps card colour', near(pt.px(150, 150), [255, 255, 255], 14), 'card white lost');
+    });
+
+    // Fixture 3: scroll box
+    await step('fixture 3', async function () {
+      const el = document.getElementById('f3');
+      el.scrollTop = 0;
+      const scrollH = el.scrollHeight;
+      check('f3 content is taller than the box', scrollH > el.clientHeight, 'scrollHeight ' + scrollH + ', clientHeight ' + el.clientHeight);
+
+      const view = await open(await S.png(el, { scale: 2, full: false }));
+      log(true, 'f3 (full: false) canvas is not tainted');
+      check('f3 full:false height is 300', view.w === 600 && view.h === 300, view.w + 'x' + view.h);
+      colourAt('f3 full:false top row is #16A34A', view, 140 * 2, 25 * 2, hex('#16A34A'));
+
+      const full = await open(await S.png(el, { scale: 2, full: true }));
+      check('f3 full:true height is scrollHeight x 2', full.h === scrollH * 2, full.h + ' vs ' + (scrollH * 2));
+      colourAt('f3 full:true top row is #16A34A', full, 140 * 2, 25 * 2, hex('#16A34A'));
+      colourAt('f3 full:true bottom row is #F59E0B', full, 140 * 2, (scrollH - 10) * 2, hex('#F59E0B'));
+
+      el.scrollTop = 100;
+      const moved = await open(await S.png(el, { scale: 2, full: false }));
+      check('f3 scrolled by 100: height is still 300', moved.h === 300, 'height ' + moved.h);
+      // At scrollTop 100 the 3rd row (index 2, white) starts at y=0; the grey 2nd row has scrolled out.
+      colourAt('f3 scrolled by 100: first visible row is not green', moved, 140 * 2, 10 * 2, [255, 255, 255]);
+      el.scrollTop = 0;
+    });
+
+    // Helpers that run in the browser
+    await step('helpers', async function () {
+      check('fileName uses the title and today', /^Sales by store \d{4}-\d{2}-\d{2}\.png$/.test(S.fileName('Sales by store', 'png')), S.fileName('Sales by store', 'png'));
+      let msg = '';
+      try { await S.png(null); } catch (e) { msg = e.message; }
+      check('png(null) rejects with a clear error', /no element/i.test(msg), 'message: ' + msg);
+    });
+  }
+
+  main().catch(function (e) {
+    log(false, 'unexpected error', e && e.stack ? e.stack : String(e));
+  }).then(function () {
+    out.textContent += (allOk ? 'ALL PASSED' : 'SOME FAILED') + '\n';
+    window.snapshotTestOk = allOk;
+    window.snapshotTestDone = true;
+  });
+}());
+</script>
+</body>
+</html>

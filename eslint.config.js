@@ -2,7 +2,7 @@
 // Run: npm run lint
 const globals = require('globals');
 
-const shared = { tableau: 'readonly', ExtCore: 'readonly', ExtBoot: 'readonly', ExtTiming: 'readonly', ExtDialog: 'readonly', ExtTheme: 'readonly', KpiBoot: 'readonly' };
+const shared = { tableau: 'readonly', ExtCore: 'readonly', ExtBoot: 'readonly', ExtTiming: 'readonly', ExtDialog: 'readonly', ExtTheme: 'readonly', ExtSnapshot: 'readonly', KpiBoot: 'readonly' };
 // Each extension's own globals (chart / config / dialog / helpers), see the table in AGENTS.md.
 const ext = {};
 ['KpiCard', 'KpiCardConfig', 'KpiCardConfigure', 'KpiCardMulti', 'KpiCardMultiConfig', 'KpiCardMultiConfigure',

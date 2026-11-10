@@ -141,6 +141,12 @@ The card background is transparent by default. To see the dashboard behind it:
 - set **Format → Shading → Worksheet** to *None*
 - set the dashboard object's and container's background to *None*
 
+## Presets
+
+The last tab of the Format window saves and loads every setting of the card. **Export** a preset as "Look only" (leaves out title and explanation text, per-measure tooltip items, row limit) or "Everything"; download it as .json, copy it, or keep it under **My presets** on this computer. **Import** from a file or pasted text; "Keep this card's…" keeps the sheet-specific settings. Presets store only values that differ from the defaults, and carry a version so older files keep working.
+
+Sample files to import: `presets/Default.json` (the default look) and `presets/Dark.json` (dark card, light text) (in the `presets/` folder; the Format window doesn't list them, use Import → Choose file).
+
 ## Deploying
 
 1. The Tableau Extensions API library is bundled in `../shared/lib/tableau.extensions.1.17.0.min.js` (shared by all extensions, no CDN). To upgrade, replace that file and update the `<script>` path in `index.html` and `configure.html`.

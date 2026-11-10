@@ -1,0 +1,273 @@
+{
+  "type": "tableau-waterfall-preset",
+  "version": 1,
+  "name": "Default",
+  "scope": "look",
+  "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#68707D",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": true
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "divider": false,
+      "dividerColor": "#E2E4E8",
+      "gap": 10
+    },
+    "numbers": {
+      "mode": "all",
+      "font": "Lato"
+    },
+    "format": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "pctFromRatio": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "plusSign": true,
+      "negStyle": "minus"
+    },
+    "bars": {
+      "width": 62,
+      "radius": 2,
+      "endRadius": 3,
+      "posColor": "#0E7C66",
+      "negColor": "#B4431E",
+      "breakdownOrder": "data",
+      "sort": "marks",
+      "sortScope": "overall",
+      "calcEnd": true,
+      "balanceIgnoreBreakdown": false,
+      "tooltip": true,
+      "rightClickMenu": true
+    },
+    "interaction": {
+      "selectInTableau": false
+    },
+    "start": {
+      "color": "#3A4656",
+      "total": {
+        "show": true,
+        "position": "above",
+        "size": 12,
+        "weight": 700,
+        "colorMode": "custom",
+        "color": "#17202B",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "plusSign": true,
+          "negStyle": "minus"
+        }
+      },
+      "brk": {
+        "show": true,
+        "style": "slash",
+        "pos": 55,
+        "bandColor": "#FFFFFF",
+        "lineColor": "#55606E"
+      }
+    },
+    "end": {
+      "color": "#3A4656",
+      "total": {
+        "show": true,
+        "position": "above",
+        "size": 12,
+        "weight": 700,
+        "colorMode": "custom",
+        "color": "#17202B",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "plusSign": true,
+          "negStyle": "minus"
+        }
+      },
+      "brk": {
+        "show": true,
+        "style": "slash",
+        "pos": 55,
+        "bandColor": "#FFFFFF",
+        "lineColor": "#55606E"
+      }
+    },
+    "stepDefaults": {
+      "colorMode": "sign",
+      "color": "#2F4B7C",
+      "invert": false,
+      "total": {
+        "show": true,
+        "position": "above",
+        "size": 11,
+        "weight": 600,
+        "colorMode": "bar",
+        "color": "#17202B",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "plusSign": true,
+          "negStyle": "minus"
+        }
+      },
+      "brk": {
+        "show": true,
+        "style": "slash",
+        "pos": 50,
+        "bandColor": "#FFFFFF",
+        "lineColor": "#55606E"
+      },
+      "breakdown": {
+        "show": true,
+        "sep": " · ",
+        "colorMode": "shades",
+        "showValues": false,
+        "showNames": false,
+        "position": "inside",
+        "size": 10,
+        "weight": 400,
+        "labelColorMode": "auto",
+        "labelColor": "#17202B",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "plusSign": true,
+          "negStyle": "minus"
+        },
+        "dividers": true,
+        "minPx": 12,
+        "order": "inherit"
+      }
+    },
+    "layout": {},
+    "groups": {
+      "mode": "sign",
+      "pos": {
+        "text": "Incoming",
+        "color": "#0E7C66",
+        "showTotal": true
+      },
+      "neg": {
+        "text": "Outgoing",
+        "color": "#B4431E",
+        "showTotal": true
+      },
+      "lineWidth": 2,
+      "lineStyle": "solid",
+      "size": 11,
+      "weight": 600,
+      "separator": " · ",
+      "inset": 12,
+      "band": false,
+      "bandOpacity": 6,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "plusSign": true,
+        "negStyle": "minus"
+      }
+    },
+    "axisY": {
+      "show": true,
+      "position": "left",
+      "base": "auto",
+      "padding": 20,
+      "manualMin": 0,
+      "maxMode": "auto",
+      "manualMax": 100,
+      "ticks": 5,
+      "font": "Lato",
+      "size": 10,
+      "weight": 400,
+      "color": "#55606E",
+      "showLine": false,
+      "lineColor": "#C9CDD4",
+      "useGlobalFormat": false,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 0,
+        "pctFromRatio": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "axisX": {
+      "show": true,
+      "font": "Lato",
+      "size": 11,
+      "weight": 500,
+      "color": "#17202B",
+      "orientation": "wrap",
+      "maxLines": 2,
+      "showLine": false,
+      "lineColor": "#C9CDD4",
+      "lineWidth": 1
+    },
+    "lines": {
+      "hGrid": {
+        "show": true,
+        "color": "#ECEEE8",
+        "width": 1,
+        "style": "solid"
+      },
+      "vGrid": {
+        "show": false,
+        "color": "#ECEEE8",
+        "width": 1,
+        "style": "solid"
+      },
+      "connectors": {
+        "show": true,
+        "color": "#55606E",
+        "width": 1,
+        "style": "dashed"
+      },
+      "zero": {
+        "show": true,
+        "color": "#C9CDD4",
+        "width": 1,
+        "style": "solid"
+      }
+    }
+  }
+}

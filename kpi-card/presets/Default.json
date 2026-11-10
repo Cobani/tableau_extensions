@@ -1,0 +1,116 @@
+{
+  "type": "tableau-kpi-card-preset",
+  "version": 1,
+  "name": "Default",
+  "scope": "look",
+  "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "show": true,
+      "align": "left",
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#68707D",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "reserveSpace": true,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": true
+    },
+    "number": {
+      "show": true,
+      "period": "day",
+      "mtdAgg": "sum",
+      "font": "Lato",
+      "size": 32,
+      "weight": 700,
+      "color": "#263244",
+      "italic": false,
+      "decimals": 2,
+      "scale": "dynamic",
+      "unit": "",
+      "unitSize": 24,
+      "unitPosition": "suffix",
+      "shrinkToFit": true,
+      "pctFromRatio": true
+    },
+    "change": {
+      "show": true,
+      "compareTo": "previous",
+      "period": "day",
+      "mtdAgg": "sum",
+      "type": "percent",
+      "decimals": 2,
+      "ppFromRatio": true,
+      "higherIsBetter": true,
+      "positiveColor": "#2E9E6A",
+      "negativeColor": "#E35263",
+      "neutralColor": "#68707D",
+      "font": "Lato",
+      "size": 12,
+      "weight": 400
+    },
+    "bottom": {
+      "mode": "chart",
+      "chartColor": "#ED8095",
+      "lineStyle": "smooth",
+      "lineWidth": 0.9,
+      "fillOpacity": 35,
+      "points": 30,
+      "showTooltip": true,
+      "heightPct": 44,
+      "textDecimals": 1,
+      "periodWord": "period",
+      "showSign": true
+    },
+    "interaction": {
+      "selectInTableau": false
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "divider": true,
+      "dividerColor": "#E2E4E8"
+    },
+    "details": {
+      "show": true,
+      "onCard": true,
+      "title": "",
+      "headingStyle": {
+        "font": "Lato",
+        "size": 11,
+        "weight": 400,
+        "color": "#68707D",
+        "italic": false
+      },
+      "nameStyle": {
+        "font": "Lato",
+        "size": 12,
+        "weight": 400,
+        "italic": false
+      },
+      "valueStyle": {
+        "font": "Lato",
+        "size": 12,
+        "weight": 700,
+        "italic": false
+      }
+    }
+  }
+}

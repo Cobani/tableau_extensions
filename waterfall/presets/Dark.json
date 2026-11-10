@@ -1,0 +1,273 @@
+{
+  "type": "tableau-waterfall-preset",
+  "version": 1,
+  "name": "Dark",
+  "scope": "look",
+  "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#F0785A",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#B8C0CC",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#8F9BAD",
+      "italic": true
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#1B2330",
+      "bgOpacity": 100,
+      "divider": false,
+      "dividerColor": "#3A4656",
+      "gap": 10
+    },
+    "numbers": {
+      "mode": "all",
+      "font": "Lato"
+    },
+    "format": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "pctFromRatio": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "plusSign": true,
+      "negStyle": "minus"
+    },
+    "bars": {
+      "width": 62,
+      "radius": 2,
+      "endRadius": 3,
+      "posColor": "#3FCB9B",
+      "negColor": "#F0785A",
+      "breakdownOrder": "data",
+      "sort": "marks",
+      "sortScope": "overall",
+      "calcEnd": true,
+      "balanceIgnoreBreakdown": false,
+      "tooltip": true,
+      "rightClickMenu": true
+    },
+    "interaction": {
+      "selectInTableau": false
+    },
+    "start": {
+      "color": "#8FA1B8",
+      "total": {
+        "show": true,
+        "position": "above",
+        "size": 12,
+        "weight": 700,
+        "colorMode": "custom",
+        "color": "#F2F4F7",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "plusSign": true,
+          "negStyle": "minus"
+        }
+      },
+      "brk": {
+        "show": true,
+        "style": "slash",
+        "pos": 55,
+        "bandColor": "#1B2330",
+        "lineColor": "#AEB7C4"
+      }
+    },
+    "end": {
+      "color": "#8FA1B8",
+      "total": {
+        "show": true,
+        "position": "above",
+        "size": 12,
+        "weight": 700,
+        "colorMode": "custom",
+        "color": "#F2F4F7",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "plusSign": true,
+          "negStyle": "minus"
+        }
+      },
+      "brk": {
+        "show": true,
+        "style": "slash",
+        "pos": 55,
+        "bandColor": "#1B2330",
+        "lineColor": "#AEB7C4"
+      }
+    },
+    "stepDefaults": {
+      "colorMode": "sign",
+      "color": "#7FA2E0",
+      "invert": false,
+      "total": {
+        "show": true,
+        "position": "above",
+        "size": 11,
+        "weight": 600,
+        "colorMode": "bar",
+        "color": "#F2F4F7",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "plusSign": true,
+          "negStyle": "minus"
+        }
+      },
+      "brk": {
+        "show": true,
+        "style": "slash",
+        "pos": 50,
+        "bandColor": "#1B2330",
+        "lineColor": "#AEB7C4"
+      },
+      "breakdown": {
+        "show": true,
+        "sep": " · ",
+        "colorMode": "shades",
+        "showValues": false,
+        "showNames": false,
+        "position": "inside",
+        "size": 10,
+        "weight": 400,
+        "labelColorMode": "auto",
+        "labelColor": "#F2F4F7",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "plusSign": true,
+          "negStyle": "minus"
+        },
+        "dividers": true,
+        "minPx": 12,
+        "order": "inherit"
+      }
+    },
+    "layout": {},
+    "groups": {
+      "mode": "sign",
+      "pos": {
+        "text": "Incoming",
+        "color": "#3FCB9B",
+        "showTotal": true
+      },
+      "neg": {
+        "text": "Outgoing",
+        "color": "#F0785A",
+        "showTotal": true
+      },
+      "lineWidth": 2,
+      "lineStyle": "solid",
+      "size": 11,
+      "weight": 600,
+      "separator": " · ",
+      "inset": 12,
+      "band": false,
+      "bandOpacity": 6,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "plusSign": true,
+        "negStyle": "minus"
+      }
+    },
+    "axisY": {
+      "show": true,
+      "position": "left",
+      "base": "auto",
+      "padding": 20,
+      "manualMin": 0,
+      "maxMode": "auto",
+      "manualMax": 100,
+      "ticks": 5,
+      "font": "Lato",
+      "size": 10,
+      "weight": 400,
+      "color": "#AEB7C4",
+      "showLine": false,
+      "lineColor": "#4A5565",
+      "useGlobalFormat": false,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 0,
+        "pctFromRatio": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "axisX": {
+      "show": true,
+      "font": "Lato",
+      "size": 11,
+      "weight": 500,
+      "color": "#E6E9EE",
+      "orientation": "wrap",
+      "maxLines": 2,
+      "showLine": false,
+      "lineColor": "#4A5565",
+      "lineWidth": 1
+    },
+    "lines": {
+      "hGrid": {
+        "show": true,
+        "color": "#2E3846",
+        "width": 1,
+        "style": "solid"
+      },
+      "vGrid": {
+        "show": false,
+        "color": "#2E3846",
+        "width": 1,
+        "style": "solid"
+      },
+      "connectors": {
+        "show": true,
+        "color": "#8794A6",
+        "width": 1,
+        "style": "dashed"
+      },
+      "zero": {
+        "show": true,
+        "color": "#4A5565",
+        "width": 1,
+        "style": "solid"
+      }
+    }
+  }
+}

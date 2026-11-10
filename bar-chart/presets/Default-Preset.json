@@ -6,84 +6,514 @@
   "exported": "2026-10-22T15:18:36.554Z",
   "settings": {
     "icon": {
+      "show": true,
+      "source": "builtin",
       "builtinId": "fg-customers",
+      "size": 24,
       "color": "#00005E",
       "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAAANRJREFUeAHtlc0JwjAYht9owYMO4aneO4GCzuEorZs4QgZwBvHsxY7QgxcRjV/EQLRNmpBUBPtA4QskvE2e/ADfYpatTil9iEyiCgExRQcwVaTZUrzKDQIQYOX1PublgVeynTT0yREAo4jR8LymcmEKCJoBkQuBuWrUAo77XYEAaKnfVmCAjkka/qBARKJLljAGbgvwlZzr42jfV5fbZFvrJc+BdhacaRvXS36iS3UJaJPsJvUTV8m+m+FPJdukugRYJTtLNQWEXtfGAEZPnfc98Qs8ACCxQHUCSt8MAAAAAElFTkSuQmCC",
-      "name": "Details.png"
+      "name": "Details.png",
+      "mask": false,
+      "w": 0,
+      "h": 0
     },
     "title": {
+      "show": true,
+      "align": "left",
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#68707D",
+      "italic": false,
       "text": "Sender Segment"
     },
+    "explanation": {
+      "show": true,
+      "reserveSpace": false,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": true
+    },
+    "export": {
+      "button": "hover"
+    },
+    "data": {
+      "maxRows": 1000
+    },
     "card": {
-      "gap": 10
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "gap": 10,
+      "plotBg": "#FFFFFF",
+      "plotBgOpacity": 0
+    },
+    "numbers": {
+      "mode": "all",
+      "font": "Lato",
+      "nullAs": "skip"
+    },
+    "format": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "pctFromRatio": true,
+      "thousands": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "unitSpace": true,
+      "plusSign": false,
+      "negStyle": "minus"
     },
     "chart": {
       "orientation": "horizontal",
+      "layout": "regular",
+      "barLevel": 1,
+      "showAll": false,
+      "showBars": true,
+      "showLines": true,
+      "seriesBy": "auto",
+      "style": "bar",
+      "axisType": "auto",
+      "overlapOffset": 45,
+      "animate": true,
       "animMs": 450
+    },
+    "progress": {
+      "max": "auto",
+      "fixed": 100,
+      "trackColor": "#E9ECF0",
+      "trackOpacity": 100,
+      "trackBorder": false,
+      "trackBorderColor": "#D5D9DF",
+      "trackShadow": false,
+      "showRemaining": false,
+      "remainingColor": "#8C96A3"
+    },
+    "lollipop": {
+      "stemWidth": 3,
+      "stemOpacity": 100,
+      "head": "circle",
+      "headSize": 14,
+      "headFill": "bar",
+      "headColor": "#FFFFFF",
+      "ringWidth": 3,
+      "valueInHead": false
+    },
+    "diverging": {
+      "labels": "axis",
+      "symmetric": true,
+      "firstSide": "neg",
+      "order": "auto"
     },
     "spacing": {
       "widthMode": "px",
       "width": 29,
-      "px": 12
+      "px": 12,
+      "seriesGap": 2,
+      "groupGap": 14,
+      "edgePad": 50
     },
     "shape": {
       "radius": 0,
       "corners": "all",
-      "endShape": "pill"
+      "endShape": "pill",
+      "arrowDepth": 10
     },
     "fill": {
       "type": "gradient",
+      "gradientDir": "along",
       "gradientTo": "color",
-      "gradientColor": "#ED8095"
+      "gradientColor": "#ED8095",
+      "gradientStrength": 45,
+      "twoTone": 14,
+      "opacity": 100
+    },
+    "border": {
+      "show": false,
+      "width": 1,
+      "colorMode": "darker",
+      "color": "#263244",
+      "opacity": 100,
+      "style": "solid"
+    },
+    "shadow": {
+      "show": false,
+      "color": "#263244",
+      "opacity": 18,
+      "blur": 6,
+      "dx": 0,
+      "dy": 2
+    },
+    "hover": {
+      "dimOthers": true,
+      "dimOpacity": 45,
+      "outline": false
     },
     "colors": {
       "mode": "single",
+      "dimLevel": "auto",
+      "highlightBy": "auto",
+      "paletteEdits": {},
       "single": "#5F6B9F",
+      "palette": "house",
+      "posColor": "#0E7C66",
+      "negColor": "#B4431E",
       "lowColor": "#FFAAFF",
-      "highColor": "#5500FF"
+      "highColor": "#5500FF",
+      "highlightTop": 0,
+      "highlightColor": "#EB644C",
+      "mutedColor": "#B8C2D0",
+      "rules": []
     },
     "labels": {
-      "totalInLegend": false,
+      "show": true,
+      "position": "outsideEnd",
       "content": "valuePct",
+      "which": "all",
       "size": 12,
       "weight": 500,
+      "italic": false,
       "colorMode": "custom",
+      "blend": -35,
       "color": "#000000",
+      "offset": 4,
       "overlap": "shrink",
+      "insideFallback": true,
+      "badge": "none",
+      "badgeFill": "bar",
+      "badgeColor": "#FFFFFF",
+      "badgeBorder": true,
+      "segments": true,
+      "totals": true,
       "totalSize": 10,
-      "totalWeight": 400
+      "totalWeight": 400,
+      "totalColor": "#17202B",
+      "totalInLegend": false,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      },
+      "totalFmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      }
     },
     "axisV": {
-      "show": false
+      "show": false,
+      "position": "auto",
+      "base": "zero",
+      "padding": 20,
+      "manualMin": 0,
+      "maxMode": "auto",
+      "manualMax": 100,
+      "ticks": 5,
+      "reversed": false,
+      "title": "",
+      "font": "Lato",
+      "size": 10,
+      "weight": 400,
+      "color": "#55606E",
+      "showLine": false,
+      "lineColor": "#C9CDD4",
+      "useGlobalFormat": true,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 0,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      }
     },
     "axisC": {
+      "show": true,
+      "position": "auto",
+      "placement": "axis",
+      "orientation": "wrap",
+      "maxLines": 2,
+      "maxWidth": 0,
       "align": "start",
+      "title": "",
+      "font": "Lato",
       "size": 12,
       "weight": 400,
       "color": "#5A5A5A",
-      "sort": "valDesc"
+      "colorByBar": false,
+      "pillRadius": 10,
+      "showLine": false,
+      "lineColor": "#C9CDD4",
+      "lineWidth": 1,
+      "dateFormat": "auto",
+      "sort": "valDesc",
+      "hideLabelsAuto": true
+    },
+    "brk": {
+      "show": true,
+      "style": "slash",
+      "pos": 12,
+      "bandColor": "#FFFFFF",
+      "lineColor": "#55606E"
+    },
+    "panels": {
+      "layout": "grid",
+      "columns": 0,
+      "shareAxis": true,
+      "showTitle": true,
+      "titleSize": 12,
+      "titleWeight": 600,
+      "titleColor": "#17202B",
+      "titleAlign": "left",
+      "gap": 14
     },
     "lines": {
       "valueGrid": {
-        "show": false
+        "show": false,
+        "color": "#ECEEF1",
+        "width": 1,
+        "style": "solid"
+      },
+      "catGrid": {
+        "show": false,
+        "color": "#ECEEF1",
+        "width": 1,
+        "style": "solid"
       },
       "zero": {
+        "show": false,
         "color": "#000000",
-        "width": 3
+        "width": 3,
+        "style": "solid"
+      }
+    },
+    "refs": [],
+    "target": {
+      "show": true,
+      "style": "line",
+      "color": "#17202B",
+      "width": 2,
+      "extend": 20,
+      "inTooltip": true
+    },
+    "lineDefaults": {
+      "label": "",
+      "color": "",
+      "width": 2,
+      "style": "solid",
+      "curve": "straight",
+      "opacity": 100,
+      "marker": "circle",
+      "markerSize": 6,
+      "markerFill": "white",
+      "area": false,
+      "areaOpacity": 14,
+      "labels": false,
+      "labelSize": 10,
+      "labelWeight": 600,
+      "labelPos": "above",
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
       }
     },
     "lineAxis": {
-      "show": false
+      "mode": "secondary",
+      "show": false,
+      "base": "auto",
+      "manualMin": 0,
+      "maxMode": "auto",
+      "manualMax": 100,
+      "sync": false,
+      "title": "",
+      "size": 10,
+      "color": "#8C96A3",
+      "useGlobalFormat": true,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 0,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      }
     },
     "legend": {
-      "marker": "circle"
+      "show": true,
+      "position": "top",
+      "align": "start",
+      "marker": "circle",
+      "markerSize": 10,
+      "font": "Lato",
+      "size": 11,
+      "weight": 400,
+      "color": "#55606E",
+      "showTitle": false,
+      "title": "",
+      "interactive": true,
+      "hoverHighlight": true,
+      "showValues": false,
+      "sort": "data",
+      "includeLines": true,
+      "includeRefs": false,
+      "includeTarget": true,
+      "gap": 14,
+      "box": false,
+      "boxColor": "#FFFFFF",
+      "boxBorder": "#E2E4E8",
+      "autoHide": true,
+      "topNNames": "both"
     },
     "icons": {
-      "fallback": "fg-bar-chart-solid"
+      "show": false,
+      "placement": "axis",
+      "size": 18,
+      "bg": "none",
+      "bgMode": "bar",
+      "bgColor": "#F2F4F7",
+      "tint": "auto",
+      "color": "#263244",
+      "accent": false,
+      "gap": 6,
+      "fallback": "fg-bar-chart-solid",
+      "by": "auto"
     },
     "topN": {
       "enabled": true,
-      "level": "0"
+      "n": 10,
+      "level": "0",
+      "scope": "parent",
+      "direction": "top",
+      "others": true,
+      "othersAgg": "sum",
+      "label": "Others",
+      "color": "#B8BEC7",
+      "othersLast": true
+    },
+    "groups": {
+      "mode": "auto",
+      "custom": {},
+      "assignBy": "auto",
+      "assign": {},
+      "lineStyle": "bracket",
+      "lineWidth": 1,
+      "color": "#8C96A3",
+      "size": 11,
+      "weight": 600,
+      "textColor": "#55606E",
+      "showTotal": false,
+      "separator": " · ",
+      "band": false,
+      "bandOpacity": 5,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "breakdown": {
+      "show": false,
+      "sep": " · ",
+      "colorMode": "shades",
+      "dividers": true,
+      "showValues": false,
+      "showNames": false,
+      "position": "inside",
+      "size": 10,
+      "weight": 400,
+      "labelColorMode": "auto",
+      "labelColor": "#17202B",
+      "minPx": 12,
+      "order": "valDesc",
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "drill": {
+      "enabled": true,
+      "mode": "expandOne",
+      "tintChildren": true,
+      "showBar": true
+    },
+    "tooltip": {
+      "show": true,
+      "sort": "valDesc",
+      "showPct": true,
+      "showSeries": true,
+      "showBreakdown": true,
+      "showExtra": true,
+      "showLines": true,
+      "maxRows": 15,
+      "fullNumbers": true,
+      "pinOnClick": false,
+      "ownFormat": false,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "interaction": {
+      "rightClickMenu": true,
+      "dblclick": "drill",
+      "dialog": "onTop",
+      "selectInTableau": true
+    },
+    "comments": {
+      "show": true,
+      "display": "marker",
+      "marker": "dot",
+      "color": "#EB644C",
+      "size": 11,
+      "maxWidth": 160,
+      "author": ""
     }
   }
 }

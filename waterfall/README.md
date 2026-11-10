@@ -89,6 +89,12 @@ With *Starts at → Close to the data*, the axis begins a little below the lowes
 the Figma design. Start and End bars are then cut short, so they get the clipped-bar marker. Switch to *Zero* for full
 bars.
 
+## Presets
+
+The last tab of the Format window saves and loads every setting of the chart. **Export** a preset as "Look only" (leaves out per-bar settings, breakdown members and colours, custom groups, bar labels, title and explanation text, row limit) or "Everything"; download it as .json, copy it, or keep it under **My presets** on this computer. **Import** from a file or pasted text; "Keep this chart's…" keeps the sheet-specific settings. Presets store only values that differ from the defaults, and carry a version so older files keep working.
+
+Sample files to import: `presets/Default.json` (the default look) and `presets/Dark.json` (dark card, light text) (in the `presets/` folder; the Format window doesn't list them, use Import → Choose file).
+
 ## Settings and deploying
 
 Change settings are stored per measure, by the pill's name (e.g. `SUM(Online Sales)`). Everything is saved in the workbook.

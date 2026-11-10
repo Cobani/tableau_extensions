@@ -29,6 +29,8 @@
   const row = kit.row, textRow = kit.textRow, numberRow = kit.numberRow, rangeRow = kit.rangeRow,
     checkboxRow = kit.checkboxRow, selectRow = kit.selectRow, segRow = kit.segRow, colorRow = kit.colorRow,
     unitRow = kit.unitRow, fontFamilyRow = kit.fontFamilyRow, fontRows = kit.fontRows;
+  const help = ExtDialog.help, copyText = ExtDialog.copyText, download = ExtDialog.download,
+    getAt = ExtDialog.getAt, setAt = ExtDialog.setAt, delAt = ExtDialog.delAt;
 
   var TABS = [
     { id: 'icon', label: 'Icon', build: buildIconTab, keys: ['icon'] },
@@ -37,7 +39,8 @@
     { id: 'change', label: '% Change', build: buildChangeTab, keys: ['change'] },
     { id: 'bottom', label: 'Bottom', build: buildBottomTab, keys: ['bottom'] },
     { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data', 'interaction'] },
-    { id: 'details', label: 'Tooltip', build: buildDetailsTab, keys: ['details'] }
+    { id: 'details', label: 'Tooltip', build: buildDetailsTab, keys: ['details'] },
+    { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
   ];
 
   // ---------------------------------------------------------------------------
@@ -544,6 +547,253 @@
     g.appendChild(addRow);
     g.appendChild(colorRow(rules.length ? 'Otherwise' : 'Color', path + '.other'));
     g.appendChild(h('div', { className: 'help', textContent: 'The first matching rule wins. Rules compare the raw value: a 0–1 ratio stays 0.45 (not 45%), and K / M / B are not applied.' }));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Presets
+  // ---------------------------------------------------------------------------
+  /** Rebuild the open tab after a change that shows or hides rows. */
+  function rebuild () { buildTabs(); }
+
+  var PRESET_TYPE = 'tableau-kpi-card-preset';
+  var PRESET_STORE = 'kpicard:presets:v1';
+
+  /**
+   * Settings tied to this worksheet's measures and data (title and explanation text,
+   * per-measure tooltip items, row limit). "Look only" presets leave them out, and an
+   * import keeps the card's own unless asked otherwise.
+   */
+  var FIELD_PATHS = [
+    'title.text', 'explanation.text', // text that names this card's measure
+    'details.items', // per-measure tooltip settings, keyed by Tooltip-tile measure
+    'data.maxRows' // how many rows this worksheet sends
+  ];
+
+  /**
+   * Preset format version. Presets keep only the settings that differ from the
+   * defaults, so new options reach old presets on their own. When a setting
+   * changes shape, bump this and add a step to PRESET_MIGRATIONS (key = the
+   * version it upgrades from) so older preset files keep working.
+   */
+  var PRESET_VERSION = 1;
+  var PRESET_MIGRATIONS = {};
+
+  function migratePreset (pr) {
+    var v = pr.version || 1;
+    if (v > PRESET_VERSION) throw new Error('This preset was made with a newer KPI Card. Update the extension, then import it again.');
+    for (; v < PRESET_VERSION; v++) if (PRESET_MIGRATIONS[v]) pr = PRESET_MIGRATIONS[v](pr) || pr;
+    pr.version = PRESET_VERSION;
+    return pr;
+  }
+
+  var presetUi = { scope: 'look', name: '', keepFields: true, msg: null, pasted: '' };
+
+  /** Only the settings that differ from the defaults (smaller files, future-proof). */
+  function diffFromDefaults (cur, def) {
+    if (Array.isArray(cur) || cur == null || typeof cur !== 'object') return JSON.stringify(cur) === JSON.stringify(def) ? undefined : KpiCardConfig.clone(cur);
+    if (def == null || typeof def !== 'object' || Array.isArray(def) || !Object.keys(def).length) {
+      return Object.keys(cur).length ? KpiCardConfig.clone(cur) : undefined;
+    }
+    var out = {};
+    Object.keys(cur).forEach(function (k) {
+      var d = diffFromDefaults(cur[k], def[k]);
+      if (d !== undefined) out[k] = d;
+    });
+    return Object.keys(out).length ? out : undefined;
+  }
+
+  function makePreset (scope, name) {
+    var s = KpiCardConfig.clone(cfg);
+    if (scope === 'look') FIELD_PATHS.forEach(function (p) { delAt(s, p); });
+    return {
+      type: PRESET_TYPE,
+      version: PRESET_VERSION,
+      name: name || 'KPI Card preset',
+      scope: scope,
+      exported: new Date().toISOString(),
+      settings: diffFromDefaults(s, KpiCardConfig.DEFAULTS) || {}
+    };
+  }
+
+  /** Accepts a preset file, or the raw settings JSON of a workbook. */
+  function parsePreset (text) {
+    var o;
+    try { o = JSON.parse(String(text).replace(/^﻿/, '')); } catch (e) { throw new Error('This isn’t valid JSON. Paste the whole preset, from { to }.'); }
+    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error('This isn’t a KPI Card preset.');
+    if (o.type && o.type !== PRESET_TYPE) throw new Error('This preset is for another extension (' + o.type + ').');
+    if (o.type === PRESET_TYPE) {
+      if (!o.settings || typeof o.settings !== 'object') throw new Error('The preset has no settings.');
+      return migratePreset(o);
+    }
+    if (o.kpiCard) { try { o = typeof o.kpiCard === 'string' ? JSON.parse(o.kpiCard) : o.kpiCard; } catch (e) { /* fall through */ } }
+    var known = Object.keys(o).filter(function (k) { return k in KpiCardConfig.DEFAULTS; });
+    if (!known.length) throw new Error('No KPI Card settings found in this file.');
+    return { type: PRESET_TYPE, version: PRESET_VERSION, name: 'Imported settings', scope: 'all', settings: o };
+  }
+
+  function applyImported (pr, keepFields) {
+    pr = migratePreset(pr);
+    var next = KpiCardConfig.merge(KpiCardConfig.DEFAULTS, pr.settings);
+    var own = pr.scope === 'look' || keepFields;
+    FIELD_PATHS.forEach(function (p) {
+      var has = getAt(pr.settings, p) !== undefined;
+      if (own || !has) setAt(next, p, KpiCardConfig.clone(getAt(cfg, p)));
+    });
+    cfg = next;
+    changed();
+    buildTabs();
+  }
+
+  function loadStore () {
+    try { var a = JSON.parse(localStorage.getItem(PRESET_STORE) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  }
+
+  function saveStore (list) {
+    try { localStorage.setItem(PRESET_STORE, JSON.stringify(list)); return true; } catch (e) { return false; }
+  }
+
+  function fileName (name) {
+    return (String(name || 'kpi-card-preset').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'kpi-card-preset') + '.json';
+  }
+
+  function presetMsg (g) {
+    if (!presetUi.msg) return;
+    g.appendChild(h('p', { className: 'preset-msg' + (presetUi.msg.error ? ' is-error' : ''), textContent: presetUi.msg.text }));
+    presetUi.msg = null;
+  }
+
+  function say (text, error) { presetUi.msg = { text: text, error: !!error }; rebuild(); }
+
+  function describe (pr) {
+    var d = pr.exported ? new Date(pr.exported) : null;
+    return (pr.scope === 'look' ? 'Look only' : 'Everything') + (d && !isNaN(d) ? ' · ' + d.toLocaleDateString() : '');
+  }
+
+  function buildPresetsTab (p) {
+    presetMsg(p);
+    // ---- Export
+    var g1 = group(p, 'Export');
+    g1.appendChild(help('Saves this card’s settings as a preset you can import into another KPI Card, in this or any workbook.'));
+    var rName = row('Preset name');
+    var name = h('input', { type: 'text', value: presetUi.name, placeholder: 'e.g. Dark card' });
+    name.addEventListener('input', function () { presetUi.name = name.value; });
+    rName.appendChild(name);
+    g1.appendChild(rName);
+    var rScope = row('Include');
+    var seg = h('div', { className: 'seg' });
+    [['look', 'Look only'], ['all', 'Everything']].forEach(function (o) {
+      var b = h('button', { type: 'button', textContent: o[1] });
+      b.setAttribute('aria-pressed', String(presetUi.scope === o[0]));
+      b.addEventListener('click', function () { presetUi.scope = o[0]; rebuild(); });
+      seg.appendChild(b);
+    });
+    rScope.appendChild(seg);
+    g1.appendChild(rScope);
+    g1.appendChild(help(presetUi.scope === 'look'
+      ? 'Icon, big number, % change, bottom, card, tooltip styles… Leaves out what belongs to this sheet’s data: title and explanation text, per-measure tooltip items, row limit.'
+      : 'Every setting, including title and explanation text and per-measure tooltip items. Best for a copy of the same sheet.'));
+
+    var ta = h('textarea', { className: 'preset-json', readOnly: true, spellcheck: false });
+    var current = function () { return JSON.stringify(makePreset(presetUi.scope, presetUi.name.trim()), null, 2); };
+    var btns = h('div', { className: 'inline preset-btns' });
+    var bDl = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Download .json' });
+    var bCp = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Copy' });
+    var bSave = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Save to My presets' });
+    var bShow = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Show JSON' });
+    bDl.addEventListener('click', function () {
+      var t = current();
+      ta.value = t;
+      say(download(t, fileName(presetUi.name)) ? 'Downloaded ' + fileName(presetUi.name) + '. If nothing appeared (Tableau Desktop can block downloads), use Copy and paste it into a text file.' : 'Download isn’t available here. Use Copy instead.', false);
+    });
+    bCp.addEventListener('click', function () {
+      var t = current();
+      ta.value = t; ta.hidden = false;
+      copyText(t, ta).then(function (ok) { say(ok ? 'Copied. Paste it into a .json or text file, an email or chat.' : 'Couldn’t copy. Select the text below and copy it yourself.', !ok); });
+    });
+    bSave.addEventListener('click', function () {
+      var nm = presetUi.name.trim() || 'Preset ' + (loadStore().length + 1);
+      var list = loadStore().filter(function (x) { return x.name !== nm; });
+      var pr = makePreset(presetUi.scope, nm);
+      list.unshift(pr);
+      say(saveStore(list) ? 'Saved “' + nm + '” to My presets.' : 'Couldn’t save in this browser. Download or copy the preset instead.', false);
+    });
+    bShow.addEventListener('click', function () { ta.value = current(); ta.hidden = !ta.hidden; });
+    btns.append(bDl, bCp, bSave, bShow);
+    g1.appendChild(btns);
+    ta.hidden = true;
+    g1.appendChild(ta);
+
+    // ---- Import
+    var g2 = group(p, 'Import');
+    g2.appendChild(help('Applies a preset to this card. Cancel at the bottom undoes it.'));
+    g2.appendChild((function () {
+      var r = row('Keep this card’s');
+      var input = h('input', { type: 'checkbox' });
+      input.checked = presetUi.keepFields;
+      input.addEventListener('change', function () { presetUi.keepFields = input.checked; });
+      r.appendChild(h('div', { className: 'inline' }, [input, h('span', { className: 'help preset-inline-help', textContent: 'title and explanation text, per-measure tooltip items, row limit' })]));
+      return r;
+    })());
+    var file = h('input', { type: 'file', accept: '.json,application/json,text/plain' });
+    file.style.display = 'none';
+    file.addEventListener('change', function () {
+      var f = file.files && file.files[0];
+      if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        try {
+          var pr = parsePreset(rd.result);
+          applyImported(pr, presetUi.keepFields);
+          say('Applied “' + (pr.name || f.name) + '” (' + describe(pr) + ').', false);
+        } catch (e) { say(e.message, true); }
+      };
+      rd.onerror = function () { say('Couldn’t read the file.', true); };
+      rd.readAsText(f);
+    });
+    var paste = h('textarea', { className: 'preset-json', spellcheck: false, placeholder: 'Or paste a preset here' });
+    paste.value = presetUi.pasted;
+    paste.addEventListener('input', function () { presetUi.pasted = paste.value; });
+    var ib = h('div', { className: 'inline preset-btns' });
+    var bFile = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Choose file…' });
+    bFile.addEventListener('click', function () { file.value = ''; file.click(); });
+    var bPaste = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Apply pasted' });
+    bPaste.addEventListener('click', function () {
+      if (!paste.value.trim()) { say('Paste a preset into the box first.', true); return; }
+      try {
+        var pr = parsePreset(paste.value);
+        applyImported(pr, presetUi.keepFields);
+        presetUi.pasted = '';
+        say('Applied “' + pr.name + '” (' + describe(pr) + ').', false);
+      } catch (e) { say(e.message, true); }
+    });
+    ib.append(bFile, bPaste, file);
+    g2.appendChild(ib);
+    g2.appendChild(paste);
+
+    // ---- My presets (this browser)
+    var g3 = group(p, 'My presets');
+    var list = loadStore();
+    if (!list.length) {
+      g3.appendChild(h('p', { className: 'note', textContent: 'None yet. “Save to My presets” keeps a preset on this computer for this extension, ready for any workbook. Download or copy a preset to share it or move it to another computer.' }));
+    } else {
+      g3.appendChild(help('Kept on this computer for this extension (any workbook). Clearing the browser data of Tableau removes them, so download the ones you want to keep.'));
+      list.forEach(function (pr, i) {
+        var r = h('div', { className: 'preset-item' });
+        var t = h('div', { className: 'preset-name' }, [h('b', { textContent: pr.name }), h('span', { className: 'help', textContent: ' ' + describe(pr) })]);
+        var apply = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Apply' });
+        apply.addEventListener('click', function () { applyImported(pr, presetUi.keepFields); say('Applied “' + pr.name + '”.', false); });
+        var dl = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Download' });
+        dl.addEventListener('click', function () { download(JSON.stringify(pr, null, 2), fileName(pr.name)); });
+        var del = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Delete', title: 'Delete this preset' });
+        del.addEventListener('click', function () {
+          if (del.dataset.sure) { var l = loadStore(); l.splice(i, 1); saveStore(l); say('Deleted “' + pr.name + '”.', false); return; }
+          del.dataset.sure = '1'; del.textContent = 'Sure?';
+          setTimeout(function () { delete del.dataset.sure; del.textContent = 'Delete'; }, 2500);
+        });
+        r.append(t, h('div', { className: 'inline' }, [apply, dl, del]));
+        g3.appendChild(r);
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `kpiCard.trex`.
 
 ## 2.3.0 — 2026-11-10
+- New Presets tab: save a look and reuse it in other worksheets or workbooks (export / import as a file or via the clipboard, My presets in this browser).
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).
 - New option Click selects in Tableau (Card tab, off by default): click the card or a trend line point to select its date so dashboard actions fire.
 - Added a local preview page (dev/preview.html) with test data sets, for trying the card without Tableau.

@@ -5,7 +5,292 @@
   "scope": "all",
   "exported": "2026-10-20T10:00:00.000Z",
   "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-table",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "show": true,
+      "align": "left",
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#68707D",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "reserveSpace": false,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": true,
+      "text": "From category (rows) to category (columns), revenue (M)"
+    },
+    "data": {
+      "maxRows": 1000
+    },
+    "card": {
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "gap": 10,
+      "plotBg": "#FFFFFF",
+      "plotBgOpacity": 0
+    },
+    "numbers": {
+      "mode": "all",
+      "font": "Lato"
+    },
+    "format": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "pctFromRatio": true,
+      "thousands": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "unitSpace": true,
+      "plusSign": false,
+      "negStyle": "minus"
+    },
+    "layout": {
+      "measures": "cell",
+      "transpose": false,
+      "square": "on",
+      "colWidth": "fit",
+      "colPx": 90,
+      "minColPx": 60,
+      "colMax": 0,
+      "fillHeight": true,
+      "rowHeight": "auto",
+      "rowPx": 46,
+      "rowHeaderPx": 0,
+      "gapX": 8,
+      "gapY": 8,
+      "freeze": true,
+      "banding": false,
+      "bandColor": "#F7F8FA",
+      "hideEmptyRows": false,
+      "hideEmptyCols": false,
+      "diagonal": true,
+      "diagonalText": "—",
+      "nullText": "n/a",
+      "zeroText": "",
+      "emptyStyle": "tile"
+    },
+    "measureHeader": {
+      "show": true,
+      "position": "inner"
+    },
+    "calc": {
+      "direction": "table"
+    },
+    "metrics": {
+      "order": [
+        "others",
+        "pct",
+        "diff",
+        "pctDiff",
+        "running",
+        "rank"
+      ],
+      "main": {
+        "show": true
+      },
+      "others": {
+        "show": true,
+        "names": true
+      },
+      "pct": {
+        "show": true,
+        "dir": "inherit",
+        "decimals": 0,
+        "label": "",
+        "onTotals": false
+      },
+      "diff": {
+        "show": false,
+        "dir": "across",
+        "vs": "prev",
+        "label": "",
+        "arrows": true,
+        "signColors": true,
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "thousands": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "unitSpace": true,
+          "plusSign": true,
+          "negStyle": "minus"
+        }
+      },
+      "pctDiff": {
+        "show": false,
+        "dir": "across",
+        "vs": "prev",
+        "decimals": 1,
+        "label": "",
+        "arrows": true,
+        "signColors": true
+      },
+      "running": {
+        "show": false,
+        "dir": "across",
+        "label": "Σ ",
+        "fmt": {
+          "scale": "dynamic",
+          "decimals": 1,
+          "pctFromRatio": true,
+          "thousands": true,
+          "unit": "",
+          "unitPosition": "suffix",
+          "unitSpace": true,
+          "plusSign": false,
+          "negStyle": "minus"
+        }
+      },
+      "rank": {
+        "show": false,
+        "dir": "inherit",
+        "order": "desc",
+        "label": "#"
+      },
+      "posColor": "#0E7C66",
+      "negColor": "#B4431E",
+      "layout": "below",
+      "sep": " · "
+    },
+    "cells": {
+      "radius": 6,
+      "padX": 6,
+      "padY": 6,
+      "bg": "#F3F1FC",
+      "bgOpacity": 100,
+      "border": true,
+      "borderStyle": "solid",
+      "borderWidth": 1,
+      "borderColor": "#E4E0F5",
+      "hAlign": "center",
+      "vAlign": "middle",
+      "main": {
+        "font": "Lato",
+        "size": 15,
+        "weight": 700,
+        "color": "#17202B",
+        "italic": false
+      },
+      "secondary": {
+        "size": 10,
+        "weight": 400,
+        "color": "#55606E",
+        "opacity": 80,
+        "italic": false
+      },
+      "emptyBg": "#F4F4F2",
+      "emptyBorder": "#D2D2CC",
+      "emptyBorderStyle": "dashed",
+      "emptyColor": "#8C96A3",
+      "emptySize": 11,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "colors": {
+      "mode": "heat",
+      "scope": "table",
+      "low": "#F3F1FC",
+      "high": "#7D5FD9",
+      "mid": "#FFFFFF",
+      "neg": "#D9604A",
+      "pos": "#2E8B6E",
+      "autoText": true,
+      "includeTotals": false,
+      "barColor": "#7D5FD9",
+      "barOpacity": 35,
+      "rules": []
+    },
     "headers": {
+      "merge": true,
+      "col": {
+        "font": "Lato",
+        "size": 11,
+        "weight": 700,
+        "color": "#27357E",
+        "italic": false,
+        "upper": true,
+        "letterSpacing": 4
+      },
+      "colOuter": {
+        "font": "Lato",
+        "size": 12,
+        "weight": 700,
+        "color": "#17202B",
+        "italic": false,
+        "upper": false,
+        "letterSpacing": 0
+      },
+      "row": {
+        "font": "Lato",
+        "size": 13,
+        "weight": 700,
+        "color": "#27357E",
+        "italic": false,
+        "upper": false,
+        "letterSpacing": 0
+      },
+      "rowOuter": {
+        "font": "Lato",
+        "size": 13,
+        "weight": 700,
+        "color": "#17202B",
+        "italic": false,
+        "upper": false,
+        "letterSpacing": 0
+      },
+      "colOrient": "horizontal",
+      "colOuterOrient": "horizontal",
+      "colAlign": "center",
+      "colOuterAlign": "center",
+      "colVAlign": "bottom",
+      "rowOrient": "horizontal",
+      "rowOuterOrient": "horizontal",
+      "rowAlign": "left",
+      "rowOuterAlign": "left",
+      "rowVAlign": "middle",
+      "rowOuterVAlign": "top",
+      "wrap": true,
+      "bg": "#FFFFFF",
+      "bgOpacity": 0,
+      "corner": "none",
+      "cornerText": "",
+      "cornerStyle": {
+        "font": "Lato",
+        "size": 11,
+        "weight": 400,
+        "color": "#8C96A3",
+        "italic": true,
+        "upper": false,
+        "letterSpacing": 0
+      },
+      "lines": false,
+      "lineColor": "#D5D9DF",
       "memberColors": {
         "Apparel": "#7B4FC9",
         "Footwear": "#7B4FC9",
@@ -13,15 +298,71 @@
       }
     },
     "totals": {
+      "rowGrand": true,
+      "rowGrandPos": "bottom",
       "rowGrandLabel": "IN",
-      "colGrandLabel": "OUT"
+      "colGrand": true,
+      "colGrandPos": "right",
+      "colGrandLabel": "OUT",
+      "subLabel": "{member} total",
+      "tile": false,
+      "bg": "#F3F1FC",
+      "label": {
+        "font": "Lato",
+        "size": 11,
+        "weight": 700,
+        "color": "#17202B",
+        "italic": false,
+        "upper": true,
+        "letterSpacing": 4
+      },
+      "value": {
+        "font": "Lato",
+        "size": 13,
+        "weight": 700,
+        "color": "#17202B",
+        "italic": false
+      },
+      "collapsible": true,
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "thousands": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "unitSpace": true,
+        "plusSign": false,
+        "negStyle": "minus"
+      }
     },
-    "layout": {
-      "square": "on",
-      "diagonal": true
+    "sort": {
+      "rows": "data",
+      "cols": "data",
+      "rowsByDir": "desc"
     },
-    "explanation": {
-      "text": "From category (rows) to category (columns), revenue (M)"
+    "tooltip": {
+      "show": true,
+      "showAll": true,
+      "showPct": true,
+      "showExtra": true,
+      "fullNumbers": true
+    },
+    "interaction": {
+      "rightClickMenu": true,
+      "crosshair": true,
+      "crosshairColor": "#EB644C",
+      "dblclick": "format",
+      "dialog": "onTop",
+      "selectInTableau": false,
+      "headerSort": true
+    },
+    "export": {
+      "button": "hover",
+      "includeTitle": true,
+      "excelSecondary": "rich",
+      "dataPct": true,
+      "dataTotals": false
     }
   }
 }

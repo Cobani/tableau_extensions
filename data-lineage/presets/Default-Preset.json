@@ -4,5 +4,169 @@
   "name": "Default",
   "scope": "look",
   "exported": "2026-10-28T09:00:00.000Z",
-  "settings": {}
+  "settings": {
+    "icon": {
+      "show": false,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": "",
+      "mask": false,
+      "w": 0,
+      "h": 0
+    },
+    "title": {
+      "show": true,
+      "align": "left",
+      "font": "Lato",
+      "size": 16,
+      "weight": 700,
+      "color": "#17202B",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "reserveSpace": false,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": false
+    },
+    "card": {
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "gap": 12,
+      "plotBg": "#FFFFFF",
+      "plotBgOpacity": 0
+    },
+    "levels": [
+      {
+        "color": "#4A5468",
+        "mono": true,
+        "count": true,
+        "subPos": "above"
+      },
+      {
+        "color": "#0F7C7C",
+        "mono": false,
+        "count": false,
+        "subPos": "below"
+      },
+      {
+        "color": "#7B4FD1",
+        "mono": false,
+        "count": false,
+        "subPos": "below"
+      },
+      {
+        "color": "#C2426B",
+        "mono": false,
+        "count": false,
+        "subPos": "below"
+      },
+      {
+        "color": "#E08A2E",
+        "mono": false,
+        "count": false,
+        "subPos": "below"
+      },
+      {
+        "color": "#2F7FC1",
+        "mono": false,
+        "count": false,
+        "subPos": "below"
+      }
+    ],
+    "data": {
+      "maxRows": 1000,
+      "nulls": "skip",
+      "sort": "flow"
+    },
+    "headers": {
+      "show": true,
+      "font": "Lato",
+      "size": 11,
+      "weight": 700,
+      "color": "#68707D",
+      "uppercase": true,
+      "spacing": 0.06
+    },
+    "nodes": {
+      "align": "flow",
+      "minWidth": 140,
+      "maxWidth": 240,
+      "gap": 10,
+      "padX": 10,
+      "padY": 6,
+      "radius": 4,
+      "bg": "#FFFFFF",
+      "border": "#D5D9DF",
+      "borderWidth": 1,
+      "marker": "square",
+      "markerSize": 8,
+      "maxLines": 2,
+      "font": "Lato",
+      "size": 12,
+      "weight": 600,
+      "color": "#17202B",
+      "subFont": "Lato",
+      "subSize": 11,
+      "subWeight": 400,
+      "subColor": "#68707D"
+    },
+    "links": {
+      "curve": "bezier",
+      "color": "#D5D9DF",
+      "width": 1.2,
+      "opacity": 100,
+      "minSpace": 48
+    },
+    "highlight": {
+      "color": "#2F5BD3",
+      "width": 2,
+      "nodeBg": "#EEF3FD",
+      "nodeBorder": "#2F5BD3",
+      "boldTitle": true,
+      "fade": "none",
+      "fadeOpacity": 35,
+      "hover": true,
+      "matchColor": "#EB644C"
+    },
+    "legend": {
+      "show": true,
+      "position": "header",
+      "useHeaders": false,
+      "showSelected": true,
+      "selectedText": "Selected Node",
+      "font": "Lato",
+      "size": 12,
+      "color": "#3D4552"
+    },
+    "search": {
+      "show": true,
+      "placeholder": "Search nodes…",
+      "mode": "highlight",
+      "width": 180
+    },
+    "collapse": {
+      "button": true,
+      "levelButtons": true,
+      "startCollapsed": false
+    },
+    "tooltip": {
+      "show": true,
+      "showDetails": true,
+      "showCounts": true
+    },
+    "interaction": {
+      "rightClickMenu": true,
+      "dblclick": "format",
+      "dialog": "onTop",
+      "selectInTableau": true
+    }
+  }
 }

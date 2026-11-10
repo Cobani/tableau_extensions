@@ -759,6 +759,22 @@
   var PRESET_STORE = 'matrixtable:presets:v1';
 
   /**
+   * Version of the settings shape inside a preset. When a setting is renamed, moved or
+   * changes meaning, raise this and add a step to PRESET_MIGRATIONS (key = the version the
+   * step upgrades FROM), so older preset files keep working.
+   */
+  var PRESET_VERSION = 1;
+  var PRESET_MIGRATIONS = {};
+
+  function migratePreset (pr) {
+    var v = Number(pr.version) || 1;
+    if (v > PRESET_VERSION) throw new Error('This preset was made with a newer Matrix Table. Update the extension, then import it again.');
+    for (; v < PRESET_VERSION; v++) if (PRESET_MIGRATIONS[v]) pr = PRESET_MIGRATIONS[v](pr) || pr;
+    pr.version = PRESET_VERSION;
+    return pr;
+  }
+
+  /**
    * Settings tied to this worksheet's fields and members (measure names and
    * formats, member colours, subtotals per field). "Look only" presets leave them out, and an
    * import keeps the chart's own unless asked otherwise.
@@ -789,7 +805,7 @@
     if (scope === 'look') FIELD_PATHS.forEach(function (p) { delAt(s, p); });
     return {
       type: PRESET_TYPE,
-      version: 1,
+      version: PRESET_VERSION,
       name: name || 'Matrix preset',
       scope: scope,
       exported: new Date().toISOString(),
@@ -805,12 +821,12 @@
     if (o.type && o.type !== PRESET_TYPE) throw new Error('This preset is for another extension (' + o.type + ').');
     if (o.type === PRESET_TYPE) {
       if (!o.settings || typeof o.settings !== 'object') throw new Error('The preset has no settings.');
-      return o;
+      return migratePreset(o);
     }
     if (o.matrixTable1) { try { o = typeof o.matrixTable1 === 'string' ? JSON.parse(o.matrixTable1) : o.matrixTable1; } catch (e) { /* fall through */ } }
     var known = Object.keys(o).filter(function (k) { return k in Mx.DEFAULTS; });
     if (!known.length) throw new Error('No Matrix Table settings found in this file.');
-    return { type: PRESET_TYPE, version: 1, name: 'Imported settings', scope: 'all', settings: o };
+    return { type: PRESET_TYPE, version: PRESET_VERSION, name: 'Imported settings', scope: 'all', settings: o };
   }
 
   function applyImported (pr, keepFields) {
