@@ -136,7 +136,7 @@ Everything is stored in the workbook under one settings key. Series, line and me
 matched to their data columns by position.
 
 1. The Tableau Extensions API library is bundled in `../shared/lib/tableau.extensions.1.17.0.min.js` (shared by all extensions, no CDN).
-2. Run `python3 stamp-versions.py` (repo root) before every commit (cache-busting for GitHub Pages).
+2. Run `python3 release.py` (repo root) before every commit: all checks plus cache-busting for GitHub Pages.
 3. Host the folder over HTTPS (GitHub Pages: `Cobani/tableau_extensions`, folder `bar-chart/`) and check `<source-location><url>` in
    `bar-chart.trex`.
 4. Add the URL to the Tableau Server extension safe list. `dev/` doesn't need to be deployed.
@@ -154,13 +154,6 @@ every Dimension field (`chart.seriesBy: "all"`), so it works on any sheet. When 
 - a renamed or moved setting bumps `PRESET_VERSION` and gets a step in `PRESET_MIGRATIONS` (`cparts/c4b.js` →
   `configure.js`), and the files in `presets/` are re-saved in the new version.
 
-### Fast reload (last-render cache)
-
-After each successful render the extension saves its data in the browser (localStorage, per Tableau Server and
-worksheet). On the next load it draws that right after the Tableau handshake, then replaces it with the live data. If
-the fields on the Marks card changed, the saved drawing is removed as soon as Tableau reports the fields. Saved results
-older than 30 days are ignored.
-
 ### Performance
 
 - **Live preview**: the Format dialog sends each change straight to the chart (through the browser's local storage —
@@ -169,7 +162,7 @@ older than 30 days are ignored.
 - **Hover**: handled once per animation frame; moving inside a bar only moves the tooltip; the fade uses a prebuilt
   index of the chart's elements and only touches what changes; crossing the gap between bars doesn't reset the fade.
 - **Big charts** (more than about 300 bars): no grow animation and no fade transitions.
-- Number formatters, text widths and parsed dates are cached; the last-render cache is written when the browser is idle.
+- Number formatters, text widths and parsed dates are cached.
 - `dev/preview.html` → *Stress test* data (`index.html?mock&data=big&n=400` = 16,000 rows) to check speed.
 
 ### Load timings (debug)
@@ -177,3 +170,10 @@ older than 30 days are ignored.
 In DevTools, pick this extension's frame in the Console, run `localStorage.setItem('extDebug', '1')` and reload. Each
 load prints a table of steps and files. `extTimings()` prints it on demand; `localStorage.removeItem('extDebug')`
 turns it off. In the dev preview, add `?debug` to the URL.
+
+## Data limit, errors and privacy
+
+- **Maximum rows.** The extension reads at most 1,000 rows from the worksheet by default. Change it in *Format → Card → Maximum rows* (0 = all rows). When rows are left out, a note in the bottom-left corner says "Showing the first N rows".
+- **Errors.** If something goes wrong, a small **!** mark appears in the bottom-right corner. Click it for details you can copy (extension version, Extensions API version, the error) and a Reload button.
+- **Nothing is kept in the browser.** The chart is always drawn from live worksheet data; no data is stored between visits.
+- **What changed in each version:** [CHANGELOG.md](CHANGELOG.md).

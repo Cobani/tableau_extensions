@@ -128,3 +128,10 @@ change.
 ## Load timings (debug)
 
 Add `?debug` to the preview URL (or the `.trex` URL) to log the load steps to the console.
+
+## Data limit, errors and privacy
+
+- **Maximum rows.** The extension reads at most 1,000 rows from the worksheet by default. Change it in *Format → Card → Maximum rows* (0 = all rows). When rows are left out, a note in the bottom-left corner says "Showing the first N rows".
+- **Errors.** If something goes wrong, a small **!** mark appears in the bottom-right corner. Click it for details you can copy (extension version, Extensions API version, the error) and a Reload button.
+- **Nothing is kept in the browser.** The chart is always drawn from live worksheet data; no data is stored between visits.
+- **What changed in each version:** [CHANGELOG.md](CHANGELOG.md).

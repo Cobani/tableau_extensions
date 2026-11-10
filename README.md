@@ -45,8 +45,12 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 - **Card header** shared by all extensions: an icon (built-in icon set, Tableau shape palettes or your own upload), a title and an explanation line, each with full font control. Titles can show a parameter's value with `<Parameter name>`.
 - **One number formatter** across the family: K / M / B / Dynamic / full / Percentage / workbook format, decimals, unit text, `+` sign, and negatives as `−201.4`, `-201.4` or `(201.4)`. Tooltips show full, unabbreviated values.
 - **Settings live in the workbook.** They travel with it when you publish to Tableau Server, and new options always come with defaults so older workbooks keep working.
-- **Works with dashboard actions.** In the charts, clicking a bar, node or cell selects it in Tableau for filter and highlight actions.
-- **Fast loading.** The charts redraw the last render from the browser cache straight after the handshake, keep Tableau API calls to a minimum (important when a dashboard has many extensions), and never reload just because Tableau Server is busy. The Tableau API library and fonts are loaded once from `shared/` and cached for every extension. Add `?debug` to see load timings.
+- **Works with dashboard actions.** A click selects marks in Tableau, so filter, highlight and go-to-sheet actions fire: a bar, node or cell (Bar Chart, Data Lineage, Matrix), a point or series (Line Chart), a breakdown segment (Waterfall), a card or a date on its trend line (KPI cards). It is a setting in each Format dialog; in Line Chart, Waterfall, Matrix and the KPI cards it is off until you switch it on.
+- **Fast loading.** Tableau API calls are kept to a minimum (important when a dashboard has many extensions), shared files are downloaded once for all extensions, and a slow or rejected start-up is retried automatically, up to three times.
+- **A row limit you control.** Each extension reads at most **1,000 rows** from the worksheet by default. *Format → Card → Maximum rows* changes it (0 = all rows). When rows are left out, a small note in the corner of the chart says so.
+- **Nothing kept in the browser.** Chart data is never stored between visits; only your own Format-dialog presets are.
+- **Presets everywhere.** Every Format dialog has a Presets tab: save a look and reuse it in another worksheet or workbook, as a file, via the clipboard or from *My presets*.
+- **Errors you can report.** If something goes wrong, a small **!** mark appears in the corner; click it for details (extension version, API version, the error) that you can copy to whoever supports the dashboard.
 - **Self-contained.** No CDNs or external services: the Tableau Extensions API library and the Lato fonts are bundled.
 
 ---
@@ -228,6 +232,10 @@ tableau_extensions/
 ├── shared/                  loaded by every extension, downloaded once and cached for all
 │   ├── lib/                 Tableau Extensions API 1.17.0 (bundled, no CDN)
 │   ├── fonts/               Lato 2.0 (OFL), WOFF2 + fonts.css
+│   ├── core.js              helpers used by every extension (formatting, settings, data, selection)
+│   ├── boot.js              start-up, automatic reload, error mark
+│   ├── dialog.js / .css     Format dialog controls and base styles
+│   ├── snapshot.js          picture export (PNG / SVG) helper
 │   └── timing.js            load timings (?debug)
 ├── kpi-card/                one folder per extension:
 ├── kpi-card-multi/            <name>.trex      manifest (Marks card tiles)
@@ -237,14 +245,18 @@ tableau_extensions/
 ├── matrix-table/              config.js        defaults, settings, number formatting
 ├── data-lineage/              icons.js, icons/ built-in icon set
 │                              dev/             browser preview with sample data
-│                              presets/         sample presets (bar chart, matrix, data lineage)
+│                              presets/         sample presets (all but line chart)
+│                              CHANGELOG.md     what changed in each version
 │                              examples/        README screenshots (made-up data)
 ├── serve.py / serve.sh      local server for all extensions (port 8766)
 ├── stamp-versions.py        cache-busting for GitHub Pages
+├── release.py               every check in one command, version bump, changelog
+├── tests/                   unit tests (node --test) and a browser smoke test
+├── AGENTS.md, BACKLOG.md    how to work on this repo (people and AI models), planned work
 └── index.html               landing page
 ```
 
-Extensions share only what is in `shared/`; everything else lives in the extension's own folder, so changing one extension never affects another.
+Extensions share only what is in `shared/`, and everything there is covered by tests; everything else lives in the extension's own folder, so changing one extension never affects another.
 
 ## Local development
 
@@ -256,6 +268,7 @@ Then open a browser preview with sample data, no Tableau needed (add `?debug` fo
 
 | Extension | Preview |
 |---|---|
+| KPI Card | http://localhost:8766/kpi-card/dev/preview.html |
 | KPI Card Multi | http://localhost:8766/kpi-card-multi/dev/preview.html |
 | Waterfall | http://localhost:8766/waterfall/dev/preview.html |
 | Line Chart | http://localhost:8766/line-chart/dev/preview.html |
@@ -265,19 +278,20 @@ Then open a browser preview with sample data, no Tableau needed (add `?debug` fo
 
 The local server also lists your Tableau shape palettes (from *My Tableau Repository* and the Tableau Desktop install) for the icon pickers. Python 3 standard library only.
 
-Checks before committing:
+Checks before committing (one command; it also refreshes the cache-busting stamps):
 
 ```bash
-for f in */*.js */dev/*.js shared/*.js; do node --check "$f"; done
-xmllint --noout */*.trex
-python3 stamp-versions.py
+npm install          # once: ESLint only, the extensions themselves have no dependencies
+python3 release.py   # syntax, manifests, stamps, lint, unit tests
 ```
+
+GitHub Actions runs the same checks on every push, plus a browser test that opens every extension and every tab of its Format dialog with sample data. Working rules, recipes and the order of work for contributors (people and AI models) are in [AGENTS.md](AGENTS.md); planned work is in [BACKLOG.md](BACKLOG.md).
 
 ## Deploying
 
 Hosted on GitHub Pages from `main` (root): `https://cobani.github.io/tableau_extensions/<extension>/`.
 
-1. `python3 stamp-versions.py` adds content hashes to every script and stylesheet link, so browsers never mix old and new files. Bar Chart: run `python3 bar-chart/bundle_shapes.py` first if the bundled shape palettes changed.
+1. `python3 release.py` runs the checks and adds content hashes to every script and stylesheet link, so browsers never mix old and new files. For a user-visible change, first `python3 release.py bump <extension> patch "What changed"` (raises the version in the `.trex` and adds the line to that extension's `CHANGELOG.md`). Bar Chart: run `python3 bar-chart/bundle_shapes.py` first if the bundled shape palettes changed.
 2. Commit and push to `main`.
 
 ## Author

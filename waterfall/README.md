@@ -112,10 +112,13 @@ The pill names are remembered in the browser (localStorage, per worksheet), not 
 
 Tableau reads the `.trex` only when the extension is added, so after editing it, remove the extension and add it again.
 
-### Fast reload (last-render cache)
-
-After each successful render the extension saves its result in the browser (localStorage, per Tableau Server and worksheet name). On the next load it draws that saved result right after the Tableau handshake, then replaces it with the live data. If the fields on the Marks card have changed since it was saved, the saved drawing is removed as soon as Tableau reports the fields. Saved results older than 30 days are ignored; it never leaves the browser, and clearing site data removes it.
-
 ### Load timings (debug)
 
 To see where load time goes, open the dashboard, open DevTools, pick this extension's frame in the Console's context dropdown, run `localStorage.setItem('extDebug', '1')` and reload. Each load then prints a table of steps (page received, API library loaded, Tableau handshake, fields received, data received with row count, cached/live result drawn) plus every file with its download time and whether it came from the browser cache. Later refreshes (filters etc.) print one line each. `extTimings()` prints the table on demand; `localStorage.removeItem('extDebug')` turns it off. In the dev preview, add `?debug` to the URL instead.
+
+## Data limit, errors and privacy
+
+- **Maximum rows.** The extension reads at most 1,000 rows from the worksheet by default. Change it in *Format → Card → Maximum rows* (0 = all rows). When rows are left out, a note in the bottom-left corner says "Showing the first N rows".
+- **Errors.** If something goes wrong, a small **!** mark appears in the bottom-right corner. Click it for details you can copy (extension version, Extensions API version, the error) and a Reload button.
+- **Nothing is kept in the browser.** The chart is always drawn from live worksheet data; no data is stored between visits.
+- **What changed in each version:** [CHANGELOG.md](CHANGELOG.md).
