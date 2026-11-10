@@ -80,6 +80,8 @@ level) and opens the Format dialog next to the chart.
 **Format Extension** at the bottom of the Marks card, or right-click the chart. The chart updates as you change things.
 **Cancel** undoes everything since the dialog opened; **Reset tab** restores that tab's defaults.
 
+**Undo and search.** The **↶ / ↷** buttons in the footer (or Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z) step back and forward through your changes in this dialog; a slider drag or a typed number counts as one step. The search box above the tabs finds a setting on any tab: type two or more letters, click a result, and the dialog opens that tab and highlights the setting.
+
 | Tab | Options |
 | --- | --- |
 | Icon | as KPI Card: built-in icons or **upload** (off by default) |

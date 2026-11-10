@@ -836,9 +836,41 @@
     return '';
   }
 
+  /**
+   * Which settings each brand-theme key drives (see shared/theme.js). Inert data: nothing reads
+   * it until the Presets tab offers "Apply theme". Only plain look settings; per-measure / per-member
+   * maps are never themed.
+   */
+  var THEME_MAP = {
+    'fonts.family': ['title.font', 'explanation.font', 'numbers.font', 'axisV.font', 'axisC.font', 'legend.font'],
+    'fonts.titleSize': ['title.size'],
+    'fonts.titleWeight': ['title.weight'],
+    'fonts.textSize': ['explanation.size'],
+    'colors.title': ['title.color'],
+    'colors.muted': ['explanation.color'],
+    'colors.accent': ['icon.color', 'colors.highlightColor', 'comments.color'],
+    'colors.background': ['card.bgColor', 'card.plotBg', 'brk.bandColor', 'legend.boxColor'],
+    'colors.backgroundOpacity': ['card.bgOpacity', 'card.plotBgOpacity'],
+    'card.padding': ['card.padding'],
+    'fonts.numberWeight': ['labels.totalWeight'],
+    'colors.text': ['axisC.color', 'panels.titleColor'],
+    'colors.axisText': ['axisV.color', 'legend.color', 'groups.textColor'],
+    'colors.axisLine': ['axisV.lineColor', 'axisC.lineColor'],
+    'colors.accent2': ['colors.single'],
+    'colors.positive': ['colors.posColor'],
+    'colors.negative': ['colors.negColor'],
+    'colors.grid': ['lines.valueGrid.color', 'lines.catGrid.color', 'lines.zero.color'],
+    'colors.divider': ['legend.boxBorder'],
+    'colors.series': [{ path: 'colors.paletteEdits.house', create: true }, { path: 'colors.palette', set: 'house' }],
+    'numbers.scale': ['format.scale'],
+    'numbers.decimals': ['format.decimals'],
+    'numbers.negative': ['format.negStyle']
+  };
+
   window.Bc = {
     STORAGE_KEY: STORAGE_KEY,
     DEFAULTS: DEFAULTS,
+    THEME_MAP: THEME_MAP,
     FORMAT: FORMAT,
     SERIES: SERIES,
     LINE: LINE,

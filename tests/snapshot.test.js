@@ -118,3 +118,30 @@ test('font helpers: family list and rule matching', function () {
   assert.equal(U.fontRuleMatches({ weight: '400', style: 'italic' }, { weight: '400', style: 'normal' }), false);
   assert.equal(U.fontRuleMatches({ weight: '400', style: 'italic' }, { weight: '400', style: 'oblique 10deg' }), true);
 });
+
+test('menuItems: png always, svg only with a vector, with labels', function () {
+  const a = S.menuItems({ element: {}, title: 'T' });
+  assert.deepEqual(json(a.map(function (i) { return i.id; })), ['png']);
+  assert.equal(a[0].label, 'Picture (PNG)');
+  assert.equal(typeof a[0].run, 'function');
+  const b = S.menuItems({ element: {}, title: 'T', vector: {} });
+  assert.deepEqual(json(b.map(function (i) { return i.id; })), ['png', 'svg']);
+  assert.equal(b[1].label, 'Vector (SVG)');
+  const c = S.menuItems({ vector: function () { return null; } });
+  assert.equal(c.length, 2, 'a vector function counts as given');
+  assert.equal(S.menuItems().length, 1);
+});
+
+test('menuItems: run rejects cleanly with no element, and returns a promise', async function () {
+  const items = S.menuItems({ vector: {} });
+  for (const i of items) {
+    const p = i.run();
+    assert.equal(typeof p.then, 'function');
+    await assert.rejects(p, /no element/i);
+  }
+  await assert.rejects(items[0].run(), /no element/i);
+  await assert.rejects(items[1].run(), /no element/i);
+  await assert.rejects(S.menuItems({ element: function () { return null; } })[0].run(), /no element/i);
+});
+
+test('button is exposed', function () { assert.equal(typeof S.button, 'function'); });

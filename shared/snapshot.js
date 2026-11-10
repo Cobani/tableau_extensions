@@ -14,7 +14,23 @@
  *   fileName(title, ext)       → 'Sales by store 2026-11-10.png'   safe name from title + local date
  *   save(element, { format: 'png' | 'svg', title, scale, background, full, vector, padding, maxPixels })
  *                              → Promise<boolean>           render + download (false = download blocked)
+ *   menuItems({ element, title, vector, background, full, onError })
+ *                              → [{ id: 'png', label: 'Picture (PNG)', run }, { id: 'svg', label: 'Vector (SVG)', run }]
+ *                                plain data for an EXISTING export menu to append; svg only when `vector` is given;
+ *                                run() returns the promise of save(). element / title / vector may be functions.
+ *   button({ host, element, title, vector, background, full, position, onError })
+ *                              → { el, refresh(), destroy() }   a "Save as picture" icon button in the top-right of
+ *                                `host` (shown on hover / keyboard focus). One item: saves the PNG; with `vector`:
+ *                                opens a PNG / SVG menu. Styles are injected from here (<style id="ext-snapshot-style">).
  *   _                          pure helpers, for tests/snapshot.test.js
+ *
+ * How an extension uses it (title/vector/element may be functions, read at click time):
+ *   // 1. No export button yet (kpi-card, waterfall, data-lineage ...):
+ *   ExtSnapshot.button({ host: card, element: card, title: function () { return worksheetName; } });
+ *   // with an SVG chart, also offer a vector file:
+ *   ExtSnapshot.button({ host: card, element: card, title: name, vector: function () { return card.querySelector('svg'); } });
+ *   // 2. An export menu exists (bar-chart, line-chart, matrix-table export.js): append to its list
+ *   items = items.concat(ExtSnapshot.menuItems({ element: card, title: name, vector: svgFn }));   // each: { id, label, run }
  *
  * png options: scale (default 2; pixels = CSS size × scale), background (CSS colour under the element;
  * default = first non-transparent background found walking up, else white; 'transparent' = none),
@@ -30,7 +46,7 @@
  * URLs; the clone goes into an SVG <foreignObject>, that SVG is loaded as an image (from a data: URL —
  * a blob: URL would taint the canvas) and drawn on a canvas.
  *
- * Left out of the picture: data-snapshot="skip", #ext-error-badge, #ext-error-panel, #ext-row-notice,
+ * Left out of the picture: data-snapshot="skip", .tooltip, #tooltip, #menu, #ext-error-badge, #ext-error-panel, #ext-row-notice,
  * and anything hidden / display:none.
  *
  * Known limits:
@@ -242,7 +258,11 @@
 
   function isSkipped (el) {
     const a = el.getAttribute && el.getAttribute('data-snapshot');
-    return a === 'skip' || SKIP_IDS.indexOf(el.id) >= 0;
+    if (a === 'skip' || SKIP_IDS.indexOf(el.id) >= 0) return true;
+    // Hover-only UI must never leak into a picture: this is the ONE place the skip list lives.
+    if (el.id === 'tooltip' || el.id === 'menu') return true;
+    const cl = el.classList;
+    return !!(cl && cl.contains('tooltip'));
   }
 
   /** Computed style of a bare element of this kind, from a clean iframe (so only differences get written). */
@@ -710,8 +730,160 @@
     return download(r.text, fileName(o.title, 'svg'), 'image/svg+xml;charset=utf-8');
   }
 
+  // ---------------------------------------------------------------------------
+  // Save-as-picture control
+  // ---------------------------------------------------------------------------
+  function val (v) { return typeof v === 'function' ? v() : v; }
+
+  /** Plain menu entries for an existing export menu. */
+  function menuItems (opts) {
+    const o = opts || {};
+    const make = function (format) {
+      return function () {
+        const so = { format: format, title: val(o.title) };
+        if (o.background != null) so.background = o.background;
+        if (o.full != null) so.full = val(o.full);
+        if (format === 'svg') so.vector = val(o.vector);
+        return save(val(o.element), so);
+      };
+    };
+    const out = [{ id: 'png', label: 'Picture (PNG)', run: make('png') }];
+    if (o.vector) out.push({ id: 'svg', label: 'Vector (SVG)', run: make('svg') });
+    return out;
+  }
+
+  const STYLE_ID = 'ext-snapshot-style';
+  const STYLE =
+    '.ext-snap-host{position:relative}' +
+    '.ext-snap-btn{position:absolute;z-index:5;width:28px;height:28px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;border:1px solid #e2e4e8;border-radius:6px;background:#fff;color:#55606e;cursor:pointer;padding:0;opacity:0;transition:opacity .15s}' +
+    '.ext-snap-host:hover>.ext-snap-btn,.ext-snap-btn:focus,.ext-snap-btn:focus-visible,.ext-snap-btn.ext-snap-open,.ext-snap-btn.ext-snap-busy{opacity:1}' +
+    '.ext-snap-btn:hover{background:#f2f4f6;color:#263244}' +
+    '.ext-snap-btn.ext-snap-busy{cursor:progress;animation:ext-snap-pulse 1s ease-in-out infinite}' +
+    '@keyframes ext-snap-pulse{50%{opacity:.45}}' +
+    '.ext-snap-menu{display:none;position:fixed;z-index:50;min-width:160px;padding:4px 0;background:#fff;border:1px solid #e2e4e8;border-radius:6px;box-shadow:0 6px 18px rgba(38,50,68,.16);font:12.5px/1.3 "Lato",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#263244}' +
+    '.ext-snap-menu button{display:block;width:100%;padding:7px 14px;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;white-space:nowrap}' +
+    '.ext-snap-menu button:hover,.ext-snap-menu button:focus{background:#f2f4f6;outline:none}';
+  const ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.5" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="5.8" cy="6" r="1.1" fill="currentColor"/><path d="M2.5 12l3.6-3.4 2.4 2.2 2-1.8 3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function ensureStyle () {
+    if (document.getElementById(STYLE_ID)) return;
+    const st = document.createElement('style');
+    st.id = STYLE_ID;
+    st.textContent = STYLE;
+    document.head.appendChild(st);
+  }
+
+  /** A "Save as picture" button in the top-right corner of `host`. Returns { el, refresh(), destroy() }. */
+  function button (opts) {
+    const o = opts || {};
+    const host = typeof o.host === 'string' ? document.getElementById(o.host) : o.host;
+    if (!host || host.nodeType !== 1) throw new Error('ExtSnapshot.button: no host element to put the button in.');
+    ensureStyle();
+    host.classList.add('ext-snap-host');
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ext-snap-btn';
+    btn.setAttribute('data-snapshot', 'skip');
+    btn.setAttribute('aria-label', 'Save as picture');
+    btn.setAttribute('aria-haspopup', 'menu');
+    btn.title = 'Save as picture';
+    btn.innerHTML = ICON;
+    const pos = o.position || {};
+    const off = function (k, d) { return (typeof pos[k] === 'number' ? pos[k] : d) + 'px'; };
+    if (typeof pos.left === 'number') btn.style.left = off('left', 8); else btn.style.right = off('right', 8);
+    if (typeof pos.bottom === 'number') btn.style.bottom = off('bottom', 8); else btn.style.top = off('top', 8);
+
+    const menu = document.createElement('div');
+    menu.className = 'ext-snap-menu';
+    menu.setAttribute('data-snapshot', 'skip');
+    menu.setAttribute('role', 'menu');
+
+    let busy = false;
+    let destroyed = false;
+    const fail = function (err) {
+      if (typeof o.onError === 'function') o.onError(err);
+      else console.error('Save as picture failed', err);
+    };
+    const closeMenu = function () { menu.style.display = 'none'; btn.classList.remove('ext-snap-open'); btn.setAttribute('aria-expanded', 'false'); };
+    const isOpen = function () { return menu.style.display === 'block'; };
+    const run = function (item) {
+      if (busy || destroyed) return;
+      busy = true;
+      btn.classList.add('ext-snap-busy');
+      btn.setAttribute('aria-busy', 'true');
+      let p;
+      try { p = Promise.resolve(item.run()); } catch (e) { p = Promise.reject(e); }
+      p.catch(fail).then(function () {
+        busy = false;
+        btn.classList.remove('ext-snap-busy');
+        btn.removeAttribute('aria-busy');
+      });
+    };
+    const items = function () { return menuItems(o); };
+
+    const onBtn = function (e) {
+      e.stopPropagation();
+      if (busy) return;
+      if (isOpen()) { closeMenu(); return; }
+      const list = items();
+      if (list.length === 1) { run(list[0]); return; }
+      menu.innerHTML = '';
+      list.forEach(function (it) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'menuitem');
+        b.setAttribute('data-snapshot', 'skip');
+        b.textContent = it.label;
+        b.addEventListener('click', function (ev) { ev.stopPropagation(); closeMenu(); btn.focus(); run(it); });
+        menu.appendChild(b);
+      });
+      const r = btn.getBoundingClientRect();
+      menu.style.display = 'block';
+      menu.style.top = (r.bottom + 4) + 'px';
+      menu.style.left = Math.max(4, r.right - menu.offsetWidth) + 'px';
+      btn.classList.add('ext-snap-open');
+      btn.setAttribute('aria-expanded', 'true');
+      if (menu.firstChild && e.detail === 0) menu.firstChild.focus(); // opened from the keyboard
+    };
+    const onDown = function (e) { if (isOpen() && !menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closeMenu(); };
+    const onKey = function (e) { if (e.key === 'Escape' && isOpen()) { closeMenu(); btn.focus(); } };
+    const onFocusOut = function (e) {
+      const t = e.relatedTarget;
+      if (isOpen() && t && t !== btn && !menu.contains(t)) closeMenu();
+    };
+    btn.addEventListener('click', onBtn);
+    btn.addEventListener('focusout', onFocusOut);
+    menu.addEventListener('focusout', onFocusOut);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('blur', closeMenu);
+
+    host.appendChild(btn);
+    document.body.appendChild(menu);
+
+    return {
+      el: btn,
+      refresh: function () {
+        // Title / vector are read at click time; this re-reads the hover text and closes a stale menu.
+        const t = val(o.title);
+        btn.title = t ? 'Save as picture: ' + t : 'Save as picture';
+        closeMenu();
+      },
+      destroy: function () {
+        destroyed = true;
+        document.removeEventListener('mousedown', onDown);
+        document.removeEventListener('keydown', onKey);
+        window.removeEventListener('blur', closeMenu);
+        if (btn.parentNode) btn.parentNode.removeChild(btn);
+        if (menu.parentNode) menu.parentNode.removeChild(menu);
+      }
+    };
+  }
+
   const api = {
-    png: png, svg: svg, download: download, fileName: fileName, save: save,
+    png: png, svg: svg, download: download, fileName: fileName, save: save, menuItems: menuItems, button: button,
     _: {
       DEFAULT_MAX_PIXELS: DEFAULT_MAX_PIXELS, limitScale: limitScale, cleanFileName: cleanFileName, cssUrls: cssUrls,
       replaceCssUrls: replaceCssUrls, dataUrl: dataUrl, localizeFragmentUrls: localizeFragmentUrls,

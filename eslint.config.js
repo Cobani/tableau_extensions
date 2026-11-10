@@ -32,5 +32,9 @@ module.exports = [
   {
     files: ['shared/core.js'],
     languageOptions: { globals: { module: 'readonly', globalThis: 'readonly' } }
+  },
+  {
+    files: ['shared/theme.js'],
+    languageOptions: { globals: { module: 'readonly', require: 'readonly', globalThis: 'readonly' } }
   }
 ];

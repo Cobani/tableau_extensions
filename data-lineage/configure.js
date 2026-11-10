@@ -15,6 +15,7 @@
   var cfg = null;
   var original = null;
   var saveTimer = null;
+  var hist = null; // undo / redo steps (shared/dialog.js)
   var activeTab = 'levels';
   var info = { liveId: null, focus: null, levels: [], extras: [], params: [], pathCount: 0 };
   var openLevel = 0; // level whose card is open in the Levels tab
@@ -65,6 +66,17 @@
       if (info.focus && info.focus.item != null) openLevel = Number(info.focus.item) || 0;
 
       buildTabs();
+      hist = ExtDialog.history({
+        snapshot: function () { return JSON.stringify(cfg); },
+        restore: function (json) { cfg = JSON.parse(json); changed(); buildTabs(); }
+      });
+      ExtDialog.footerTools({ history: hist, footer: document.querySelector('.footer') });
+      ExtDialog.search({
+        tabs: document.getElementById('tabs'),
+        container: document.getElementById('panels'),
+        getTabs: function () { return TABS; },
+        openTab: function (id) { activeTab = id; buildTabs(); }
+      });
       window.addEventListener('storage', onChartInfo);
       document.getElementById('cancel').addEventListener('click', function () {
         cfg = original;
@@ -893,6 +905,7 @@
     liveTimer = setTimeout(pushLive, 16);
     clearTimeout(saveTimer);
     saveTimer = setTimeout(persist, 450);
+    if (hist) hist.record();
   }
 
   function pushLive () {

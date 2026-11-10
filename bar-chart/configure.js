@@ -16,6 +16,7 @@
   var cfg = null;
   var original = null;
   var saveTimer = null;
+  var hist = null; // undo / redo steps (shared/dialog.js)
   var activeTab = 'type';
   var shapeIndex = null;
   var info = { liveId: null, series: [], members: [], lines: [], dims: [], combos: [], measures: [], extras: [], levels: [], L: 1, bars: [], hasTarget: false, catCount: 0, axisType: 'dimension', focus: null, params: [], target: null, labels: {}, legendItems: [], barCandidates: null, seriesIdx: [], seriesName: null, isDate: false, divAuto: {}, divOrder: [] };
@@ -91,6 +92,17 @@
       if (info.lines.length) selectedLine = info.lines[0].key;
 
       buildTabs();
+      hist = ExtDialog.history({
+        snapshot: function () { return JSON.stringify(cfg); },
+        restore: function (json) { cfg = JSON.parse(json); changed(); buildTabs(); }
+      });
+      ExtDialog.footerTools({ history: hist, footer: document.querySelector('.footer') });
+      ExtDialog.search({
+        tabs: document.getElementById('tabs'),
+        container: document.getElementById('panels'),
+        getTabs: function () { return TABS; },
+        openTab: function (id) { activeTab = id; buildTabs(); }
+      });
       window.addEventListener('storage', onChartInfo);
       document.getElementById('cancel').addEventListener('click', function () {
         cfg = original;
@@ -2717,6 +2729,7 @@
     liveTimer = setTimeout(pushLive, 16);
     clearTimeout(saveTimer);
     saveTimer = setTimeout(persist, 450);
+    if (hist) hist.record();
   }
 
   function pushLive () {

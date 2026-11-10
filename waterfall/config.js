@@ -464,9 +464,39 @@
     return '';
   }
 
+  /**
+   * Which settings each brand-theme key drives (see shared/theme.js). Inert data: nothing reads
+   * it until the Presets tab offers "Apply theme". Only plain look settings; per-measure / per-member
+   * maps are never themed.
+   */
+  var THEME_MAP = {
+    'fonts.family': ['title.font', 'explanation.font', 'numbers.font', 'axisY.font', 'axisX.font'],
+    'fonts.titleSize': ['title.size'],
+    'fonts.titleWeight': ['title.weight'],
+    'fonts.textSize': ['explanation.size'],
+    'colors.title': ['title.color'],
+    'colors.muted': ['explanation.color'],
+    'colors.accent': ['icon.color'],
+    'colors.background': ['card.bgColor', 'start.brk.bandColor', 'end.brk.bandColor', 'stepDefaults.brk.bandColor'],
+    'colors.backgroundOpacity': ['card.bgOpacity'],
+    'card.padding': ['card.padding'],
+    'fonts.numberWeight': ['start.total.weight', 'end.total.weight'],
+    'colors.text': ['axisX.color'],
+    'colors.axisText': ['axisY.color'],
+    'colors.axisLine': ['axisY.lineColor', 'axisX.lineColor', 'lines.zero.color'],
+    'colors.accent2': ['stepDefaults.color'],
+    'colors.positive': ['bars.posColor', 'groups.pos.color'],
+    'colors.negative': ['bars.negColor', 'groups.neg.color'],
+    'colors.divider': ['card.dividerColor'],
+    'numbers.scale': ['format.scale'],
+    'numbers.decimals': ['format.decimals'],
+    'numbers.negative': ['format.negStyle']
+  };
+
   window.Wf = {
     STORAGE_KEY: STORAGE_KEY,
     DEFAULTS: DEFAULTS,
+    THEME_MAP: THEME_MAP,
     STEP: STEP,
     FORMAT: FORMAT,
     BAR_SORTS: BAR_SORTS,

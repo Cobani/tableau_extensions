@@ -297,9 +297,27 @@
   // Fonts + colours
   // -------------------------------------------------------------------------
 
+  /**
+   * Which settings each brand-theme key drives (see shared/theme.js). Inert data: nothing reads
+   * it until the Presets tab offers "Apply theme". Only plain look settings; per-measure / per-member
+   * maps are never themed.
+   */
+  var THEME_MAP = {
+    'fonts.family': ['title.font', 'explanation.font', 'headers.font', 'nodes.font', 'nodes.subFont', 'legend.font'],
+    'fonts.titleSize': ['title.size'],
+    'fonts.textSize': ['explanation.size'],
+    'colors.muted': ['explanation.color', 'headers.color'],
+    'colors.accent': ['icon.color', 'highlight.matchColor'],
+    'colors.background': ['card.bgColor', 'card.plotBg'],
+    'colors.backgroundOpacity': ['card.bgOpacity', 'card.plotBgOpacity'],
+    'card.padding': ['card.padding'],
+    'colors.text': ['title.color']
+  };
+
   window.Dl = {
     STORAGE_KEY: STORAGE_KEY,
     DEFAULTS: DEFAULTS,
+    THEME_MAP: THEME_MAP,
     LEVEL: LEVEL,
     LEVEL_COLORS: LEVEL_COLORS,
     FONTS: FONTS,

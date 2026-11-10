@@ -66,6 +66,8 @@ Viz extensions can't add their own entries to Tableau's right-click menu. There 
 - **Right-click a bar** in the chart → *Format "Online Sales"…*, Groups…, Axes…, Lines…, Numbers…. **Double-click** a bar
   opens its settings directly.
 
+**Undo and search.** The **↶ / ↷** buttons in the footer (or Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z) step back and forward through your changes in this dialog; a slider drag or a typed number counts as one step. The search box above the tabs finds a setting on any tab: type two or more letters, click a result, and the dialog opens that tab and highlights the setting.
+
 The dialog is modeless, so the chart updates as you change things. **Cancel** undoes everything since the dialog
 opened, and **Reset tab** restores the defaults for that tab.
 

@@ -281,3 +281,69 @@ input[type="range"] { flex: 1; accent-color: var(--accent); }
 .btn--primary { background: var(--text); border-color: var(--text); color: #fff; }
 
 .btn--primary:hover { background: #1a2433; }
+
+/* ---- undo / redo buttons (footer) ------------------------------------- */
+.btn--icon {
+  min-width: 0;
+  width: 28px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+.btn:disabled:hover { background: #fff; }
+
+/* ---- settings search -------------------------------------------------- */
+/* A thin strip above the tab bar, so the tabs (which wrap or scroll, depending on the dialog) keep their layout. */
+.dlg-search {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px 0;
+}
+
+.dlg-search-input {
+  width: 220px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  color: var(--text);
+  background: #fff;
+}
+
+.dlg-search-input:focus { outline: 2px solid rgba(235, 100, 76, 0.35); outline-offset: 0; border-color: var(--accent); }
+
+.dlg-results[hidden] { display: none; }
+
+.dlg-hits { display: flex; flex-direction: column; gap: 2px; }
+
+.dlg-hit {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.dlg-hit:hover, .dlg-hit:focus { background: var(--soft); outline: none; }
+
+.dlg-hit-path { color: var(--muted); }
+
+.dlg-hit-label { font-weight: 700; }
+
+/* The row a search hit opened, shown for about a second. */
+.is-found { animation: dlg-found 1.2s ease-out; }
+
+@keyframes dlg-found {
+  0%, 55% { background: #fff1ee; box-shadow: 0 0 0 4px #fff1ee; }
+  100% { background: transparent; box-shadow: 0 0 0 4px transparent; }
+}

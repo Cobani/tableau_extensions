@@ -636,9 +636,35 @@
     return v;
   }
 
+  /**
+   * Which settings each brand-theme key drives (see shared/theme.js). Inert data: nothing reads
+   * it until the Presets tab offers "Apply theme". Only plain look settings; per-measure / per-member
+   * maps are never themed.
+   */
+  var THEME_MAP = {
+    'fonts.family': ['title.font', 'explanation.font', 'numbers.font', 'cells.main.font', 'headers.col.font', 'headers.colOuter.font', 'headers.row.font', 'headers.rowOuter.font', 'headers.cornerStyle.font', 'totals.label.font', 'totals.value.font'],
+    'fonts.titleSize': ['title.size'],
+    'fonts.titleWeight': ['title.weight'],
+    'fonts.textSize': ['explanation.size'],
+    'colors.title': ['title.color'],
+    'colors.muted': ['explanation.color'],
+    'colors.accent': ['icon.color', 'interaction.crosshairColor'],
+    'colors.background': ['card.bgColor', 'card.plotBg', 'headers.bg'],
+    'colors.backgroundOpacity': ['card.bgOpacity', 'card.plotBgOpacity', 'headers.bgOpacity'],
+    'card.padding': ['card.padding'],
+    'fonts.numberWeight': ['cells.main.weight'],
+    'colors.text': ['headers.colOuter.color', 'headers.rowOuter.color'],
+    'colors.positive': ['metrics.posColor'],
+    'colors.negative': ['metrics.negColor'],
+    'numbers.scale': ['format.scale'],
+    'numbers.decimals': ['format.decimals'],
+    'numbers.negative': ['format.negStyle']
+  };
+
   window.Mx = {
     STORAGE_KEY: STORAGE_KEY,
     DEFAULTS: DEFAULTS,
+    THEME_MAP: THEME_MAP,
     FORMAT: FORMAT,
     MEASURE: MEASURE,
     RULE: RULE,

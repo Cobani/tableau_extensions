@@ -24,6 +24,8 @@
   #f3 tr:first-child td { background: #16A34A; }
   #f3 tr:last-child td { background: #F59E0B; }
   #f3 tr:nth-child(2) td { background: #e5e7eb; }
+  /* Fixture 4: card with the save-as-picture button */
+  #f4 { width: 320px; height: 180px; background: #FDE68A; font-size: 14px; padding: 12px; box-sizing: border-box; }
   pre { background: #fff; padding: 8px; font-size: 12px; white-space: pre-wrap; }
 </style>
 </head>
@@ -54,6 +56,8 @@
     <tr><td>Row 7</td></tr><tr><td>Row 8</td></tr><tr><td>Row 9</td></tr>
   </table>
 </div>
+
+<div class="fx" id="f4"><span>Card with button</span></div>
 
 <pre id="result"></pre>
 
@@ -210,6 +214,57 @@
       // At scrollTop 100 the 3rd row (index 2, white) starts at y=0; the grey 2nd row has scrolled out.
       colourAt('f3 scrolled by 100: first visible row is not green', moved, 140 * 2, 10 * 2, [255, 255, 255]);
       el.scrollTop = 0;
+    });
+
+    // Fixture 4: the save-as-picture button
+    await step('fixture 4', async function () {
+      const el = document.getElementById('f4');
+      const errors = [];
+      const ctl = S.button({ host: el, element: el, title: 'Card', onError: function (e) { errors.push(e); } });
+      check('f4 button returns el, refresh, destroy', ctl && ctl.el && typeof ctl.refresh === 'function' && typeof ctl.destroy === 'function', 'bad return');
+      check('f4 button exists inside the card', ctl.el.parentNode === el, 'not in host');
+      check('f4 button has data-snapshot="skip"', ctl.el.getAttribute('data-snapshot') === 'skip', 'attribute missing');
+      check('f4 button has aria-label', ctl.el.getAttribute('aria-label') === 'Save as picture', 'aria-label ' + ctl.el.getAttribute('aria-label'));
+      check('f4 style element is injected once', document.querySelectorAll('#ext-snapshot-style').length === 1, 'count ' + document.querySelectorAll('#ext-snapshot-style').length);
+      ctl.el.focus(); // keyboard focus makes the button visible
+      await new Promise(function (r) { setTimeout(r, 300); });
+      check('f4 button is visible while focused', getComputedStyle(ctl.el).opacity === '1', 'opacity ' + getComputedStyle(ctl.el).opacity);
+      const br = ctl.el.getBoundingClientRect();
+      const er = el.getBoundingClientRect();
+      const cx = br.left - er.left + br.width / 2;
+      const cy = br.top - er.top + br.height / 2;
+      check('f4 button sits inside the card', cx > 0 && cx < 320 && cy > 0 && cy < 180, 'centre ' + cx + ',' + cy);
+      const pic = await open(await S.png(el, { scale: 2 }));
+      check('f4 size is 640x360', pic.w === 640 && pic.h === 360, pic.w + 'x' + pic.h);
+      colourAt('f4 card colour (not the button) at the button position', pic, cx * 2, cy * 2, hex('#FDE68A'));
+      colourAt('f4 card colour at the button corner', pic, (br.left - er.left + 3) * 2, (br.top - er.top + 3) * 2, hex('#FDE68A'));
+      // One item (no vector): a click would save directly; with a vector the menu opens.
+      const noVec = S.menuItems({ element: el });
+      check('f4 menuItems without vector has only png', noVec.length === 1 && noVec[0].id === 'png', 'ids ' + noVec.map(function (i) { return i.id; }));
+      const svgEl = document.getElementById('f1svg');
+      const two = S.menuItems({ element: document.getElementById('f1'), title: 'Sales', vector: svgEl });
+      check('f4 menuItems on the SVG fixture returns two items', two.length === 2 && two[0].id === 'png' && two[1].id === 'svg', 'ids ' + two.map(function (i) { return i.id; }));
+      check('f4 labels', two[0].label === 'Picture (PNG)' && two[1].label === 'Vector (SVG)', two[0].label + ' / ' + two[1].label);
+      // The skip list also covers tooltips and menus inside the captured element.
+      const tip = document.createElement('div');
+      tip.className = 'tooltip';
+      tip.style.cssText = 'position:absolute;left:100px;top:100px;width:60px;height:40px;background:#DC2626';
+      el.appendChild(tip);
+      const pic2 = await open(await S.png(el, { scale: 1 }));
+      colourAt('f4 a .tooltip element is left out of the picture', pic2, 130, 120, hex('#FDE68A'));
+      tip.remove();
+      // Menu: a vector option makes the click open a two-item menu.
+      const ctl2 = S.button({ host: el, element: el, title: 'Card', vector: svgEl, position: { top: 40, right: 8 }, onError: function (e) { errors.push(e); } });
+      ctl2.el.click();
+      const menus = Array.from(document.querySelectorAll('.ext-snap-menu')).filter(function (m) { return m.style.display === 'block'; });
+      check('f4 click opens a menu with two items', menus.length === 1 && menus[0].querySelectorAll('button').length === 2, 'open menus ' + menus.length);
+      check('f4 menu has data-snapshot="skip"', menus.length === 1 && menus[0].getAttribute('data-snapshot') === 'skip', 'attribute missing');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      check('f4 Escape closes the menu', menus.length === 1 && menus[0].style.display === 'none', 'still open');
+      ctl2.destroy();
+      ctl.destroy();
+      check('f4 destroy removes the button', !el.querySelector('.ext-snap-btn'), 'button still there');
+      check('f4 no errors reported', errors.length === 0, String(errors[0]));
     });
 
     // Helpers that run in the browser

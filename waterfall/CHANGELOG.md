@@ -3,6 +3,7 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `waterfall.trex`.
 
 ## 1.3.0 — 2026-11-10
+- Format dialog: Undo and Redo (buttons and Ctrl/Cmd+Z), and a search box that finds a setting on any tab.
 - New Presets tab: save a look and reuse it in other worksheets or workbooks (export / import as a file or via the clipboard, My presets in this browser).
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).
 - Optional: click a breakdown segment to select it in Tableau, so dashboard filter and highlight actions fire (Format, Bars, Click selects in Tableau).

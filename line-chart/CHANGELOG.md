@@ -3,6 +3,7 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `line-chart.trex`.
 
 ## 1.2.0 — 2026-11-10
+- Format dialog: Undo and Redo (buttons and Ctrl/Cmd+Z), and a search box that finds a setting on any tab.
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).
 - Optional: click a point to select it in Tableau, so dashboard filter and highlight actions fire (Format, Legend and tooltip, Click selects in Tableau).
 - New setting Format → Card → Maximum rows: the extension reads at most this many rows from the worksheet (default 1,000; 0 = all) and shows a note in the corner when rows were left out.

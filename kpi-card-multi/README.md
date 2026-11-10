@@ -53,6 +53,8 @@ second KPI Card Multi sheet.
 The dialog opens with a **Card** picker at the top. Settings tagged **this card** apply only to the selected card;
 everything else applies to the whole row.
 
+**Undo and search.** The **↶ / ↷** buttons in the footer (or Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z) step back and forward through your changes in this dialog; a slider drag or a typed number counts as one step. The search box above the tabs finds a setting on any tab: type two or more letters, click a result, and the dialog opens that tab and highlights the setting.
+
 | Per card (tagged *this card*) | Shared by all cards |
 | --- | --- |
 | icon on/off, source, built-in icon, uploaded/shape image · title text · explanation text · big number: single day / MTD, MTD roll-up, number format, decimals, unit, unit position, 0–1 ratio · % change: on/off, compare with, period, roll-up, % / pp, decimals, ratio, increase is good · width weight | fonts, sizes, colours, icon size and colour, alignment, keep explanation space, shrink to fit, change colours, bottom (trend line / text) and chart style, padding, divider, background, layout |

@@ -48,16 +48,32 @@ function fakeDocument () {
       dispatchEvent: function (e) { n.dispatch(e.type); return true; },
       focus: function () {},
       querySelector: function (sel) {
-        const m = /^(\w+)(?:\[type="(\w+)"\])?$/.exec(sel);
+        const all = n.querySelectorAll(sel);
+        return all.length ? all[0] : null;
+      },
+      // Selectors the dialog code uses: tag, tag[type="x"], .class, and comma lists of those, in document order.
+      querySelectorAll: function (sel) {
+        const tests = sel.split(',').map(function (part) {
+          const t = part.trim();
+          const cls = /^\.([\w-]+)$/.exec(t);
+          if (cls) return function (c) { return String(c.className || '').split(/\s+/).indexOf(cls[1]) >= 0; };
+          const m = /^(\w+)(?:\[type="(\w+)"\])?$/.exec(t);
+          return function (c) { return c.tagName === m[1].toUpperCase() && (!m[2] || c.type === m[2]); };
+        });
+        const out = [];
         const walk = function (x) {
           for (const c of x.children) {
-            if (c.tagName === m[1].toUpperCase() && (!m[2] || c.type === m[2])) return c;
-            const f = walk(c);
-            if (f) return f;
+            if (tests.some(function (f) { return f(c); })) out.push(c);
+            walk(c);
           }
-          return null;
         };
-        return walk(n);
+        walk(n);
+        return out;
+      },
+      closest: function (sel) {
+        const cls = /^\.([\w-]+)$/.exec(sel)[1];
+        for (let x = n; x; x = x.parent) if (String(x.className || '').split(/\s+/).indexOf(cls) >= 0) return x;
+        return null;
       }
     };
     // <input>.value is a string (null → ''); <select>.value follows the chosen <option>.
@@ -283,4 +299,151 @@ test('getAt / setAt / delAt and escapeHtml', function () {
   t.D.delAt(o, 'a.b.c');
   assert.deepEqual(JSON.parse(JSON.stringify(o)), { a: { b: {} } });
   assert.equal(t.D.escapeHtml('<b a="1">&</b>'), '&lt;b a=&quot;1&quot;&gt;&amp;&lt;/b&gt;');
+});
+
+// ---- Undo / Redo ----------------------------------------------------------
+function makeHistory (limit) {
+  const t = setup();
+  const state = { v: 0 };
+  let clock = 0;
+  const hist = t.D.history({
+    snapshot: function () { return JSON.stringify(state); },
+    restore: function (j) { state.v = JSON.parse(j).v; },
+    now: function () { return clock; },
+    limit: limit
+  });
+  // a change as the dialog does it: edit, then record()
+  const change = function (v, at) { state.v = v; clock = at; return hist.record(); };
+  return { hist: hist, state: state, change: change };
+}
+
+test('history: opening state cannot be undone; only real changes are recorded', function () {
+  const x = makeHistory();
+  assert.equal(x.hist.canUndo(), false);
+  assert.equal(x.hist.canRedo(), false);
+  assert.equal(x.change(0, 1000), false); // same value: nothing recorded
+  assert.equal(x.hist.canUndo(), false);
+  assert.equal(x.change(1, 2000), true);
+  assert.equal(x.hist.canUndo(), true);
+  assert.equal(x.hist.undo(), true);
+  assert.equal(x.state.v, 0);
+  assert.equal(x.hist.canUndo(), false);
+  assert.equal(x.hist.undo(), false);
+});
+
+test('history: changes within 600 ms are one step, later ones are separate', function () {
+  const x = makeHistory();
+  x.change(1, 1000); x.change(2, 1300); x.change(3, 1800); // each < 600 ms after the previous: one step
+  x.change(4, 3000);
+  x.hist.undo();
+  assert.equal(x.state.v, 3);
+  x.hist.undo();
+  assert.equal(x.state.v, 0);
+  assert.equal(x.hist.canUndo(), false);
+});
+
+test('history: undo and redo go in order, a new change clears redo', function () {
+  const x = makeHistory();
+  x.change(1, 1000); x.change(2, 3000); x.change(3, 5000);
+  x.hist.undo(); x.hist.undo();
+  assert.equal(x.state.v, 1);
+  assert.equal(x.hist.canRedo(), true);
+  x.hist.redo();
+  assert.equal(x.state.v, 2);
+  x.hist.undo();
+  x.change(9, 8000); // new change after undo
+  assert.equal(x.hist.canRedo(), false);
+  assert.equal(x.hist.redo(), false);
+  x.hist.undo();
+  assert.equal(x.state.v, 1);
+});
+
+test('history: a change right after undo is its own step; record during restore is ignored', function () {
+  const x = makeHistory();
+  x.change(1, 1000); x.change(2, 3000);
+  x.hist.undo();
+  x.change(5, 3100); // within 600 ms of the last record, but after an undo
+  x.hist.undo();
+  assert.equal(x.state.v, 1);
+});
+
+test('history: changing back to the previous state leaves no step; seal() splits a step', function () {
+  const x = makeHistory();
+  x.change(1, 1000);
+  x.change(0, 1100); // back to the opening state within the window
+  assert.equal(x.hist.canUndo(), false);
+  const y = makeHistory();
+  y.change(1, 1000);
+  y.hist.seal();
+  y.change(2, 1100);
+  y.hist.undo();
+  assert.equal(y.state.v, 1);
+});
+
+test('history: keeps at most `limit` steps', function () {
+  const x = makeHistory(5);
+  for (let i = 1; i <= 20; i++) x.change(i, i * 1000);
+  let n = 0;
+  while (x.hist.undo()) n++;
+  assert.equal(n, 5);
+  assert.equal(x.state.v, 15);
+});
+
+test('history: clear() makes the current state the opening state', function () {
+  const x = makeHistory();
+  x.change(1, 1000);
+  x.hist.clear();
+  assert.equal(x.hist.canUndo(), false);
+});
+
+test('history: subscribers hear about every change of what can be undone', function () {
+  const x = makeHistory();
+  let n = 0;
+  x.hist.subscribe(function () { n++; });
+  x.change(1, 1000); x.hist.undo(); x.hist.redo();
+  assert.equal(n, 3);
+});
+
+test('keyboard: Ctrl/Cmd+Z, Shift+Z and Ctrl+Y; never while typing in a text box', function () {
+  const D = setup().D;
+  assert.equal(D._undoKey({ key: 'z', ctrlKey: true }), 'undo');
+  assert.equal(D._undoKey({ key: 'Z', metaKey: true, shiftKey: true }), 'redo');
+  assert.equal(D._undoKey({ key: 'y', ctrlKey: true }), 'redo');
+  assert.equal(D._undoKey({ key: 'z' }), null);
+  assert.equal(D._undoKey({ key: 'y', metaKey: true }), null);
+  assert.equal(D._inTextField({ tagName: 'INPUT', type: 'text' }), true);
+  assert.equal(D._inTextField({ tagName: 'INPUT', type: 'number' }), true);
+  assert.equal(D._inTextField({ tagName: 'TEXTAREA' }), true);
+  assert.equal(D._inTextField({ tagName: 'INPUT', type: 'checkbox' }), false);
+  assert.equal(D._inTextField({ tagName: 'INPUT', type: 'range' }), false);
+  assert.equal(D._inTextField({ tagName: 'SELECT' }), false);
+  assert.equal(D._inTextField({ tagName: 'BUTTON' }), false);
+});
+
+// ---- Settings search ------------------------------------------------------
+test('search match: all words, any case, any order, at least 2 characters', function () {
+  const D = setup().D;
+  const text = 'Numbers › Big number › Decimal places';
+  assert.equal(D._match('decimal', text), true);
+  assert.equal(D._match('DECIMAL PLACES', text), true);
+  assert.equal(D._match('places decimal', text), true);
+  assert.equal(D._match('numbers places', text), true);
+  assert.equal(D._match('decimal colour', text), false);
+  assert.equal(D._match('d', text), false);
+  assert.equal(D._match('', text), false);
+  assert.equal(D._match('   ', text), false);
+  assert.equal(D._match(null, text), false);
+  assert.equal(D._match('de', text), true);
+});
+
+test('search index: reads group titles and row labels from a built tab', function () {
+  const t = setup({ a: 1, b: 2 });
+  const p = t.D.h('section');
+  const g = t.D.group(p, 'Title');
+  g.appendChild(t.kit.numberRow('Size (px)', 'a', 1, 9, 1));
+  g.appendChild(t.kit.numberRow('Size (px)', 'b', 1, 9, 1));
+  const g2 = t.D.group(p, 'Axis');
+  g2.appendChild(t.kit.checkboxRow('Show axis', 'a'));
+  const found = t.D._scanPanel(p).map(function (e) { return [e.group, e.label, e.nth]; });
+  assert.equal(JSON.stringify(found), JSON.stringify([['Title', '', 1], ['Title', 'Size (px)', 1], ['Title', 'Size (px)', 2], ['Axis', '', 1], ['Axis', 'Show axis', 1]]));
 });

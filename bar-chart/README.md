@@ -20,7 +20,14 @@ explanation are the same as **KPI Card**; the card options and number formatting
 ```
 bar-chart.trex   manifest: Marks card tiles + "Format Extension" button
 index.html       chart page
-chart.css/js     header, legend, data reading, drawing, tooltip, right-click menu, drill-down, comments
+chart.css        chart styles
+chart-state.js   shared state (window.BcChart.S) and constants; loaded first
+chart-data.js    reading Tableau data, Top N, sorting, drill, colours (the view model)
+chart-layout.js  scales, axis ticks, text measuring, label placement, legend items
+chart-card.js    card style, header, drill breadcrumb, legend
+chart-draw.js    the svg plot: bars, lollipops, segments, lines, labels, comments
+chart-interact.js tooltip, hover, click/select, drill, right-click menu, comment editor, live preview
+chart.js         start-up, refresh, paint, resize, opening the Format dialog (loaded last)
 configure.*      Format dialog (every option below)
 config.js        shared defaults, number and date formatting, colour palettes
 icons.js, icons/extension/ the 14 Figma icons from *Icons for Extension* (same files as KPI Card)
@@ -99,6 +106,8 @@ card too; every field there becomes a `name: value` tooltip row.
 **Format Extension** at the bottom of the Marks card, or right-click the chart. The dialog is modeless, so the chart
 updates as you change things. **Cancel** undoes everything since the dialog opened; **Reset tab** restores that tab's
 defaults.
+
+**Undo and search.** The **↶ / ↷** buttons in the footer (or Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z) step back and forward through your changes in this dialog; a slider drag or a typed number counts as one step. The search box above the tabs finds a setting on any tab: type two or more letters, click a result, and the dialog opens that tab and highlights the setting.
 
 | Tab | Options |
 | --- | --- |

@@ -13,6 +13,7 @@
   var cfg = null;
   var original = null;
   var saveTimer = null;
+  var hist = null; // undo / redo steps (shared/dialog.js)
   var activeTab = 'series';
   var shapeIndex = null;
   var info = { series: [], xs: [], hasTime: false, colorDim: '', focus: null };
@@ -84,6 +85,17 @@
       if (selected !== '__defaults' && !seriesInfo(selected)) selected = '__defaults';
 
       buildTabs();
+      hist = ExtDialog.history({
+        snapshot: function () { return JSON.stringify(cfg); },
+        restore: function (json) { cfg = JSON.parse(json); changed(); buildTabs(); }
+      });
+      ExtDialog.footerTools({ history: hist, footer: document.querySelector('.footer') });
+      ExtDialog.search({
+        tabs: document.getElementById('tabs'),
+        container: document.getElementById('panels'),
+        getTabs: function () { return TABS; },
+        openTab: function (id) { activeTab = id; buildTabs(); }
+      });
       document.getElementById('cancel').addEventListener('click', function () {
         cfg = original;
         flush().then(close);
@@ -1077,6 +1089,7 @@
   function changed () {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(persist, 180);
+    if (hist) hist.record();
   }
 
   function flush () {

@@ -456,9 +456,40 @@
     return '';
   }
 
+  /**
+   * Which settings each brand-theme key drives (see shared/theme.js). Inert data: nothing reads
+   * it until the Presets tab offers "Apply theme". Only plain look settings; per-measure / per-member
+   * maps are never themed.
+   */
+  var THEME_MAP = {
+    'fonts.family': ['title.font', 'explanation.font', 'numbers.font', 'axisY.font', 'axisY2.font', 'axisX.font', 'legend.font'],
+    'fonts.titleSize': ['title.size'],
+    'fonts.titleWeight': ['title.weight'],
+    'fonts.textSize': ['explanation.size'],
+    'colors.title': ['title.color'],
+    'colors.muted': ['explanation.color'],
+    'colors.accent': ['icon.color'],
+    'colors.background': ['card.bgColor'],
+    'colors.backgroundOpacity': ['card.bgOpacity'],
+    'card.padding': ['card.padding'],
+    'colors.axisText': ['axisY.color', 'axisY2.color', 'axisX.color', 'legend.color'],
+    'colors.axisLine': ['axisY.lineColor', 'axisY2.lineColor', 'axisX.lineColor', 'lines.zero.color'],
+    'colors.accent2': ['band.color'],
+    'colors.changeUp': ['seriesDefaults.change.positiveColor'],
+    'colors.changeDown': ['seriesDefaults.change.negativeColor'],
+    'colors.neutral': ['seriesDefaults.change.neutralColor'],
+    'colors.grid': ['lines.hGrid.color', 'lines.vGrid.color'],
+    'colors.divider': ['card.dividerColor'],
+    'colors.series': [{ path: 'chart.paletteEdits.house', create: true }, { path: 'chart.palette', set: 'house' }],
+    'numbers.scale': ['format.scale'],
+    'numbers.decimals': ['format.decimals'],
+    'numbers.negative': ['format.negStyle']
+  };
+
   window.Lc = {
     STORAGE_KEY: STORAGE_KEY,
     DEFAULTS: DEFAULTS,
+    THEME_MAP: THEME_MAP,
     SERIES: SERIES,
     REF: REF,
     FORMAT: FORMAT,

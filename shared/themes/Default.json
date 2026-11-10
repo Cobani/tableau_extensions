@@ -1,0 +1,15 @@
+{
+  "type": "tableau-extensions-theme",
+  "version": 1,
+  "name": "Default",
+  "fonts": { "family": "Lato", "titleSize": 16, "titleWeight": 500, "textSize": 12, "numberWeight": 700 },
+  "colors": {
+    "text": "#17202B", "title": "#68707D", "muted": "#68707D", "number": "#263244",
+    "axisText": "#55606E", "axisLine": "#C9CDD4", "accent": "#EB644C", "accent2": "#2F4B7C",
+    "positive": "#0E7C66", "negative": "#B4431E", "changeUp": "#2E9E6A", "changeDown": "#E35263",
+    "neutral": "#68707D", "background": "#FFFFFF", "backgroundOpacity": 0,
+    "grid": "#ECEEF1", "divider": "#E2E4E8"
+  },
+  "card": { "padding": 15 },
+  "numbers": { "scale": "dynamic", "decimals": 1, "negative": "minus" }
+}

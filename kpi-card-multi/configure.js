@@ -13,6 +13,7 @@
   var currentKey = null;
   var cfg = null;       // the selected card's full settings (view); edits are split back into store
   var saveTimer = null;
+  var hist = null; // undo / redo steps (shared/dialog.js)
   var activeTab = 'icon';
   var shapeIndex = null; // { palettes: [{ name, files: [{ name, url }] }] }
   var detailList = [];   // [{ key, label }] Details tile measures, sent by the extension
@@ -67,6 +68,26 @@
       cfg = KpiCardMultiConfig.cardConfig(store, currentKey);
       buildPicker();
       buildTabs();
+      hist = ExtDialog.history({
+        // Whole store plus the selected card: undo can switch back to the card that was edited.
+        snapshot: function () { KpiCardMultiConfig.splitInto(store, currentKey, cfg); return JSON.stringify({ store: store, key: currentKey }); },
+        restore: function (json) {
+          var s = JSON.parse(json);
+          store = s.store;
+          currentKey = s.key;
+          cfg = KpiCardMultiConfig.cardConfig(store, currentKey);
+          buildPicker();
+          changed();
+          buildTabs();
+        }
+      });
+      ExtDialog.footerTools({ history: hist, footer: document.querySelector('.footer') });
+      ExtDialog.search({
+        tabs: document.getElementById('tabs'),
+        container: document.getElementById('panels'),
+        getTabs: function () { return TABS; },
+        openTab: function (id) { activeTab = id; buildTabs(); }
+      });
       document.getElementById('cancel').addEventListener('click', function () {
         store = original;
         cfg = KpiCardMultiConfig.cardConfig(store, currentKey);
@@ -935,6 +956,7 @@
   function changed () {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(persist, 180);
+    if (hist) hist.record();
   }
 
   function flush () {

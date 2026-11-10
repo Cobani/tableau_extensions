@@ -1,0 +1,15 @@
+{
+  "type": "tableau-extensions-theme",
+  "version": 1,
+  "name": "Midnight",
+  "fonts": { "family": "Lato", "titleSize": 16, "titleWeight": 600, "textSize": 12, "numberWeight": 700 },
+  "colors": {
+    "text": "#E6EAF0", "title": "#E6EAF0", "muted": "#9AA4B2", "number": "#FFFFFF",
+    "axisText": "#9AA4B2", "axisLine": "#3A4656", "accent": "#F58A72", "accent2": "#7FA3E0",
+    "positive": "#3FD0A4", "negative": "#FF8A65", "changeUp": "#3FD0A4", "changeDown": "#FF7A8A",
+    "neutral": "#9AA4B2", "background": "#101826", "backgroundOpacity": 100,
+    "grid": "#243043", "divider": "#2E3A4D",
+    "series": ["#7FA3E0", "#F58A72", "#3FD0A4", "#F2C14E", "#B79CF0", "#5CC8E0"]
+  },
+  "card": { "padding": 15 }
+}

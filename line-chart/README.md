@@ -66,6 +66,8 @@ show off a feature. **Reset settings** brings those back.
   settings directly. (Viz extensions can't add entries to Tableau's own right-click menu.)
 - **Format Extension** button at the bottom of the Marks card opens the same dialog.
 
+In the dialog, the **↶ / ↷** buttons in the footer (or Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z) step back and forward through your changes; a slider drag or a typed number counts as one step. The search box above the tabs finds a setting on any tab: type two or more letters, click a result, and the dialog opens that tab and highlights the setting.
+
 The dialog is modeless, so the chart updates as you change things. **Cancel** undoes everything since the dialog
 opened, and **Reset tab** restores the defaults for that tab.
 

@@ -53,6 +53,8 @@ Viz extensions don't get a right-click menu of their own. Tableau shows the mani
 change shows on the card right away. **Cancel** undoes everything since the dialog opened. **Reset tab** restores the
 Figma defaults for that tab.
 
+**Undo and search.** The **↶ / ↷** buttons in the footer (or Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z) step back and forward through your changes in this dialog; a slider drag or a typed number counts as one step. The search box above the tabs finds a setting on any tab: type two or more letters, click a result, and the dialog opens that tab and highlights the setting.
+
 | Tab | Options |
 | --- | --- |
 | Icon | show/hide · **14 built-in icons** from the Figma page *Icons for Extension* (chart icons, others) · **Tableau shapes** (palette picker) · upload PNG/SVG/JPG/GIF · **size** 12–96 px on the longer side (default 24, as in Figma). Larger icons sit beside both the title and the explanation. |

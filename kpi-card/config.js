@@ -349,6 +349,31 @@
     return '<div class="tt-details">' + (details.title ? '<div class="tt-dh" style="' + escHtml(styleCss(details.headingStyle)) + '">' + escHtml(details.title) + '</div>' : '') + rows + '</div>';
   }
 
+  /**
+   * Which settings each brand-theme key drives (see shared/theme.js). Inert data: nothing reads
+   * it until the Presets tab offers "Apply theme". Only plain look settings; per-measure / per-member
+   * maps are never themed.
+   */
+  var THEME_MAP = {
+    'fonts.family': ['title.font', 'explanation.font', 'number.font', 'change.font'],
+    'fonts.titleSize': ['title.size'],
+    'fonts.titleWeight': ['title.weight'],
+    'fonts.textSize': ['explanation.size'],
+    'colors.title': ['title.color'],
+    'colors.muted': ['explanation.color'],
+    'colors.accent': ['icon.color'],
+    'colors.background': ['card.bgColor'],
+    'colors.backgroundOpacity': ['card.bgOpacity'],
+    'card.padding': ['card.padding'],
+    'fonts.numberWeight': ['number.weight'],
+    'colors.number': ['number.color'],
+    'colors.changeUp': ['change.positiveColor'],
+    'colors.changeDown': ['change.negativeColor'],
+    'colors.neutral': ['change.neutralColor'],
+    'colors.divider': ['card.dividerColor'],
+    'numbers.scale': ['number.scale']
+  };
+
   window.KpiCardConfig = {
     DETAIL_ITEM: DETAIL_ITEM,
     DETAIL_RULE: DETAIL_RULE,
@@ -359,6 +384,7 @@
     detailsHtml: detailsHtml,
     STORAGE_KEY: STORAGE_KEY,
     DEFAULTS: DEFAULTS,
+    THEME_MAP: THEME_MAP,
     FONTS: FONTS,
     ICONS: ICONS,
     findIcon: findIcon,
