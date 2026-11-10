@@ -3547,8 +3547,15 @@
   function progressMaxFn (v) {
     var PR = cfg.progress;
     var maxV = 0;
+    var totV = 0;
     var inUnit = true;
-    v.nodes.forEach(function (n) { n.bars.forEach(function (b) { maxV = Math.max(maxV, b.shown); if (Math.abs(b.shown) > 1.0001) inUnit = false; }); });
+    v.nodes.forEach(function (n) { n.bars.forEach(function (b) { maxV = Math.max(maxV, b.shown); if (b.shown > 0) totV += b.shown; if (Math.abs(b.shown) > 1.0001) inUnit = false; }); });
+    var dKey = null;
+    if (PR.max === 'detail' && raw) {
+      var dms = (raw.extras || []).filter(function (x) { return !x.dim; });
+      var hit = dms.filter(function (x) { return x.key === PR.detailField; })[0] || dms[0];
+      dKey = hit ? hit.key : null;
+    }
     var mode = PR.max;
     var f = cfg.format;
     if (mode === 'auto') mode = inUnit ? 'one' : (maxV <= 100 && /percent/.test(f.scale) && !f.pctFromRatio) ? 'hundred' : 'max';
@@ -3558,6 +3565,8 @@
         case 'one': return 1;
         case 'hundred': return 100;
         case 'target': return isFinite(n.t) && n.t > 0 ? n.t : maxV;
+        case 'total': return totV > 0 ? totV : maxV;
+        case 'detail': var dv = dKey && n.x ? n.x[dKey] : NaN; return isFinite(dv) && dv > 0 ? dv : maxV;
         case 'fixed': return Number(PR.fixed) || maxV;
         default: return maxV;
       }

@@ -445,9 +445,15 @@
         var gp = group(p, 'Filling bar');
         gp.appendChild(selectRow('Fill up to', 'progress.max', [
           ['auto', 'Automatic (100% for ratios, else the largest bar)'], ['percent', '100% (values are percentages or 0–1 ratios)'],
-          ['max', 'Largest value in the chart'], ['target', 'Target measure (each bar its own)'], ['fixed', 'A fixed value']
+          ['max', 'Largest value in the chart'], ['total', 'Total of all bars (each bar shows its share)'],
+          ['target', 'Target measure (each bar its own)'], ['detail', 'A measure on the Detail tile (each bar its own)'], ['fixed', 'A fixed value']
         ], null, rebuild));
         if (PR.max === 'fixed') gp.appendChild(numberRow('Value', 'progress.fixed', -1e15, 1e15, 'any'));
+        if (PR.max === 'detail') {
+          var dms = (info.extras || []).filter(function (x) { return !x.dim; });
+          if (dms.length) gp.appendChild(selectRow('Measure', 'progress.detailField', [['', 'First measure (' + (info.labels[dms[0].key] || dms[0].name) + ')']].concat(dms.map(function (x) { return [x.key, info.labels[x.key] || x.name]; }))));
+          else gp.appendChild(h('p', { className: 'note', textContent: 'Drop a measure on the Detail (or Tooltip) tile; until then bars fill up to the largest value.' }));
+        }
         if (PR.max === 'target' && !info.hasTarget) gp.appendChild(h('p', { className: 'note', textContent: 'Drop a measure on the Target tile; bars without a target fill up to the largest value.' }));
         gp.appendChild(colorRow('Empty part color', 'progress.trackColor'));
         gp.appendChild(rangeRow('Empty part opacity', 'progress.trackOpacity', 0, 100, 1, '%'));
@@ -1700,7 +1706,7 @@
     'series', 'lineSeries', 'colors.custom', 'colors.highlight', 'colors.valueField', 'icons.members',
     'breakdown.dims', 'breakdown.colors', 'comments.items', 'chart.seriesDims', 'chart.panelDims', 'chart.panelMeasures',
     'interaction.hidden', 'topN.by', 'axisC.sortBy', 'title.text', 'explanation.text', 'export.fileName', 'layout',
-    'names', 'legend.names', 'diverging.sides'
+    'names', 'legend.names', 'diverging.sides', 'progress.detailField'
   ];
 
   var presetUi = { scope: 'look', name: '', keepFields: true, msg: null, pasted: '' };

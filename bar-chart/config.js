@@ -198,8 +198,9 @@
       animMs: 350
     },
     progress: {
-      max: 'auto', // auto (100% / 1.0 if values look like percentages, else largest) | max | percent | target | fixed
+      max: 'auto', // auto (100% / 1.0 if values look like percentages, else largest) | max | percent | total | target | detail | fixed
       fixed: 100,
+      detailField: '', // max 'detail': key of a measure on the Detail / Tooltip tile ('' = the first one)
       trackColor: '#E9ECF0',
       trackOpacity: 100,
       trackBorder: false,
