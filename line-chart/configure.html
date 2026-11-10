@@ -20,23 +20,16 @@
       <button class="btn btn--primary" id="done" type="button">Done</button>
     </footer>
 
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=cb0f188540" data-name="Line Chart — Format" data-ext-version="1.2.0"></script>
+    <script src="../shared/core.js?v=2cdac465b4"></script>
     <script src="./icons.js?v=899a3f9c7f"></script>
-    <script src="./config.js?v=ff37e1e0a8"></script>
-    <script src="./configure.js?v=9f7243352b"></script>
+    <script src="./config.js?v=7885c8c6c7"></script>
+    <script src="./configure.js?v=a240a3ede5"></script>
     <script>
-      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=db3141287c"><\/script>');
-    </script>
-    <script>
-      // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.
-      if (!(window.tableau && window.tableau.extensions)) {
-        document.write('<script src="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7"><\/script>');
-      }
-    </script>
-    <script>
-      if (window.tableau && window.tableau.extensions) {
-        window.LineChartConfigure.init();
+      if (window.ExtBoot) {
+        ExtBoot.start(function () { if (!window.LineChartConfigure) return false; window.LineChartConfigure.init(); return true; }, { dialog: true });
       } else {
-        console.error('Could not load the Tableau Extensions API library.');
+        console.error('Could not load the Line Chart files.');
       }
     </script>
   </body>

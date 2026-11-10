@@ -22,15 +22,15 @@
 
   function m (name) { return { name: name, id: '[' + name + ']' }; }
 
-  // Opening → closing balance from balance-flow-figma.html (SAR M)
+  // Opening → closing stock flow, made-up data (millions of units)
   var FIGMA = {
-    start: ['SUM(Opening Balance)', 1284.5],
+    start: ['SUM(Opening Stock)', 1284.5],
     steps: [
-      ['SUM(Bank In)', 262.1], ['SUM(Wallet In)', 36.3], ['SUM(Top-up)', 74.3], ["SUM(Int'l In)", 21.6],
-      ['SUM(Reversal)', 18.3], ['SUM(Other Bank Out)', -201.4], ['SUM(Wallet Out)', -48.7],
-      ['SUM(Card Txns)', -72.9], ['SUM(SADAD)', -31.2], ['SUM(Loan)', -18.6], ["SUM(Int'l Out)", -13.3]
+      ['SUM(Supplier Deliveries)', 262.1], ['SUM(Customer Returns)', 36.3], ['SUM(Store Transfers In)', 74.3], ["SUM(Imports)", 21.6],
+      ['SUM(Order Cancellations)', 18.3], ['SUM(Online Sales)', -201.4], ['SUM(Store Sales)', -48.7],
+      ['SUM(Damaged Goods)', -72.9], ['SUM(Store Transfers Out)', -31.2], ['SUM(Samples)', -18.6], ["SUM(Exports)", -13.3]
     ],
-    end: ['SUM(Closing Balance)', 1311.0]
+    end: ['SUM(Closing Stock)', 1311.0]
   };
 
   var DATASETS = {
@@ -40,33 +40,33 @@
       def: {
         start: FIGMA.start,
         steps: FIGMA.steps.slice(0, 2).concat(FIGMA.steps.slice(5, 8)),
-        end: ['SUM(Closing Balance)', 1284.5 + 262.1 + 36.3 - 201.4 - 48.7 - 72.9]
+        end: ['SUM(Closing Stock)', 1284.5 + 262.1 + 36.3 - 201.4 - 48.7 - 72.9]
       },
       // [dimension names, combinations, weights]
-      breakdown: [['Account Type', 'Segment'],
-        [['Current', 'Retail'], ['Current', 'SME'], ['Ehsan', 'Retail'], ['Musaned', 'Retail'], ['Savings', 'Retail'], ['Savings', 'SME']],
+      breakdown: [['Product Line', 'Segment'],
+        [['Apparel', 'Retail'], ['Apparel', 'Wholesale'], ['Footwear', 'Retail'], ['Home', 'Retail'], ['Toys', 'Retail'], ['Toys', 'Wholesale']],
         [0.4, 0.15, 0.15, 0.1, 0.12, 0.08]]
     },
     // 14 members: the chart shows the top 10 and sums the rest into "Others"
     breakdownMany: {
       def: null, // set below: same bars as breakdown
-      breakdown: [['Branch'],
-        [['Riyadh'], ['Jeddah'], ['Dammam'], ['Makkah'], ['Madinah'], ['Khobar'], ['Tabuk'], ['Abha'], ['Taif'], ['Hail'], ['Jazan'], ['Najran'], ['Buraidah'], ['Yanbu']],
+      breakdown: [['Store'],
+        [['Store A'], ['Store B'], ['Store C'], ['Store D'], ['Store E'], ['Store F'], ['Store G'], ['Store H'], ['Store I'], ['Store J'], ['Store K'], ['Store L'], ['Store M'], ['Store N']],
         [0.22, 0.16, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.025, 0.02, 0.015, 0.01]]
     },
     breakdownLod: null, // set below: breakdown with balances repeated per row
     zero: {
       def: {
-        start: ['SUM(Opening Balance)', 100],
-        steps: [['SUM(Bank In)', 20], ['SUM(FX Gain)', 0], ['SUM(Fees)', 0], ['SUM(Bank Out)', -15]],
-        end: ['SUM(Closing Balance)', 105]
+        start: ['SUM(Opening Stock)', 100],
+        steps: [['SUM(Supplier Deliveries)', 20], ['SUM(Found Stock)', 0], ['SUM(Fees)', 0], ['SUM(Shipments Out)', -15]],
+        end: ['SUM(Closing Stock)', 105]
       }
     },
     negative: {
       def: {
-        start: ['SUM(Net Position)', 40],
-        steps: [['SUM(Inflow)', 25], ['SUM(Outflow)', -95], ['SUM(FX)', 12], ['SUM(Fees)', -8]],
-        end: ['SUM(Net Position End)', -26]
+        start: ['SUM(Net Stock Change)', 40],
+        steps: [['SUM(Inflow)', 25], ['SUM(Outflow)', -95], ['SUM(Adjustments)', 12], ['SUM(Fees)', -8]],
+        end: ['SUM(Net Stock Change End)', -26]
       }
     }
   };
@@ -80,7 +80,7 @@
 
   // Renamed pills: name on the Marks card → [new pill name, column name in the data]
   function renamedStep (name, i) { return RENAME && i === 0 ? 'Inflows (renamed)' : name; }
-  function renamedDim (name, i) { return RENAME && i === 0 ? 'Type of account' : name; }
+  function renamedDim (name, i) { return RENAME && i === 0 ? 'Type of product' : name; }
 
   function cell (v, fmt) {
     return { value: v, nativeValue: v, formattedValue: fmt != null ? fmt : (typeof v === 'number' ? v.toLocaleString('en-US') : String(v)) };
@@ -181,6 +181,8 @@
         worksheet: {
           name: 'Mock sheet',
           addEventListener: function () {},
+          selectMarksByValueAsync: function (sel) { console.log('mock selectMarksByValueAsync', JSON.stringify(sel)); return Promise.resolve(); },
+          clearSelectedMarksAsync: function () { console.log('mock clearSelectedMarksAsync'); return Promise.resolve(); },
           getVisualSpecificationAsync: function () {
             return Promise.resolve({ activeMarksSpecificationIndex: 0, marksSpecifications: [{ encodings: encodings() }] });
           },
@@ -237,5 +239,17 @@
     if (tries < +h[1]) return new Promise(function () {});
     if (tries < +m[1]) return Promise.reject(new Error('mock: handshake rejected (failInit)'));
     return real.call(tableau.extensions, opts);
+  };
+})();
+
+// getSummaryDataAsync (the extensions use it below 10,000 rows) on top of the mock's reader, honouring maxRows.
+(function () {
+  var ws = window.tableau && window.tableau.extensions && window.tableau.extensions.worksheetContent && window.tableau.extensions.worksheetContent.worksheet;
+  if (!ws || ws.getSummaryDataAsync) return;
+  ws.getSummaryDataAsync = function (opts) {
+    return ws.getSummaryDataReaderAsync(undefined, opts).then(function (r) { return r.getAllPagesAsync(); }).then(function (t) {
+      var n = opts && opts.maxRows;
+      return n ? { columns: t.columns, data: t.data.slice(0, n) } : t;
+    });
   };
 })();

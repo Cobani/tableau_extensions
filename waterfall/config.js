@@ -11,10 +11,12 @@
  * Tableau persists inside the workbook.
  */
 (function () {
-  var STORAGE_KEY = 'waterfall1';
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var clone = ExtCore.clone, normalizeHex = ExtCore.normalizeHex, rgb = ExtCore.rgb, rgba = ExtCore.rgba,
+    tint = ExtCore.tint, fontStack = ExtCore.fontStack, merge = ExtCore.merge, pickScale = ExtCore.pickScale,
+    fixed = ExtCore.fixed, formatScaled = ExtCore.formatScaled;
 
-  var FONT_STACK_FALLBACK =
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  var STORAGE_KEY = 'waterfall1';
 
   /** Font families offered in the dialog. "Lato" ships with the extension. */
   var FONTS = [
@@ -178,6 +180,11 @@
       color: '#68707D',
       italic: true
     },
+    // ---- Data ---------------------------------------------------------------
+    data: {
+      maxRows: 1000 // rows read from the worksheet; 0 = no limit (Format → Card → Maximum rows)
+    },
+
     card: {
       padding: 15,
       bgColor: '#FFFFFF',
@@ -208,6 +215,9 @@
       balanceIgnoreBreakdown: false, // Start / End: take the value once instead of summing it over the Breakdown members
       tooltip: true,
       rightClickMenu: true
+    },
+    interaction: {
+      selectInTableau: false // click a Breakdown segment to select it in Tableau (dashboard actions)
     },
     start: endBar(),
     end: endBar(),
@@ -340,34 +350,9 @@
     return iconHtml(id, color).html;
   }
 
-
   // -------------------------------------------------------------------------
   // Settings I/O
   // -------------------------------------------------------------------------
-  function clone (o) { return JSON.parse(JSON.stringify(o)); }
-
-  function isMap (o) { return o && typeof o === 'object' && !Array.isArray(o) && !Object.keys(o).length; }
-
-  /**
-   * Deep-merges stored values over the defaults so new keys get defaults.
-   * An empty object in the defaults ({}) is a map (steps, colours, custom
-   * groups): the stored map is copied as is.
-   */
-  function merge (base, over) {
-    var out = clone(base);
-    if (!over || typeof over !== 'object') return out;
-    Object.keys(out).forEach(function (k) {
-      if (!(k in over)) return;
-      if (isMap(out[k])) {
-        if (over[k] && typeof over[k] === 'object') out[k] = clone(over[k]);
-      } else if (out[k] && typeof out[k] === 'object' && !Array.isArray(out[k])) {
-        out[k] = merge(out[k], over[k]);
-      } else if (typeof over[k] === typeof out[k] || out[k] === '' || out[k] == null) {
-        out[k] = over[k];
-      }
-    });
-    return out;
-  }
 
   function read () {
     try {
@@ -391,36 +376,6 @@
   // -------------------------------------------------------------------------
   // Formatting helpers
   // -------------------------------------------------------------------------
-  var SCALES = { K: 1e3, M: 1e6, B: 1e9 };
-
-  function pickScale (value, scale) {
-    if (scale === 'dynamic') {
-      var a = Math.abs(value);
-      return a >= 1e9 ? 'B' : a >= 1e6 ? 'M' : a >= 1e3 ? 'K' : '';
-    }
-    return SCALES[scale] ? scale : '';
-  }
-
-  function fixed (n, decimals) {
-    var d = Math.max(0, Math.min(10, Number(decimals) || 0));
-    try {
-      return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: d,
-        maximumFractionDigits: d
-      }).format(n);
-    } catch (e) {
-      return n.toFixed(d);
-    }
-  }
-
-  function formatScaled (value, scale, decimals, forceScale) {
-    if (!isFinite(value)) return '—';
-    var suffix = forceScale != null ? forceScale : pickScale(value, scale);
-    var divisor = SCALES[suffix] || 1;
-    var text = fixed(value / divisor, decimals);
-    if (/^-[0.,]+$/.test(text)) text = text.slice(1);
-    return text + suffix;
-  }
 
   /**
    * Formats a number with a format object (see FORMAT).
@@ -459,35 +414,6 @@
     }
     if (opts.signed && f.plusSign) return '+' + body;
     return body;
-  }
-
-  function fontStack (family) {
-    if (!family) return FONT_STACK_FALLBACK;
-    return '"' + String(family).replace(/"/g, '') + '", ' + FONT_STACK_FALLBACK;
-  }
-
-  function normalizeHex (value) {
-    if (typeof value !== 'string') return null;
-    var hex = value.trim().replace(/^#/, '');
-    if (/^[0-9a-f]{3}$/i.test(hex)) hex = hex.replace(/(.)/g, '$1$1');
-    return /^[0-9a-f]{6}$/i.test(hex) ? '#' + hex.toUpperCase() : null;
-  }
-
-  function rgb (hex) {
-    var h = normalizeHex(hex) || '#000000';
-    return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-  }
-
-  function rgba (hex, alpha) {
-    var c = rgb(hex);
-    return 'rgba(' + c[0] + ', ' + c[1] + ', ' + c[2] + ', ' + alpha + ')';
-  }
-
-  /** Mixes a colour with white: t = 0 → the colour, t = 1 → white. */
-  function tint (hex, t) {
-    var c = rgb(hex);
-    var m = function (x) { return Math.round(x + (255 - x) * t); };
-    return '#' + [m(c[0]), m(c[1]), m(c[2])].map(function (x) { return ('0' + x.toString(16)).slice(-2); }).join('').toUpperCase();
   }
 
   /** Dark or light text, whichever reads better on `hex`. */

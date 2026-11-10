@@ -1,0 +1,14 @@
+{
+  "name": "tableau-extensions",
+  "private": true,
+  "description": "Dev tooling only (tests and lint). The extensions themselves have no dependencies and no build step.",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "lint": "eslint .",
+    "check": "python3 release.py --check"
+  },
+  "devDependencies": {
+    "eslint": "^9.14.0",
+    "globals": "^15.12.0"
+  }
+}

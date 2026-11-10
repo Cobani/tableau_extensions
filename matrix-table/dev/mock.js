@@ -28,20 +28,20 @@
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   var DATASETS = {
-    // From → To money movement between products (the base design). Same product = diagonal.
+    // From → To switching between categories (the base design). Same category = diagonal.
     transfer: function () {
-      var P = ['Current', 'Ehsan', 'Musaned', 'Daily', 'Monthly', 'Term'];
+      var P = ['Apparel', 'Footwear', 'Home', 'Toys', 'Garden', 'Sports'];
       var V = {
-        Current: { Daily: 34.0, Monthly: 18.6, Term: 6.9 },
-        Ehsan: { Current: 4.8, Daily: 3.9, Monthly: 1.6, Term: 0.6 },
-        Musaned: { Current: 3.2, Daily: 2.8, Monthly: 1.2, Term: 0.4 },
-        Daily: { Current: 22.0, Monthly: 7.4, Term: 2.3 },
-        Monthly: { Current: 10.4, Daily: 5.1, Term: 0.8 },
-        Term: { Current: 1.7, Daily: 0.7, Monthly: 0.3 }
+        Apparel: { Toys: 34.0, Garden: 18.6, Sports: 6.9 },
+        Footwear: { Apparel: 4.8, Toys: 3.9, Garden: 1.6, Sports: 0.6 },
+        Home: { Apparel: 3.2, Toys: 2.8, Garden: 1.2, Sports: 0.4 },
+        Toys: { Apparel: 22.0, Garden: 7.4, Sports: 2.3 },
+        Garden: { Apparel: 10.4, Toys: 5.1, Sports: 0.8 },
+        Sports: { Apparel: 1.7, Toys: 0.7, Garden: 0.3 }
       };
       var rows = [];
-      P.forEach(function (f) { P.forEach(function (t) { if (V[f][t] != null) rows.push({ 'From Product': f, 'To Product': t, 'SUM(Amount (M))': V[f][t], 'SUM(Transfers)': Math.round(V[f][t] * (900 + rnd() * 300)) }); }); });
-      return { tiles: { rows: ['From Product'], columns: ['To Product'], values: ['SUM(Amount (M))'], tooltip: ['SUM(Transfers)'] }, rows: rows };
+      P.forEach(function (f) { P.forEach(function (t) { if (V[f][t] != null) rows.push({ 'From Category': f, 'To Category': t, 'SUM(Revenue (M))': V[f][t], 'SUM(Switches)': Math.round(V[f][t] * (900 + rnd() * 300)) }); }); });
+      return { tiles: { rows: ['From Category'], columns: ['To Category'], values: ['SUM(Revenue (M))'], tooltip: ['SUM(Switches)'] }, rows: rows };
     },
     // Region › Segment by Year, Sales + Profit, Quantity in the tooltip, Profit ratio on Color
     sales: function () {
@@ -123,7 +123,7 @@
     },
     // No dimensions at all
     single: function () {
-      return { tiles: { rows: [], columns: [], values: ['SUM(Bank In)', 'SUM(Wallet In)'] }, rows: [{ 'SUM(Bank In)': 262.1e6, 'SUM(Wallet In)': 36.3e6 }] };
+      return { tiles: { rows: [], columns: [], values: ['SUM(Store Orders)', 'SUM(Online Orders)'] }, rows: [{ 'SUM(Store Orders)': 262.1e6, 'SUM(Online Orders)': 36.3e6 }] };
     },
     // 3 row levels, 30 columns: scrolling with frozen headers
     wide: function () {
@@ -266,5 +266,17 @@
     if (tries < +h[1]) return new Promise(function () {});
     if (tries < +m[1]) return Promise.reject(new Error('mock: handshake rejected (failInit)'));
     return real.call(tableau.extensions, opts);
+  };
+})();
+
+// getSummaryDataAsync (the extensions use it below 10,000 rows) on top of the mock's reader, honouring maxRows.
+(function () {
+  var ws = window.tableau && window.tableau.extensions && window.tableau.extensions.worksheetContent && window.tableau.extensions.worksheetContent.worksheet;
+  if (!ws || ws.getSummaryDataAsync) return;
+  ws.getSummaryDataAsync = function (opts) {
+    return ws.getSummaryDataReaderAsync(undefined, opts).then(function (r) { return r.getAllPagesAsync(); }).then(function (t) {
+      var n = opts && opts.maxRows;
+      return n ? { columns: t.columns, data: t.data.slice(0, n) } : t;
+    });
   };
 })();

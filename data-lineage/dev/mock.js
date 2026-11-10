@@ -251,3 +251,15 @@
     return real.call(tableau.extensions, opts);
   };
 })();
+
+// getSummaryDataAsync (the extensions use it below 10,000 rows) on top of the mock's reader, honouring maxRows.
+(function () {
+  var ws = window.tableau && window.tableau.extensions && window.tableau.extensions.worksheetContent && window.tableau.extensions.worksheetContent.worksheet;
+  if (!ws || ws.getSummaryDataAsync) return;
+  ws.getSummaryDataAsync = function (opts) {
+    return ws.getSummaryDataReaderAsync(undefined, opts).then(function (r) { return r.getAllPagesAsync(); }).then(function (t) {
+      var n = opts && opts.maxRows;
+      return n ? { columns: t.columns, data: t.data.slice(0, n) } : t;
+    });
+  };
+})();

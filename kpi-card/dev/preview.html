@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KPI Card — dev preview</title>
+<style>
+  body { margin: 0; font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #263244; background: #eef0f2; }
+  .bar { display: flex; gap: 14px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e2e4e8; flex-wrap: wrap; }
+  .bar b { font-size: 14px; }
+  .wrap { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  .zone { resize: both; overflow: hidden; width: 320px; height: 200px; background: #fff; border: 1px solid #d5d9df; }
+  .zone iframe, .dlg iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .dlg { flex: none; width: 540px; height: 760px; background: #fff; border: 1px solid #d5d9df; box-shadow: 0 6px 24px rgba(0,0,0,.12); display: none; }
+  button, select { font: inherit; padding: 4px 10px; }
+  .note { color: #68707d; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <b>KPI Card — dev preview</b>
+    <label>Data
+      <select id="data">
+        <option value="default">Default (one measure + date)</option>
+        <option value="negative">Negative (crosses zero)</option>
+        <option value="flat">Flat</option>
+        <option value="zeros">Zeros</option>
+        <option value="nulls">Nulls (gaps)</option>
+        <option value="nodate">No date</option>
+        <option value="tooltip">Tooltip tile (3 measures)</option>
+        <option value="renamed">Renamed pill</option>
+        <option value="big">Big (2,500 rows)</option>
+      </select>
+    </label>
+    <label>Card size
+      <select id="size">
+        <option value="200x120">Small 200 x 120</option>
+        <option value="320x200" selected>Medium 320 x 200</option>
+        <option value="480x300">Large 480 x 300</option>
+        <option value="900x200">Wide 900 x 200</option>
+      </select>
+    </label>
+    <button id="fmt" type="button">Format Extension</button>
+    <button id="filter" type="button">Filter change</button>
+    <button id="reset" type="button">Reset settings</button>
+    <span class="note">Drag the card's corner to resize. Add ?debug for timings.</span>
+  </div>
+  <div class="wrap">
+    <div class="dlg" id="dlg"><iframe id="dialog" title="Format dialog"></iframe></div>
+    <div class="zone" id="zone"><iframe id="card" title="card"></iframe></div>
+  </div>
+<script>
+  var dataSel = document.getElementById('data');
+  var sizeSel = document.getElementById('size');
+  var zone = document.getElementById('zone');
+  var extra = location.search.replace(/^\?/, '').split('&').filter(function (p) { return /^(failInit|hangInit|rows)=/.test(p); }).join('&');
+  try {
+    dataSel.value = localStorage.getItem('kcMockData') || 'default';
+    sizeSel.value = localStorage.getItem('kcMockSize') || '320x200';
+  } catch (e) {}
+  function applySize () {
+    var p = sizeSel.value.split('x');
+    zone.style.width = p[0] + 'px';
+    zone.style.height = p[1] + 'px';
+  }
+  function load () {
+    document.getElementById('card').src = '../index.html?mock&data=' + dataSel.value + (extra ? '&' + extra : '') + (/debug/.test(location.search) ? '&debug' : '');
+  }
+  dataSel.addEventListener('change', function () { localStorage.setItem('kcMockData', dataSel.value); closeDlg(); load(); });
+  sizeSel.addEventListener('change', function () { localStorage.setItem('kcMockSize', sizeSel.value); applySize(); });
+  document.getElementById('reset').addEventListener('click', function () { localStorage.removeItem('kcMockSettings'); closeDlg(); load(); });
+  document.getElementById('filter').addEventListener('click', function () { document.getElementById('card').contentWindow.mockDataChanged(); });
+  document.getElementById('fmt').addEventListener('click', function () {
+    document.getElementById('card').contentWindow.postMessage({ type: 'kc-configure' }, '*');
+  });
+  function closeDlg () {
+    document.getElementById('dlg').style.display = 'none';
+    document.getElementById('dialog').src = 'about:blank';
+    var c = document.getElementById('card').contentWindow;
+    if (c) c.postMessage({ type: 'kc-dialog-closed' }, '*');
+  }
+  window.addEventListener('message', function (e) {
+    if (!e.data) return;
+    if (e.data.type === 'kc-open-dialog') {
+      document.getElementById('dlg').style.display = 'block';
+      document.getElementById('dialog').src = e.data.url;
+    }
+    if (e.data.type === 'kc-close-dialog') closeDlg();
+  });
+  applySize();
+  load();
+</script>
+</body>
+</html>

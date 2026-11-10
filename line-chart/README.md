@@ -56,6 +56,9 @@ show off a feature. **Reset settings** brings those back.
   point with full, unabbreviated values (Tableau's own format when the point is a single value), plus the stacked
   total, each area's share with 100% stacking, and the band range. Under each series: the change vs the previous
   point (↗ +3.25%, KPI Card arrows, coloured good / bad) and the previous value — set per series on the Series tab.
+- **Click** a point (Format → Legend & tooltip → *Click selects in Tableau*, off by default): selects that date, and
+  the series under the mouse when there is a Color dimension, in Tableau, so dashboard filter and highlight actions
+  fire. Click it again, click empty space or press Escape to clear.
 - **Legend**: click an item to hide or show that series, hover to highlight it, double-click to format it. Hiding
   is for this session only; to hide a series for everyone, set it to *Hidden* in Format → Series.
 - **Right-click** a line, an area or a legend item → *Format "Deposits"…*, *Hide "Deposits"*, Series…, Areas &

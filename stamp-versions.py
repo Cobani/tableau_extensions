@@ -2,7 +2,9 @@
 """Cache-busting for GitHub Pages (whole tableau_extensions repo).
 
 Adds ?v=<content hash> to every local .js/.css reference in each extension's
-HTML pages (<slug>/*.html), including the shared files in shared/ ("../shared/..."),
+HTML pages (<slug>/*.html: src, href and boot.js's data-lib / data-mock), including
+the shared files in shared/ ("../shared/..."), and writes the .trex extension-version
+into boot.js's data-ext-version (shown in the error details),
 so a browser or CDN can never mix an old file with a new page after a deploy.
 The hash only changes when that file's content changes.
 
@@ -18,7 +20,10 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SKIP = {'shared', '.git'}
-REF = re.compile(r'((?:src|href)=")(\.{1,2}/[^"?#]+\.(?:js|css))(?:\?v=[0-9a-f]*)?(")')
+REF = re.compile(r'((?:src|href|data-lib|data-mock)=")(\.{1,2}/[^"?#]+\.(?:js|css))(?:\?v=[0-9a-f]*)?(")')
+
+EXT_VERSION = re.compile(r'(data-ext-version=")[^"]*(")')
+TREX_VERSION = re.compile(r'extension-version="([^"]+)"')
 
 
 def extension_dirs(names):
@@ -42,6 +47,11 @@ def main():
         if not ext.is_dir():
             print('error: no extension folder %s' % ext.name, file=sys.stderr)
             sys.exit(1)
+        version = ''
+        for trex in sorted(ext.glob('*.trex')):
+            found = TREX_VERSION.search(trex.read_text(encoding='utf-8'))
+            if found:
+                version = found.group(1)
         for page in sorted(ext.glob('*.html')):
             text = page.read_text(encoding='utf-8')
 
@@ -53,6 +63,8 @@ def main():
                 return '%s%s?v=%s%s' % (m.group(1), m.group(2), h, m.group(3))
 
             new = REF.sub(stamp, text)
+            if version:
+                new = EXT_VERSION.sub(lambda m: m.group(1) + version + m.group(2), new)
             if new != text:
                 page.write_text(new, encoding='utf-8')
                 changed.append('%s/%s' % (ext.name, page.name))

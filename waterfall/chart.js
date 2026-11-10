@@ -15,12 +15,17 @@
  * which also opens from a right-click on a bar.
  */
 (function () {
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var esc = ExtCore.esc, toNumber = ExtCore.toNumber, isMN = ExtCore.isMN, isNumericCol = ExtCore.isNumericCol,
+    norm = ExtCore.norm, cleanName = ExtCore.cleanName, findColumn = ExtCore.findColumn;
+
   var el = {};
   var worksheet = null;
   var cfg = null;
   var model = null; // see extract()
   var drawn = [];   // bars as drawn: { bar, x, w, yTop, yBottom }
   var renderToken = 0;
+  var selected = null; // { key, member } of the segment selected in Tableau (Format → Bars → Click selects in Tableau)
   var clipSeq = 0;
   var SVGNS = 'http://www.w3.org/2000/svg';
 
@@ -35,6 +40,12 @@
     el.svg.addEventListener('mousemove', onHover);
     el.svg.addEventListener('mouseleave', hideTooltip);
     el.svg.addEventListener('contextmenu', onContextMenu);
+    el.svg.addEventListener('click', onSegmentClick);
+    document.addEventListener('click', function (e) {
+      const path = e.composedPath ? e.composedPath() : [];
+      if (selected && path.indexOf(el.svg) < 0 && path.indexOf(el.menu) < 0) clearPick();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && selected) clearPick(); });
     el.svg.addEventListener('dblclick', function (e) {
       var b = barFromEvent(e);
       if (b) openDialog({ tab: 'bars', bar: b.key });
@@ -77,7 +88,7 @@
           cfg = Wf.read();
           reconcileKeys();
           // Just switched on "ignore the Breakdown": fetch Start / End without it.
-          if (cfg.bars.balanceIgnoreBreakdown && model && model.balanceCols && !model.balanceTried) refresh();
+          if (limitChanged() || (cfg.bars.balanceIgnoreBreakdown && model && model.balanceCols && !model.balanceTried)) refresh();
           else paint();
         }
       );
@@ -91,7 +102,7 @@
     }).catch(function (err) {
       if (initDone) {
         console.error('Waterfall failed to start:', err);
-        showEmpty('Could not initialize the extension. See the console for details.');
+        showEmpty('Could not initialize the extension. Click the ! mark in the corner for details.');
         return;
       }
       initDone = true;
@@ -150,80 +161,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Last-render cache: on load, draw the previous result straight away (right
-  // after the Tableau handshake), then replace it with the live data. Stored in
-  // this browser only (localStorage), per worksheet, and only reused when the
-  // same fields are on the Marks card. Any storage error just skips the cache.
-  // ---------------------------------------------------------------------------
-  var CACHE_PREFIX = 'waterfall:lastRender:v1:';
-  var CACHE_MAX_AGE = 30 * 24 * 3600 * 1000; // 30 days
-  var CACHE_MAX_CHARS = 400000;
-  var cacheTried = false;
-
-  function cacheKey () {
-    var host = '';
-    try { host = document.referrer ? new URL(document.referrer).origin : ''; } catch (e) { /* ignore */ }
-    return CACHE_PREFIX + host + '|' + (worksheet && worksheet.name);
-  }
-
-  /** Identifies what's on the Marks card, so a cache is only used for the same setup. */
-  function fieldsSig (fields) {
-    var out = {};
-    Object.keys(fields).sort().forEach(function (k) {
-      out[k] = fields[k].map(function (f) { return (f.id || '') + '|' + (f.name || ''); });
-    });
-    return JSON.stringify(out);
-  }
-
-  // JSON keeps Dates and NaN/Infinity intact.
-  function enc (k, v) {
-    var raw = this[k];
-    if (raw instanceof Date) return { $d: raw.getTime() };
-    if (typeof raw === 'number' && !isFinite(raw)) return { $n: String(raw) };
-    return v;
-  }
-  function dec (k, v) {
-    if (v && typeof v === 'object') {
-      if (Object.prototype.hasOwnProperty.call(v, '$d')) return new Date(v.$d);
-      if (Object.prototype.hasOwnProperty.call(v, '$n')) return Number(v.$n);
-    }
-    return v;
-  }
-
-  /** The saved result for this worksheet, if fresh: { sig, data }. */
-  function readCacheEntry () {
-    try {
-      var s = window.localStorage.getItem(cacheKey());
-      if (!s) return null;
-      var c = JSON.parse(s, dec);
-      if (!c || !c.data || !(Date.now() - c.t < CACHE_MAX_AGE)) return null;
-      return c;
-    } catch (e) { return null; }
-  }
-
-  function writeCache (fields, data) {
-    try {
-      var s = JSON.stringify({ sig: fieldsSig(fields), t: Date.now(), data: data }, enc);
-      // Too big to keep: drop the old entry too, so a stale drawing isn't shown on the next load.
-      if (s.length > CACHE_MAX_CHARS) { clearCache(); return; }
-      try {
-        window.localStorage.setItem(cacheKey(), s);
-      } catch (full) {
-        // Storage full: drop this extension's old entries and try once more.
-        for (var i = window.localStorage.length - 1; i >= 0; i--) {
-          var k = window.localStorage.key(i);
-          if (k && k.indexOf(CACHE_PREFIX) === 0) window.localStorage.removeItem(k);
-        }
-        window.localStorage.setItem(cacheKey(), s);
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  function clearCache () {
-    try { window.localStorage.removeItem(cacheKey()); } catch (e) { /* ignore */ }
-  }
-
-  // ---------------------------------------------------------------------------
   // Data
   // ---------------------------------------------------------------------------
   async function refresh () {
@@ -245,33 +182,12 @@
         return r;
       }).catch(function (err) { tData = ms(); return { error: err }; });
 
-      // First load: draw the last result from cache right after the handshake,
-      // while Tableau is still working on the fields and the data. If the fields
-      // on the Marks card turn out to be different, the cached drawing is removed.
-      if (!cacheTried) {
-        cacheTried = true;
-        var entry = readCacheEntry();
-        if (entry && !model) {
-          model = entry.data;
-          try { paint(); T.mark('cached result drawn'); } catch (e) { model = null; entry = null; }
-        }
-        if (entry) {
-          fieldsP.then(function (f) {
-            if (token !== renderToken || model !== entry.data || entry.sig === fieldsSig(f)) return;
-            model = null;
-            showEmpty('');
-            T.mark('cached result removed (fields changed)');
-          }).catch(function () { /* handled below */ });
-        }
-      }
-
       var results = await Promise.all([fieldsP, dataP]);
       if (token !== renderToken) return;
       var fields = results[0];
 
       if (!fields.start.length && !fields.steps.length && !fields.end.length) {
         model = null;
-        clearCache();
         if (first) { T.mark('no fields on the Marks card'); T.done('Waterfall load timings'); }
         showEmpty('Drag measures onto <b>Start</b>, <b>Changes</b> (one at a time) and <b>End</b>.<br>' +
           'Add a dimension to <b>Breakdown</b> to split the change bars.');
@@ -294,11 +210,10 @@
         T.line('refresh #' + token + ': fields ' + tFields + ' ms, data ' + tData + ' ms (' +
           (table.data ? table.data.length : 0) + ' rows), draw ' + Math.round(performance.now() - tp) + ' ms');
       }
-      writeCache(fields, model);
     } catch (err) {
       console.error('Waterfall render failed:', err);
       if (first) { T.mark('render failed', err && err.message); T.done('Waterfall load timings'); }
-      if (token === renderToken) showEmpty('Could not read the worksheet data. See the console for details.');
+      if (token === renderToken) showEmpty('Could not read the worksheet data. Click the ! mark in the corner for details.');
     }
   }
 
@@ -345,46 +260,21 @@
     }
   }
 
+  /**
+   * The worksheet's summary data, up to the row limit in the settings (Format → Card → Maximum
+   * rows; 0 = all). When rows were left out, a small note says so in the corner.
+   */
+  var lastLimit = null;
   async function readSummaryData (extra) {
-    var opts = { ignoreSelection: true };
-    if (extra) Object.keys(extra).forEach(function (k) { opts[k] = extra[k]; });
-    var reader = await worksheet.getSummaryDataReaderAsync(undefined, opts);
-    try {
-      return await reader.getAllPagesAsync();
-    } finally {
-      await reader.releaseAsync();
-    }
+    var limit = ExtCore.rowLimit(cfg.data.maxRows);
+    var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
+    return table;
   }
 
-  function norm (s) {
-    return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase();
-  }
-
-  /** Name without an inline-calculation comment: "SUM([X]) //New name" → both parts. */
-  function nameParts (s) {
-    var str = String(s || '');
-    var i = str.indexOf('//');
-    if (i < 0) return [norm(str)];
-    return [norm(str.slice(i + 2)), norm(str.slice(0, i))].filter(Boolean);
-  }
-
-  function isMN (c) { return /^measure (names|values)$/i.test(c.fieldName); }
-  function isNumericCol (c) { return /^(float|int|real|integer|number)$/i.test(String(c.dataType || '')); }
-
-  /** Column for a field by id or name (exact, without aggregation, or around a // comment). */
-  function findColumn (table, field, taken) {
-    if (!field) return null;
-    var cols = table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); });
-    var fid = field.id || field.fieldId;
-    var fn = nameParts(field.name);
-    return cols.find(function (c) { return fid && c.fieldId && c.fieldId === fid; }) ||
-      cols.find(function (c) { return c.fieldName === field.name; }) ||
-      cols.find(function (c) { return norm(c.fieldName) === norm(field.name); }) ||
-      cols.find(function (c) {
-        var cn = nameParts(c.fieldName);
-        return cn.some(function (x) { return fn.indexOf(x) >= 0; });
-      }) ||
-      null;
+  /** True when the row limit in the settings no longer matches the data that was read. */
+  function limitChanged () {
+    return lastLimit != null && ExtCore.rowLimit(cfg.data.maxRows) !== lastLimit;
   }
 
   /**
@@ -418,17 +308,6 @@
         return (r.field && r.field.name) + ' → ' + r.col.fieldName;
       }));
     }
-  }
-
-  function toNumber (cell) {
-    if (!cell) return NaN;
-    var v = cell.nativeValue != null ? cell.nativeValue : cell.value;
-    if (v === null || v === '%null%' || v === '') return NaN;
-    return typeof v === 'number' ? v : Number(v);
-  }
-
-  function cleanName (name) {
-    return String(name || '').replace(/^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR)\((.*)\)$/i, '$2');
   }
 
   /**
@@ -472,12 +351,13 @@
 
     // Distinct combinations of the Breakdown values, in data order.
     var combos = [];
+    var comboRaw = []; // raw cell values of each combination, for selecting in Tableau
     var comboSeen = {};
 
     rows.forEach(function (r) {
       var vals = cBrk.map(function (c) { return String(r[c.index].formattedValue); });
       var ck = vals.join('\u0001');
-      if (cBrk.length && !comboSeen[ck]) { comboSeen[ck] = combos.length + 1; combos.push(vals); }
+      if (cBrk.length && !comboSeen[ck]) { comboSeen[ck] = combos.length + 1; combos.push(vals); comboRaw.push(cBrk.map(function (c) { return r[c.index].value; })); }
       var mn = cMN ? norm(r[cMN.index].formattedValue || r[cMN.index].value) : null;
       ms.forEach(function (m) {
         var cell = null;
@@ -520,9 +400,10 @@
       start: ms.filter(function (m) { return m.kind === 'start'; }).map(bar)[0] || null,
       steps: ms.filter(function (m) { return m.kind === 'step'; }).map(bar),
       end: ms.filter(function (m) { return m.kind === 'end'; }).map(bar)[0] || null,
-      dims: fBrk.map(function (f) { return { key: f.name, name: cleanName(f.name) }; }),
+      dims: fBrk.map(function (f, i) { return { key: f.name, name: cleanName(f.name), fieldName: cBrk[i].fieldName }; }),
       dimKeys: fields.breakdown.map(function (f) { return f.name; }), // every Breakdown pill, matched or not
       combos: combos,
+      comboRaw: comboRaw,
       members: combos.map(function (c) { return c.join(' \u00b7 '); }),
       missing: ms.filter(function (m) { return !m.n; }).map(function (m) { return m.name; }),
       // Start / End column ids, for reading them without the Breakdown (fetchBalances)
@@ -1113,8 +994,8 @@
     var slotX = function (i) { return left + i * slot; };
 
     // ---- layers -------------------------------------------------------------
-    var gBack = node('g'), gGrid = node('g'), gBars = node('g'), gConn = node('g'), gLabels = node('g'), gAxes = node('g');
-    [gBack, gGrid, gBars, gConn, gLabels, gAxes].forEach(function (g) { svg.appendChild(g); });
+    var gBack = node('g'), gGrid = node('g'), gBars = node('g'), gConn = node('g'), gLabels = node('g'), gAxes = node('g'), gSel = node('g', { 'pointer-events': 'none' });
+    [gBack, gGrid, gBars, gConn, gLabels, gAxes, gSel].forEach(function (g) { svg.appendChild(g); });
     var defs = node('defs');
     svg.insertBefore(defs, svg.firstChild);
 
@@ -1229,6 +1110,8 @@
         drawBreak(g, x, bw, c0, s.brk);
       }
     });
+
+    drawSelection(gSel);
 
     // ---- connectors -------------------------------------------------------
     if (L.connectors.show) {
@@ -1391,6 +1274,70 @@
   // ---------------------------------------------------------------------------
   // Tooltip + right-click menu
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Click selects a Breakdown segment in Tableau
+  // ---------------------------------------------------------------------------
+  function segmentAt (b, clientY) {
+    if (!b || !b.segGeom || !b.segGeom.length) return null;
+    const y = clientY - el.svg.getBoundingClientRect().top;
+    let best = null;
+    b.segGeom.forEach(function (g) {
+      const d = y < g.y1 ? g.y1 - y : (y > g.y2 ? y - g.y2 : 0);
+      if (!best || d < best.d) best = { d: d, g: g };
+    });
+    return best && best.d <= 3 ? best.g.seg : null;
+  }
+
+  /** Tableau selection for one segment: each Breakdown dimension it spans, with the raw member values. */
+  function segmentSelection (b, seg) {
+    const order = dimOrder(b.s.breakdown);
+    const sep = b.s.breakdown.sep;
+    const shown = {};
+    (b.segs || []).forEach(function (sg) { if (!sg.others) shown[sg.member] = true; });
+    const vals = order.map(function () { return []; });
+    model.combos.forEach(function (combo, c) {
+      const name = memberName(combo, order, sep);
+      if (seg.others ? shown[name] : name !== seg.member) return;
+      order.forEach(function (di, k) {
+        const v = model.comboRaw[c][di];
+        if (vals[k].indexOf(v) < 0) vals[k].push(v);
+      });
+    });
+    return order.map(function (di, k) { return { fieldName: model.dims[di].fieldName, value: vals[k] }; })
+      .filter(function (s) { return s.fieldName && s.value.length; });
+  }
+
+  function onSegmentClick (e) {
+    if (!cfg || !model || !cfg.interaction || !cfg.interaction.selectInTableau) return;
+    if (e.detail > 1 || el.menu.style.display === 'block') return; // second click of a double-click
+    const b = barFromEvent(e);
+    if (!b) { clearPick(); return; }
+    const seg = segmentAt(b, e.clientY);
+    if (!seg) return; // a plain measure bar: nothing to select
+    if (selected && selected.key === b.key && selected.member === seg.member) { clearPick(); return; }
+    const sel = segmentSelection(b, seg);
+    if (!sel.length) return;
+    selected = { key: b.key, member: seg.member };
+    ExtCore.select(worksheet, sel, 'Waterfall');
+    paint();
+  }
+
+  function clearPick () {
+    if (!selected) return;
+    selected = null;
+    ExtCore.clearSelection(worksheet);
+    paint();
+  }
+
+  function drawSelection (g) {
+    if (!selected) return;
+    const d = drawn.find(function (x) { return x.bar.key === selected.key; });
+    const sg = d && d.bar.segGeom && d.bar.segGeom.find(function (x) { return x.seg.member === selected.member; });
+    if (!sg) { selected = null; return; }
+    g.appendChild(node('rect', { x: d.x + 0.75, y: sg.y1 + 0.75, width: Math.max(0, d.w - 1.5), height: Math.max(0, sg.y2 - sg.y1 - 1.5),
+      fill: 'none', stroke: '#17202B', 'stroke-width': 1.5, 'stroke-dasharray': '4,3' }));
+  }
+
   function barFromEvent (e) {
     var g = e.target.closest ? e.target.closest('.bar') : null;
     if (!g) return null;
@@ -1479,12 +1426,6 @@
 
   function hideMenu () {
     if (el.menu) el.menu.style.display = 'none';
-  }
-
-  function esc (s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
   }
 
   function showEmpty (html) {

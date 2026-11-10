@@ -44,7 +44,7 @@
     var mc = monthCells(24);
     return {
       dates: ['MY(Order Date)'],
-      measures: ['SUM(Deposits)', 'SUM(Withdrawals)', 'SUM(Net Flow)', 'AVG(Active Customers)'],
+      measures: ['SUM(Revenue)', 'SUM(Returns)', 'SUM(Net Revenue)', 'AVG(Active Shoppers)'],
       rows: mc.map(function (c, i) {
         var dep = 820 + i * 14 + wave(i, 0.9, 0.3, 60);
         var wd = 760 + i * 12 + wave(i, 0.7, 1.4, 70);
@@ -52,23 +52,23 @@
       }),
       preset: {
         series: {
-          'SUM(Deposits)': { type: 'area' },
-          'SUM(Withdrawals)': { type: 'area' },
-          'SUM(Net Flow)': { labels: 'last', markers: 'last', width: 2.5 },
-          'AVG(Active Customers)': { axis: 'right', style: 'dashed', width: 1.5 }
+          'SUM(Revenue)': { type: 'area' },
+          'SUM(Returns)': { type: 'area' },
+          'SUM(Net Revenue)': { labels: 'last', markers: 'last', width: 2.5 },
+          'AVG(Active Shoppers)': { axis: 'right', style: 'dashed', width: 1.5 }
         },
-        axisY: { title: 'SAR M' },
-        axisY2: { title: 'Customers' },
-        refs: [{ kind: 'average', series: 'SUM(Net Flow)', label: 'Avg net flow', color: '#0E7C66' }],
-        title: { text: 'Deposits, withdrawals and net flow' },
-        explanation: { text: 'Monthly, SAR M — customers on the right axis' }
+        axisY: { title: 'Revenue (M)' },
+        axisY2: { title: 'Shoppers' },
+        refs: [{ kind: 'average', series: 'SUM(Net Revenue)', label: 'Avg net revenue', color: '#0E7C66' }],
+        title: { text: 'Revenue, returns and net revenue' },
+        explanation: { text: 'Monthly, millions — shoppers on the right axis' }
       }
     };
   }
 
   function channels () {
     var mc = monthCells(18);
-    var ch = [['App', 520, 18], ['Web', 260, 4], ['Branch', 180, -3], ['ATM', 140, -2]];
+    var ch = [['Online', 520, 18], ['Marketplace', 260, 4], ['In store', 180, -3], ['Kiosk', 140, -2]];
     var rows = [];
     mc.forEach(function (c, i) {
       ch.forEach(function (x, k) {
@@ -76,11 +76,11 @@
       });
     });
     return {
-      dates: ['MY(Txn Date)'],
+      dates: ['MY(Order Date)'],
       color: 'Channel',
-      measures: ['SUM(Transactions)'],
+      measures: ['SUM(Orders)'],
       rows: rows,
-      preset: { areas: { mode: 'stack' }, seriesDefaults: { type: 'area' }, legend: { showLatest: true }, title: { text: 'Transactions by channel' } }
+      preset: { areas: { mode: 'stack' }, seriesDefaults: { type: 'area' }, legend: { showLatest: true }, title: { text: 'Orders by channel' } }
     };
   }
 
@@ -104,7 +104,7 @@
         band: { show: true, lower: 'SUM(Forecast Low)', upper: 'SUM(Forecast High)', label: 'Forecast range', color: '#EB644C' },
         forecast: { show: true, from: 'May 2026' },
         refs: [{ kind: 'constant', value: 1600, label: 'Target', color: '#0E7C66' }],
-        title: { text: 'Balance: actual and forecast' }
+        title: { text: 'Revenue: actual and forecast' }
       }
     };
   }
@@ -118,10 +118,10 @@
         48e6 + i * 2.1e5 + wave(i, 0.4, 0, 3.2e6), 31e6 + i * 1.4e5 + wave(i, 0.3, 2, 2.6e6)]);
     }
     return {
-      dates: ['MDY(Value Date)'],
-      measures: ['SUM(SARIE Inflow)', 'SUM(SARIE Outflow)'],
+      dates: ['MDY(Order Date)'],
+      measures: ['SUM(Orders Placed)', 'SUM(Orders Shipped)'],
       rows: rows,
-      preset: { chart: { xSpacing: 'time' }, seriesDefaults: { curve: 'smooth' }, title: { text: 'Daily SARIE flows' } }
+      preset: { chart: { xSpacing: 'time' }, seriesDefaults: { curve: 'smooth' }, title: { text: 'Daily orders' } }
     };
   }
 
@@ -137,7 +137,7 @@
     rows.reverse(); // Tableau's order isn't guaranteed; the chart sorts by date
     return {
       dates: ['MONTH(Date)', 'YEAR(Date)'],
-      measures: ['AVG(Card Share)', 'AVG(Wallet Share)'],
+      measures: ['AVG(Online Share)', 'AVG(Store Share)'],
       rows: rows.map(function (r) { return [r[1], r[0], r[2], r[3]]; }),
       preset: { format: { scale: 'percent', decimals: 1 }, axisY: { fmt: { scale: 'percent', decimals: 0 } }, seriesDefaults: { markers: 'all' } }
     };
@@ -147,14 +147,14 @@
     var mc = monthCells(15);
     return {
       dates: ['MY(Month)'],
-      measures: ['SUM(Net Position)', 'SUM(FX Result)'],
+      measures: ['SUM(Net Margin)', 'SUM(Discount Effect)'],
       rows: mc.map(function (c, i) { return [c, wave(i, 0.7, 0, 90) + 10, wave(i, 0.45, 1, 40) - 15]; }),
       preset: { seriesDefaults: { labels: 'minmax', markers: 'minmax' } }
     };
   }
 
   function single () {
-    return { dates: [], measures: ['SUM(Deposits)', 'SUM(Withdrawals)'], rows: [[1284.5, 961.2]] };
+    return { dates: [], measures: ['SUM(Revenue)', 'SUM(Returns)'], rows: [[1284.5, 961.2]] };
   }
 
   var DATASETS = { monthly: monthly, channels: channels, forecast: forecast, daily: daily, yearmonth: yearmonth, negative: negative, single: single };
@@ -245,6 +245,8 @@
         worksheet: {
           name: 'Mock sheet',
           addEventListener: function () {},
+          selectMarksByValueAsync: function (sel) { console.log('mock selectMarksByValueAsync', JSON.stringify(sel)); return Promise.resolve(); },
+          clearSelectedMarksAsync: function () { console.log('mock clearSelectedMarksAsync'); return Promise.resolve(); },
           getVisualSpecificationAsync: function () {
             return Promise.resolve({ activeMarksSpecificationIndex: 0, marksSpecifications: [{ encodings: encodings() }] });
           },
@@ -286,5 +288,17 @@
     if (tries < +h[1]) return new Promise(function () {});
     if (tries < +m[1]) return Promise.reject(new Error('mock: handshake rejected (failInit)'));
     return real.call(tableau.extensions, opts);
+  };
+})();
+
+// getSummaryDataAsync (the extensions use it below 10,000 rows) on top of the mock's reader, honouring maxRows.
+(function () {
+  var ws = window.tableau && window.tableau.extensions && window.tableau.extensions.worksheetContent && window.tableau.extensions.worksheetContent.worksheet;
+  if (!ws || ws.getSummaryDataAsync) return;
+  ws.getSummaryDataAsync = function (opts) {
+    return ws.getSummaryDataReaderAsync(undefined, opts).then(function (r) { return r.getAllPagesAsync(); }).then(function (t) {
+      var n = opts && opts.maxRows;
+      return n ? { columns: t.columns, data: t.data.slice(0, n) } : t;
+    });
   };
 })();

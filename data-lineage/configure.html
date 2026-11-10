@@ -20,23 +20,16 @@
       <button class="btn btn--primary" id="done" type="button">Done</button>
     </footer>
 
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=9e84dd7850" data-name="Data Lineage — Format" data-ext-version="1.3.0"></script>
+    <script src="../shared/core.js?v=2cdac465b4"></script>
     <script src="./icons.js?v=58c76ce58f"></script>
-    <script src="./config.js?v=6abc19bbb5"></script>
-    <script src="./configure.js?v=383eccf579"></script>
+    <script src="./config.js?v=d94d3e4838"></script>
+    <script src="./configure.js?v=6461844e83"></script>
     <script>
-      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=83db694214"><\/script>');
-    </script>
-    <script>
-      // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.
-      if (!(window.tableau && window.tableau.extensions)) {
-        document.write('<script src="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7"><\/script>');
-      }
-    </script>
-    <script>
-      if (window.tableau && window.tableau.extensions) {
-        window.DataLineageConfigure.init();
+      if (window.ExtBoot) {
+        ExtBoot.start(function () { if (!window.DataLineageConfigure) return false; window.DataLineageConfigure.init(); return true; }, { dialog: true });
       } else {
-        console.error('Could not load the Tableau Extensions API library.');
+        console.error('Could not load the Data Lineage files.');
       }
     </script>
   </body>

@@ -11,10 +11,12 @@
  * Tableau persists inside the workbook.
  */
 (function () {
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var clone = ExtCore.clone, normalizeHex = ExtCore.normalizeHex, rgba = ExtCore.rgba, mix = ExtCore.mix,
+    tint = ExtCore.tint, fontStack = ExtCore.fontStack, merge = ExtCore.merge;
+
   var STORAGE_KEY = 'dataLineage1';
 
-  var FONT_STACK_FALLBACK =
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
   var MONO_STACK = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
 
   /** Font families offered in the dialog. "Lato" ships with the extension. */
@@ -102,6 +104,7 @@
     names: {}, // level field name → { header, legend } (empty → the field name)
     details: {}, // detail field name → { level: 'auto' | 0…5, show: 'subtitle' | 'inline' | 'tooltip' | 'hidden' }
     data: {
+      maxRows: 1000, // rows read from the worksheet; 0 = no limit (Format → Card → Maximum rows)
       nulls: 'skip', // skip (the path jumps over the empty level) | show ("Null" node)
       sort: 'flow', // flow (fewest crossings) | name | paths (most paths first)
       countNoun: '' // "9 views": empty → the last level's name
@@ -260,33 +263,6 @@
   // -------------------------------------------------------------------------
   // Settings I/O
   // -------------------------------------------------------------------------
-  function clone (o) { return JSON.parse(JSON.stringify(o)); }
-
-  function isMap (o) { return o && typeof o === 'object' && !Array.isArray(o) && !Object.keys(o).length; }
-
-  /**
-   * Deep-merges stored values over the defaults so new keys get defaults.
-   * An empty object in the defaults ({}) is a map: the stored map is copied as
-   * is. Arrays are copied as stored, except `levels`, whose items are merged
-   * over LEVEL one by one.
-   */
-  function merge (base, over) {
-    var out = clone(base);
-    if (!over || typeof over !== 'object') return out;
-    Object.keys(out).forEach(function (k) {
-      if (!(k in over)) return;
-      if (isMap(out[k])) {
-        if (over[k] && typeof over[k] === 'object' && !Array.isArray(over[k])) out[k] = clone(over[k]);
-      } else if (Array.isArray(out[k])) {
-        if (Array.isArray(over[k])) out[k] = clone(over[k]);
-      } else if (out[k] && typeof out[k] === 'object') {
-        out[k] = merge(out[k], over[k]);
-      } else if (typeof over[k] === typeof out[k] || out[k] === '' || out[k] == null) {
-        out[k] = over[k];
-      }
-    });
-    return out;
-  }
 
   /** Stored settings over the defaults; every level filled in. */
   function normalize (cfg) {
@@ -320,39 +296,6 @@
   // -------------------------------------------------------------------------
   // Fonts + colours
   // -------------------------------------------------------------------------
-  function fontStack (family) {
-    if (!family) return FONT_STACK_FALLBACK;
-    return '"' + String(family).replace(/"/g, '') + '", ' + FONT_STACK_FALLBACK;
-  }
-
-  function normalizeHex (value) {
-    if (typeof value !== 'string') return null;
-    var hex = value.trim().replace(/^#/, '');
-    if (/^[0-9a-f]{3}$/i.test(hex)) hex = hex.replace(/(.)/g, '$1$1');
-    return /^[0-9a-f]{6}$/i.test(hex) ? '#' + hex.toUpperCase() : null;
-  }
-
-  function rgb (hex) {
-    var h = normalizeHex(hex) || '#000000';
-    return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-  }
-
-  function toHex (c) {
-    return '#' + c.map(function (x) { return ('0' + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2); }).join('').toUpperCase();
-  }
-
-  function rgba (hex, alpha) {
-    var c = rgb(hex);
-    return 'rgba(' + c[0] + ', ' + c[1] + ', ' + c[2] + ', ' + alpha + ')';
-  }
-
-  /** Mixes two colours: t = 0 → a, t = 1 → b. */
-  function mix (a, b, t) {
-    var x = rgb(a); var y = rgb(b);
-    return toHex([0, 1, 2].map(function (i) { return x[i] + (y[i] - x[i]) * t; }));
-  }
-
-  function tint (hex, t) { return mix(hex, '#FFFFFF', t); }
 
   window.Dl = {
     STORAGE_KEY: STORAGE_KEY,

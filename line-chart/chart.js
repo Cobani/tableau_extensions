@@ -16,6 +16,11 @@
  * also opens from a right-click or double-click in the chart or the legend.
  */
 (function () {
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var esc = ExtCore.esc, toNumber = ExtCore.toNumber, isMN = ExtCore.isMN, isNumericCol = ExtCore.isNumericCol,
+    norm = ExtCore.norm, findColumn = ExtCore.findColumn;
+  function cleanName (name) { return ExtCore.cleanName(name, { alias: true }); } // 'Field // Shown name' → 'Shown name'
+
   var el = {};
   var worksheet = null;
   var cfg = null;
@@ -24,6 +29,7 @@
   var hidden = {}; // series hidden from the legend (this session only)
   var hoverKey = null; // legend item under the mouse
   var renderToken = 0;
+  var selected = null; // { label, member } of the point selected in Tableau (Format → Legend & tooltip → Click selects in Tableau)
   var SVGNS = 'http://www.w3.org/2000/svg';
 
   // ---------------------------------------------------------------------------
@@ -38,6 +44,11 @@
     el.svg.addEventListener('mousemove', onHover);
     el.svg.addEventListener('mouseleave', function () { hideTooltip(); clearCrosshair(); });
     el.svg.addEventListener('contextmenu', onContextMenu);
+    el.svg.addEventListener('click', onPlotClick);
+    document.addEventListener('click', function (e) {
+      if (selected && !el.svg.contains(e.target) && !el.legend.contains(e.target) && !el.menu.contains(e.target)) clearPick();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && selected) clearPick(); });
     el.svg.addEventListener('dblclick', function (e) {
       var s = seriesFromEvent(e);
       openDialog({ tab: 'series', item: s ? s.key : null });
@@ -84,7 +95,7 @@
       worksheet.addEventListener(tableau.TableauEventType.SummaryDataChanged, refresh);
       tableau.extensions.settings.addEventListener(
         tableau.TableauEventType.SettingsChanged,
-        function () { cfg = Lc.read(); reconcileKeys(); paint(); }
+        function () { cfg = Lc.read(); reconcileKeys(); if (limitChanged()) refresh(); else paint(); }
       );
 
       if (window.ResizeObserver) {
@@ -96,7 +107,7 @@
     }).catch(function (err) {
       if (initDone) {
         console.error('Line Chart failed to start:', err);
-        showEmpty('Could not initialize the extension. See the console for details.');
+        showEmpty('Could not initialize the extension. Click the ! mark in the corner for details.');
         return;
       }
       initDone = true;
@@ -157,79 +168,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Last-render cache: on load, draw the previous result straight away (right
-  // after the Tableau handshake), then replace it with the live data. Stored in
-  // this browser only (localStorage), per worksheet, and only reused when the
-  // same fields are on the Marks card. Any storage error just skips the cache.
-  // ---------------------------------------------------------------------------
-  var CACHE_PREFIX = 'line-chart:lastRender:v1:';
-  var CACHE_MAX_AGE = 30 * 24 * 3600 * 1000; // 30 days
-  var CACHE_MAX_CHARS = 400000;
-  var cacheTried = false;
-
-  function cacheKey () {
-    var host = '';
-    try { host = document.referrer ? new URL(document.referrer).origin : ''; } catch (e) { /* ignore */ }
-    return CACHE_PREFIX + host + '|' + (worksheet && worksheet.name);
-  }
-
-  /** Identifies what's on the Marks card, so a cache is only used for the same setup. */
-  function fieldsSig (fields) {
-    var out = {};
-    Object.keys(fields).sort().forEach(function (k) {
-      out[k] = fields[k].map(function (f) { return (f.id || '') + '|' + (f.name || ''); });
-    });
-    return JSON.stringify(out);
-  }
-
-  // JSON keeps Dates and NaN/Infinity intact.
-  function enc (k, v) {
-    var raw = this[k];
-    if (raw instanceof Date) return { $d: raw.getTime() };
-    if (typeof raw === 'number' && !isFinite(raw)) return { $n: String(raw) };
-    return v;
-  }
-  function dec (k, v) {
-    if (v && typeof v === 'object') {
-      if (Object.prototype.hasOwnProperty.call(v, '$d')) return new Date(v.$d);
-      if (Object.prototype.hasOwnProperty.call(v, '$n')) return Number(v.$n);
-    }
-    return v;
-  }
-
-  /** The saved result for this worksheet, if fresh: { sig, data }. */
-  function readCacheEntry () {
-    try {
-      var s = window.localStorage.getItem(cacheKey());
-      if (!s) return null;
-      var c = JSON.parse(s, dec);
-      if (!c || !c.data || !(Date.now() - c.t < CACHE_MAX_AGE)) return null;
-      return c;
-    } catch (e) { return null; }
-  }
-
-  function writeCache (fields, data) {
-    try {
-      var s = JSON.stringify({ sig: fieldsSig(fields), t: Date.now(), data: data }, enc);
-      if (s.length > CACHE_MAX_CHARS) return;
-      try {
-        window.localStorage.setItem(cacheKey(), s);
-      } catch (full) {
-        // Storage full: drop this extension's old entries and try once more.
-        for (var i = window.localStorage.length - 1; i >= 0; i--) {
-          var k = window.localStorage.key(i);
-          if (k && k.indexOf(CACHE_PREFIX) === 0) window.localStorage.removeItem(k);
-        }
-        window.localStorage.setItem(cacheKey(), s);
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  function clearCache () {
-    try { window.localStorage.removeItem(cacheKey()); } catch (e) { /* ignore */ }
-  }
-
-  // ---------------------------------------------------------------------------
   // Data
   // ---------------------------------------------------------------------------
   async function refresh () {
@@ -251,33 +189,12 @@
         return r;
       }).catch(function (err) { tData = ms(); return { error: err }; });
 
-      // First load: draw the last result from cache right after the handshake,
-      // while Tableau is still working on the fields and the data. If the fields
-      // on the Marks card turn out to be different, the cached drawing is removed.
-      if (!cacheTried) {
-        cacheTried = true;
-        var entry = readCacheEntry();
-        if (entry && !model) {
-          model = entry.data;
-          try { paint(); T.mark('cached result drawn'); } catch (e) { model = null; entry = null; }
-        }
-        if (entry) {
-          fieldsP.then(function (f) {
-            if (token !== renderToken || model !== entry.data || entry.sig === fieldsSig(f)) return;
-            model = null;
-            showEmpty('');
-            T.mark('cached result removed (fields changed)');
-          }).catch(function () { /* handled below */ });
-        }
-      }
-
       var results = await Promise.all([fieldsP, dataP]);
       if (token !== renderToken) return;
       var fields = results[0];
 
       if (!fields.measures.length) {
         model = null;
-        clearCache();
         if (first) { T.mark('no measures on the Marks card'); T.done('Line Chart load timings'); }
         showEmpty('Drag measures onto <b>Measures</b> (one at a time) and a date onto <b>Date</b>.<br>' +
           'Add a dimension to <b>Color</b> to split each measure into several lines.');
@@ -300,11 +217,10 @@
         T.line('refresh #' + token + ': fields ' + tFields + ' ms, data ' + tData + ' ms (' +
           (table.data ? table.data.length : 0) + ' rows), draw ' + Math.round(performance.now() - tp) + ' ms');
       }
-      writeCache(fields, model);
     } catch (err) {
       console.error('Line Chart render failed:', err);
       if (first) { T.mark('render failed', err && err.message); T.done('Line Chart load timings'); }
-      if (token === renderToken) showEmpty('Could not read the worksheet data. See the console for details.');
+      if (token === renderToken) showEmpty('Could not read the worksheet data. Click the ! mark in the corner for details.');
     }
   }
 
@@ -319,44 +235,21 @@
     return fields;
   }
 
-  async function readSummaryData () {
-    var reader = await worksheet.getSummaryDataReaderAsync(undefined, { ignoreSelection: true });
-    try {
-      return await reader.getAllPagesAsync();
-    } finally {
-      await reader.releaseAsync();
-    }
+  /**
+   * The worksheet's summary data, up to the row limit in the settings (Format → Card → Maximum
+   * rows; 0 = all). When rows were left out, a small note says so in the corner.
+   */
+  var lastLimit = null;
+  async function readSummaryData (extra) {
+    var limit = ExtCore.rowLimit(cfg.data.maxRows);
+    var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
+    return table;
   }
 
-  function norm (s) {
-    return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase();
-  }
-
-  /** Name without an inline-calculation comment: "SUM([X]) //New name" → both parts. */
-  function nameParts (s) {
-    var str = String(s || '');
-    var i = str.indexOf('//');
-    if (i < 0) return [norm(str)];
-    return [norm(str.slice(i + 2)), norm(str.slice(0, i))].filter(Boolean);
-  }
-
-  function isMN (c) { return /^measure (names|values)$/i.test(c.fieldName); }
-  function isNumericCol (c) { return /^(float|int|real|integer|number)$/i.test(String(c.dataType || '')); }
-
-  /** Column for a field by id or name (exact, without aggregation, or around a // comment). */
-  function findColumn (table, field, taken) {
-    if (!field) return null;
-    var cols = table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); });
-    var fid = field.id || field.fieldId;
-    var fn = nameParts(field.name);
-    return cols.find(function (c) { return fid && c.fieldId && c.fieldId === fid; }) ||
-      cols.find(function (c) { return c.fieldName === field.name; }) ||
-      cols.find(function (c) { return norm(c.fieldName) === norm(field.name); }) ||
-      cols.find(function (c) {
-        var cn = nameParts(c.fieldName);
-        return cn.some(function (x) { return fn.indexOf(x) >= 0; });
-      }) ||
-      null;
+  /** True when the row limit in the settings no longer matches the data that was read. */
+  function limitChanged () {
+    return lastLimit != null && ExtCore.rowLimit(cfg.data.maxRows) !== lastLimit;
   }
 
   /**
@@ -390,20 +283,6 @@
         return (r.field && r.field.name) + ' → ' + r.col.fieldName;
       }));
     }
-  }
-
-  function toNumber (cell) {
-    if (!cell) return NaN;
-    var v = cell.nativeValue != null ? cell.nativeValue : cell.value;
-    if (v === null || v === '%null%' || v === '') return NaN;
-    return typeof v === 'number' ? v : Number(v);
-  }
-
-  function cleanName (name) {
-    var s = String(name || '');
-    var i = s.indexOf('//');
-    if (i >= 0 && s.slice(i + 2).trim()) return s.slice(i + 2).trim();
-    return s.replace(/^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR)\((.*)\)$/i, '$2');
   }
 
   // ---- dates (same rules as KPI Card) -----------------------------------------
@@ -565,6 +444,7 @@
     var xIndex = {};
     var members = [];
     var memberSeen = {};
+    var memberRaw = {};
     var acc = {};
 
     rows.forEach(function (r, rowI) {
@@ -575,11 +455,12 @@
           label: label,
           key: cDates.map(function (c) { return ordinal(r[c.index]); }),
           t: cDay ? toDay(r[cDay.index]) : null,
-          i: rowI
+          i: rowI,
+          rawX: cDates.map(function (c) { return { fieldName: c.fieldName, value: r[c.index].value }; })
         });
       }
       var member = cColor ? String(r[cColor.index].formattedValue) : null;
-      if (member != null && !memberSeen[member]) { memberSeen[member] = 1; members.push(member); }
+      if (member != null && !memberSeen[member]) { memberSeen[member] = 1; members.push(member); memberRaw[member] = r[cColor.index].value; }
       var mn = cMN ? norm(r[cMN.index].formattedValue || r[cMN.index].value) : null;
       mReqs.forEach(function (m) {
         var cell = null;
@@ -608,6 +489,7 @@
           key: skey,
           mkey: m.key,
           member: member,
+          rawMember: member == null ? null : { fieldName: cColor.fieldName, value: memberRaw[member] },
           name: member == null ? m.name : (mReqs.length === 1 ? member : m.name + ' · ' + member),
           vals: xs.map(function (x) { return x.label in a.sums ? a.sums[x.label] : NaN; }),
           fvs: xs.map(function (x) { return a.fv[x.label] != null ? a.fv[x.label] : null; })
@@ -616,7 +498,7 @@
     });
 
     return {
-      xs: xs.map(function (x) { return { label: x.label, t: x.t }; }),
+      xs: xs.map(function (x) { return { label: x.label, t: x.t, rawX: x.rawX }; }),
       series: series,
       measures: mReqs.map(function (m) { return { key: m.key, name: m.name }; }),
       colorDim: cReqs[0] ? { key: cReqs[0].field.name, name: cleanName(cReqs[0].field.name) } : null,
@@ -1353,8 +1235,9 @@
     var clip = 'url(#' + clipId + ')';
 
     var gBack = node('g'), gGrid = node('g'), gAreas = node('g'), gBand = node('g'), gLines = node('g'),
-      gRefs = node('g'), gMarks = node('g'), gLabels = node('g'), gAxes = node('g'), gHover = node('g', { 'pointer-events': 'none' });
-    [gBack, gGrid, gAreas, gBand, gLines, gRefs, gMarks, gLabels, gAxes, gHover].forEach(function (g) { svg.appendChild(g); });
+      gRefs = node('g'), gMarks = node('g'), gLabels = node('g'), gAxes = node('g'), gHover = node('g', { 'pointer-events': 'none' }),
+      gSel = node('g', { 'pointer-events': 'none' });
+    [gBack, gGrid, gAreas, gBand, gLines, gRefs, gMarks, gLabels, gAxes, gSel, gHover].forEach(function (g) { svg.appendChild(g); });
     var halo = { 'paint-order': 'stroke', stroke: '#FFFFFF', 'stroke-width': 3, 'stroke-linejoin': 'round' };
     var withHalo = function (o) { Object.keys(halo).forEach(function (k) { o[k] = halo[k]; }); return o; };
 
@@ -1584,7 +1467,7 @@
     if (xTitleH) axisText(ax, { x: left + plotW / 2, y: H - 3, 'text-anchor': 'middle' }, ax.title);
 
     view = {
-      xpx: xpx, top: top, bottomY: bottomY, left: left, plotW: plotW, gHover: gHover, mode: mode,
+      xpx: xpx, top: top, bottomY: bottomY, left: left, plotW: plotW, gHover: gHover, gSel: gSel, mode: mode,
       act: act.map(function (s) {
         var yf = Y(s.axis);
         return {
@@ -1595,6 +1478,7 @@
       }),
       band: bandOn ? { lower: bl, upper: bu } : null
     };
+    drawSelection();
   }
 
   // ---------------------------------------------------------------------------
@@ -1641,6 +1525,52 @@
     var i = nearestIndex(m.x);
     drawCrosshair(i);
     if (cfg.chart.tooltip) showTooltip(i, e); else hideTooltip();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Click selects the x position (and the series' Color member) in Tableau
+  // ---------------------------------------------------------------------------
+  function onPlotClick (e) {
+    if (!view || !cfg || !cfg.interaction || !cfg.interaction.selectInTableau || !model) return;
+    if (e.detail > 1 || el.menu.style.display === 'block') return; // second click of a double-click
+    var m = mousePos(e);
+    if (!inPlot(m)) { clearPick(); return; }
+    var i = nearestIndex(m.x);
+    var x = model.xs[i];
+    if (!x || !x.rawX || !x.rawX.length) return;
+    var s = model.colorDim ? seriesFromEvent(e) : null;
+    var member = s && s.rawMember ? s.member : null;
+    if (selected && selected.label === x.label && selected.member === member) { clearPick(); return; }
+    // Tableau wants a list of values per field
+    var sel = x.rawX.concat(member != null ? [s.rawMember] : []).map(function (r) { return { fieldName: r.fieldName, value: [r.value] }; });
+    selected = { label: x.label, member: member };
+    ExtCore.select(worksheet, sel, 'Line Chart');
+    drawSelection();
+  }
+
+  function clearPick () {
+    if (!selected) return;
+    selected = null;
+    ExtCore.clearSelection(worksheet);
+    drawSelection();
+  }
+
+  function drawSelection () {
+    if (!view || !view.gSel) return;
+    var g = view.gSel;
+    while (g.firstChild) g.removeChild(g.firstChild);
+    if (!selected || !model) return;
+    var i = -1;
+    model.xs.forEach(function (x, k) { if (x.label === selected.label) i = k; });
+    if (i < 0) { selected = null; return; }
+    var x = Math.round(view.xpx[i]) + 0.5;
+    var ch = cfg.lines.crosshair;
+    if (ch.show) g.appendChild(node('line', Object.assign({ x1: x, x2: x, y1: view.top, y2: view.bottomY }, lineAttrs(ch))));
+    view.act.forEach(function (a) {
+      if (!isFinite(a.py[i]) || !isFinite(a.s.vals[i])) return;
+      if (selected.member != null && a.s.member !== selected.member) return;
+      g.appendChild(node('circle', { cx: view.xpx[i], cy: a.py[i], r: Math.max(3.5, a.s.sc.width + 2), fill: a.s.color, stroke: '#FFFFFF', 'stroke-width': 2 }));
+    });
   }
 
   function clearCrosshair () {
@@ -1820,12 +1750,6 @@
 
   function hideMenu () {
     if (el.menu) el.menu.style.display = 'none';
-  }
-
-  function esc (s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
   }
 
   function showEmpty (html) {

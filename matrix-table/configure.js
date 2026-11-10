@@ -40,7 +40,7 @@
     { id: 'tooltip', label: 'Tooltip & actions', build: buildTooltipTab, keys: ['tooltip', 'interaction'] },
     { id: 'export', label: 'Export', build: buildExportTab, keys: ['export'] },
     { id: 'numbers', label: 'Numbers', build: buildNumbersTab, keys: ['numbers.mode', 'numbers.font', 'format'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
   ];
 
@@ -729,6 +729,10 @@
     g3.appendChild(colorRow('Color', 'card.plotBg'));
     g3.appendChild(rangeRow('Opacity', 'card.plotBgOpacity', 0, 100, 1, '%'));
     g3.appendChild(help('Shades only the area with the matrix, e.g. a light panel behind the cells.'));
+    var gData = group(p, 'Data');
+    gData.appendChild(numberRow('Maximum rows', 'data.maxRows', 0, 1000000, 1));
+    gData.appendChild(h('div', { className: 'help', textContent: 'How many rows are read from the worksheet (0 = all). When rows are left out, a note in the corner of the chart says so.' }));
+
   }
 
   function help (text) { return h('div', { className: 'help', textContent: text }); }

@@ -29,7 +29,7 @@
     { id: 'links', label: 'Links & highlight', build: buildLinksTab, keys: ['links', 'highlight'] },
     { id: 'legend', label: 'Headers & legend', build: buildLegendTab, keys: ['headers', 'legend'] },
     { id: 'search', label: 'Search & actions', build: buildSearchTab, keys: ['search', 'collapse', 'tooltip', 'interaction'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data.maxRows'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
   ];
 
@@ -364,6 +364,10 @@
     g3.appendChild(colorRow('Color', 'card.plotBg'));
     g3.appendChild(rangeRow('Opacity', 'card.plotBgOpacity', 0, 100, 1, '%'));
     g3.appendChild(help('Also used behind the column headers while scrolling.'));
+    var gData = group(p, 'Data');
+    gData.appendChild(numberRow('Maximum rows', 'data.maxRows', 0, 1000000, 1));
+    gData.appendChild(h('div', { className: 'help', textContent: 'How many rows are read from the worksheet (0 = all). When rows are left out, a note in the corner of the chart says so.' }));
+
   }
 
   // ---------------------------------------------------------------------------

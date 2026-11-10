@@ -60,6 +60,9 @@ balance flow, a breakdown dimension, raw SAR values, negative values; the breakd
 Viz extensions can't add their own entries to Tableau's right-click menu. There are two ways in:
 
 - **Format Extension** button at the bottom of the Marks card (the manifest's `<context-menu>`).
+- **Click a breakdown segment** (Format → Bars → All bars → *Click selects in Tableau*, off by default) to select that
+  member in Tableau, so dashboard filter and highlight actions fire. Click it again, click an empty area or press
+  Escape to clear. Bars without a Breakdown have nothing to select.
 - **Right-click a bar** in the chart → *Format "Bank In"…*, Groups…, Axes…, Lines…, Numbers…. **Double-click** a bar
   opens its settings directly.
 

@@ -293,3 +293,9 @@ body {
 .zone-hint:empty {
   display: none;
 }
+
+/* ---- Click selects in Tableau: selected state --------------------------- */
+.card.is-picked {
+  outline: 1px solid var(--picked-color, #ED8095);
+  outline-offset: -1px;
+}

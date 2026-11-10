@@ -18,6 +18,16 @@
  * the workbook through tableau.extensions.settings.
  */
 (function () {
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var esc = ExtCore.esc, toNumber = ExtCore.toNumber, isMN = ExtCore.isMN, isNumericCol = ExtCore.isNumericCol,
+    cleanName = ExtCore.cleanName;
+
+  // Per-measure settings are saved under this name, so it must never change: it strips only the
+  // aggregations older versions stripped (cleanName, used for labels, knows more).
+  function keyName (name) {
+    return String(name || '').replace(/^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR)\((.*)\)$/i, '$2');
+  }
+
   var el = {};
   var worksheet = null;
   var cfg = null;
@@ -48,6 +58,8 @@
 
     el.card.addEventListener('mousemove', onCardHover);
     el.card.addEventListener('mouseleave', hideTooltip);
+    el.card.addEventListener('click', onCardClick);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') clearPicked(); });
 
     // Handshake recovery: the frame is reloaded (fresh handshake, up to 3 times in all) when
     // Tableau rejects the handshake, or when it hasn't answered within the timeout. Tableau
@@ -74,12 +86,11 @@
       if (window.ExtTiming) ExtTiming.mark('initializeAsync done (Tableau handshake)');
       worksheet = tableau.extensions.worksheetContent.worksheet;
       cfg = KpiCardConfig.read();
-      setTimeout(dropOldCache, 5000);
 
       worksheet.addEventListener(tableau.TableauEventType.SummaryDataChanged, requestRefresh);
       tableau.extensions.settings.addEventListener(
         tableau.TableauEventType.SettingsChanged,
-        function () { cfg = KpiCardConfig.read(); paint(); }
+        function () { cfg = KpiCardConfig.read(); if (limitChanged()) refresh(); else paint(); }
       );
 
       if (window.ResizeObserver) {
@@ -92,7 +103,7 @@
     }).catch(function (err) {
       if (initDone) {
         console.error('KPI Card failed to start:', err);
-        showEmpty('Could not initialize the extension. See the console for details.');
+        showEmpty('Could not initialize the extension. Click the ! mark in the corner for details.');
         return;
       }
       initDone = true;
@@ -113,17 +124,6 @@
     showEmpty((why || 'Could not connect to Tableau.') + '<br><u>Click to reload this card.</u>');
     el.hint.style.cursor = 'pointer';
     el.hint.onclick = function () { if (window.KpiBoot) KpiBoot.reload(); else location.reload(); };
-  }
-
-  /** Removes results saved in this browser by older versions (the old last-render cache). */
-  function dropOldCache () {
-    try {
-      var ls = window.localStorage;
-      for (var i = ls.length - 1; i >= 0; i--) {
-        var k = ls.key(i);
-        if (k && k.indexOf('kpi-card:lastRender:') === 0) ls.removeItem(k);
-      }
-    } catch (e) { /* ignore */ }
   }
 
   /** Opens the Format dialog ("Format Extension" on the Marks card). */
@@ -239,7 +239,7 @@
     } catch (err) {
       console.error('KPI Card render failed:', err);
       if (first) { T.mark('render failed', err && err.message); T.done('KPI Card load timings'); }
-      if (token === renderToken) showEmpty('Could not read the worksheet data. See the console for details.');
+      if (token === renderToken) showEmpty('Could not read the worksheet data. Click the ! mark in the corner for details.');
     }
   }
 
@@ -297,8 +297,21 @@
 
   // One call (get-summary-data) instead of three for the reader (create, page, release).
   // A KPI sheet has one row per date, far below any paging limit.
-  function readSummaryData () {
-    return worksheet.getSummaryDataAsync({ ignoreSelection: true });
+  /**
+   * The worksheet's summary data, up to the row limit in the settings (Format → Card → Maximum
+   * rows; 0 = all). When rows were left out, a small note says so in the corner.
+   */
+  var lastLimit = null;
+  async function readSummaryData (extra) {
+    var limit = ExtCore.rowLimit(cfg.data.maxRows);
+    var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
+    return table;
+  }
+
+  /** True when the row limit in the settings no longer matches the data that was read. */
+  function limitChanged () {
+    return lastLimit != null && ExtCore.rowLimit(cfg.data.maxRows) !== lastLimit;
   }
 
   // Marks card fields per column set: in memory, and in this browser's localStorage so the
@@ -359,12 +372,10 @@
   // source, exact name, name without aggregation, underlying field name — each round over all
   // pills before the next, and whatever is still unmatched is filled by role from the free
   // columns: date-like columns for the Date tile, numbers for measures.
-  function isMN (c) { return /^measure (names|values)$/i.test(String(c.fieldName || '')); }
   var DATE_PART_RE = /^(YEAR|YR|TYEAR|QUARTER|QR|TQUARTER|MONTH|MN|MY|TMONTH|WEEK|WK|TWEEK|DAY|DY|MDY|TDAY|WEEKDAY|HOUR|MINUTE|SECOND|ISO[A-Z]*|DATETRUNC|DATEPART)\(/i;
   function looksLikeDateCol (c) {
     return /^date(-?time)?$/i.test(String(c.dataType || '')) || DATE_PART_RE.test(String(c.fieldName || ''));
   }
-  function isNumericCol (c) { return /^(float|int|real|integer|number|double)$/i.test(String(c.dataType || '')); }
   function looksAggregated (c) { return /^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR|STDEV|STDEVP|VAR|VARP|PCT\d+)\(/i.test(String(c.fieldName || '')); }
   function normName (s) { return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase(); }
   function pillId (f) { return f ? String(f.id || f.fieldId || '') : ''; }
@@ -492,13 +503,6 @@
       value: values.map(function (p) { return p.col; }), date: dates, mn: cMN, mv: cMV, mnLabels: mnLabels,
       details: dets.map(function (p) { return p.col; }), detLabels: detLabels
     };
-  }
-
-  function toNumber (cell) {
-    if (!cell) return NaN;
-    var v = cell.nativeValue != null ? cell.nativeValue : cell.value;
-    if (v === null || v === '%null%' || v === '') return NaN;
-    return typeof v === 'number' ? v : Number(v);
   }
 
   /**
@@ -655,8 +659,10 @@
       var key = new Array(cDates.length);
       var lab = new Array(cDates.length);
       var ids = new Array(cDates.length);
+      var raws = new Array(cDates.length);
       for (var k = 0; k < cDates.length; k++) {
         var pc = parsed(k, r[cDates[k].index]);
+        raws[k] = r[cDates[k].index] ? r[cDates[k].index].value : null; // raw cell value, for selecting in Tableau
         key[k] = pc.o;
         lab[k] = pc.f;
         ids[k] = pc.id;
@@ -672,7 +678,8 @@
         fv: cell.formattedValue,
         key: key,
         day: cDay ? dayOf(r[cDay.index]) : null,
-        label: lab.join(' · ')
+        label: lab.join(' · '),
+        raws: raws
       };
       if (gid !== null) byDate.set(gid, pt);
       pts.push(pt);
@@ -712,6 +719,7 @@
       label: label,
       points: pts,
       hasDate: cDates.length > 0,
+      dateFields: cDates.map(function (c) { return c.fieldName; }), // fieldNames as in the summary data
       dateIssue: issue,
       calendar: calendar, // every point has a real date
       grain: calendar ? granularity(cDay.fieldName) : 0,
@@ -724,7 +732,7 @@
     var seen = {};
     return (detailFields || []).map(function (f) {
       var name = pillName(f);
-      var base = cleanName(name) || name || 'Measure';
+      var base = keyName(name) || name || 'Measure';
       seen[base] = (seen[base] || 0) + 1;
       return { key: seen[base] > 1 ? base + ' #' + seen[base] : base, label: cleanName(name) || base };
     });
@@ -777,10 +785,6 @@
       });
     });
     return { list: list, byLabel: byLabel };
-  }
-
-  function cleanName (name) {
-    return String(name || '').replace(/^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR)\((.*)\)$/i, '$2');
   }
 
   // ---------------------------------------------------------------------------
@@ -970,6 +974,7 @@
     paintChange(cmp);
     paintBottom(cmp);
     layout();
+    paintPicked();
   }
 
   function applyFont (node, f) {
@@ -1368,10 +1373,52 @@
     if (dot) dot.style.display = 'none';
   }
 
-  function esc (s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
+  // ---------------------------------------------------------------------------
+  // Click selects in Tableau (optional): the date of a trend-line point, or the latest date
+  // ---------------------------------------------------------------------------
+  var picked = null; // label of the selected date, or null
+
+  function selectionOn () {
+    return !!(cfg && cfg.interaction && cfg.interaction.selectInTableau);
+  }
+
+  /** Index of the point a click means: the nearest trend-line point on the line, else the latest. */
+  function clickedIndex (e) {
+    var last = lastData.points.length - 1;
+    if (cfg.bottom.mode === 'chart' && shown.length >= 2 && el.bottom.contains(e.target)) {
+      var mx = e.clientX - el.bottom.getBoundingClientRect().left;
+      var best = shown[0];
+      shown.forEach(function (s) { if (Math.abs(s.x - mx) < Math.abs(best.x - mx)) best = s; });
+      return best.idx;
+    }
+    return last;
+  }
+
+  function onCardClick (e) {
+    if (!selectionOn() || e.detail > 1 || !lastData || !lastData.points.length) return;
+    if (el.card.classList.contains('is-empty')) return;
+    var names = lastData.dateFields || [];
+    var p = lastData.points[clickedIndex(e)];
+    if (!names.length || !p || !p.raws) return; // no Date tile: nothing to select
+    if (picked === p.label) { clearPicked(); return; }
+    var sel = names.map(function (n, k) { return { fieldName: n, value: [p.raws[k]] }; });
+    if (ExtCore.select(worksheet, sel, 'KPI Card')) { picked = p.label; paintPicked(); }
+  }
+
+  function clearPicked () {
+    if (picked === null) return;
+    picked = null;
+    ExtCore.clearSelection(worksheet);
+    paintPicked();
+  }
+
+  /** Pointer cursor and a thin outline while a date is selected. */
+  function paintPicked () {
+    var on = selectionOn();
+    if (!on && picked !== null) picked = null;
+    el.card.style.cursor = on ? 'pointer' : '';
+    el.card.style.setProperty('--picked-color', (cfg && cfg.bottom.chartColor) || '#ED8095');
+    el.card.classList.toggle('is-picked', on && picked !== null);
   }
 
   // ---------------------------------------------------------------------------

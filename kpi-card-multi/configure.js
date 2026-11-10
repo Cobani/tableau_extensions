@@ -26,7 +26,7 @@
     { id: 'number', label: 'Big number', build: buildNumberTab, keys: ['number'] },
     { id: 'change', label: '% Change', build: buildChangeTab, keys: ['change'] },
     { id: 'bottom', label: 'Bottom', build: buildBottomTab, keys: ['bottom'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data', 'interaction'] },
     { id: 'layout', label: 'Layout', build: buildLayoutTab, keys: ['layout'] },
     { id: 'details', label: 'Tooltip', build: buildDetailsTab, keys: ['details'] }
   ];
@@ -466,6 +466,13 @@
     g2.appendChild(colorRow('Color', 'card.bgColor'));
     g2.appendChild(rangeRow('Opacity', 'card.bgOpacity', 0, 100, 1, '%'));
     g2.appendChild(h('div', { className: 'help', textContent: '0% is fully transparent. Set worksheet and container shading to None in Tableau to see through.' }));
+    var gData = group(p, 'Data');
+    gData.appendChild(numberRow('Maximum rows', 'data.maxRows', 0, 1000000, 1));
+    gData.appendChild(h('div', { className: 'help', textContent: 'How many rows are read from the worksheet (0 = all). When rows are left out, a note in the corner of the chart says so.' }));
+    var gInt = group(p, 'Interaction');
+    gInt.appendChild(checkboxRow('Click selects in Tableau', 'interaction.selectInTableau'));
+    gInt.appendChild(h('div', { className: 'help', textContent: 'Click a card to select its latest date in Tableau, or a point on the trend line to select that date, so dashboard filter, highlight and go-to-sheet actions fire. Click again to clear. Needs a field on the Date tile.' }));
+
   }
 
   // ---------------------------------------------------------------------------

@@ -18,6 +18,16 @@
  * the per-card settings listed in config.js (PER_CARD).
  */
 (function () {
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var esc = ExtCore.esc, toNumber = ExtCore.toNumber, isMN = ExtCore.isMN, isNumericCol = ExtCore.isNumericCol,
+    cleanName = ExtCore.cleanName;
+
+  // Per-measure settings are saved under this name, so it must never change: it strips only the
+  // aggregations older versions stripped (cleanName, used for labels, knows more).
+  function keyName (name) {
+    return String(name || '').replace(/^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR)\((.*)\)$/i, '$2');
+  }
+
   var worksheet = null;
   var store = null;     // { shared, cards } from config.js
   var cards = [];       // [{ key, label, field, root, inst }] in Measures-tile order
@@ -36,7 +46,6 @@
   var MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
   var WEEKDAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
-
   // ---------------------------------------------------------------------------
   // Init
   // ---------------------------------------------------------------------------
@@ -45,6 +54,7 @@
     ui.hint = document.getElementById('hint');
     ui.tooltip = document.getElementById('tooltip');
     ui.template = document.getElementById('card-template');
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') clearPicked(); });
 
     // Handshake recovery: the frame is reloaded (fresh handshake, up to 3 times in all) when
     // Tableau rejects the handshake, or when it hasn't answered within the timeout. Tableau
@@ -75,7 +85,7 @@
       worksheet.addEventListener(tableau.TableauEventType.SummaryDataChanged, requestRefresh);
       tableau.extensions.settings.addEventListener(
         tableau.TableauEventType.SettingsChanged,
-        function () { store = KpiCardMultiConfig.read(); renderAll(); }
+        function () { store = KpiCardMultiConfig.read(); if (limitChanged()) refresh(); else renderAll(); }
       );
 
       if (window.ResizeObserver) {
@@ -88,7 +98,7 @@
     }).catch(function (err) {
       if (initDone) {
         console.error('KPI Card Multi failed to start:', err);
-        showHint('Could not initialize the extension. See the console for details.');
+        showHint('Could not initialize the extension. Click the ! mark in the corner for details.');
         return;
       }
       initDone = true;
@@ -123,6 +133,19 @@
 
   function hideTooltip () {
     if (ui.tooltip) ui.tooltip.style.display = 'none';
+  }
+
+  // Click selects in Tableau (optional, shared by all cards): the date is selected, never a measure.
+  // One selection exists in Tableau, so `picked` (the selected date's label) is shared and every card shows it.
+  var picked = null;
+
+  function repaintPicked () { cards.forEach(function (c) { c.inst.paintPicked(); }); }
+
+  function clearPicked () {
+    if (picked === null) return;
+    picked = null;
+    ExtCore.clearSelection(worksheet);
+    repaintPicked();
   }
 
   /** Opens the Format dialog ("Format Extension" on the Marks card) with the current card list. */
@@ -176,7 +199,6 @@
       if (rerun) { rerun = false; scheduleRefresh(); }
     }
   }
-
 
   // ---------------------------------------------------------------------------
   // Data
@@ -241,7 +263,7 @@
     } catch (err) {
       console.error('KPI Card Multi render failed:', err);
       if (first) { T.mark('render failed', err && err.message); T.done('KPI Card Multi load timings'); }
-      if (token === renderToken) showHint('Could not read the worksheet data. See the console for details.');
+      if (token === renderToken) showHint('Could not read the worksheet data. Click the ! mark in the corner for details.');
     }
   }
 
@@ -276,7 +298,7 @@
   function cardKeys (valueFields) {
     var seen = {};
     return valueFields.map(function (f) {
-      var base = cleanName(f.name) || f.name || 'Measure';
+      var base = keyName(f.name) || f.name || 'Measure';
       seen[base] = (seen[base] || 0) + 1;
       return { key: seen[base] > 1 ? base + ' #' + seen[base] : base, label: cleanName(f.name), field: f };
     });
@@ -379,8 +401,21 @@
 
   // One call (get-summary-data) instead of three for the reader (create, page, release).
   // A KPI sheet has one row per date, far below any paging limit.
-  function readSummaryData () {
-    return worksheet.getSummaryDataAsync({ ignoreSelection: true });
+  /**
+   * The worksheet's summary data, up to the row limit in the settings (Format → Card → Maximum
+   * rows; 0 = all). When rows were left out, a small note says so in the corner.
+   */
+  var lastLimit = null;
+  async function readSummaryData (extra) {
+    var limit = ExtCore.rowLimit(store.shared.data.maxRows);
+    var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
+    return table;
+  }
+
+  /** True when the row limit in the settings no longer matches the data that was read. */
+  function limitChanged () {
+    return lastLimit != null && ExtCore.rowLimit(store.shared.data.maxRows) !== lastLimit;
   }
 
   // Marks card fields per column set: in memory, and in this browser's localStorage so the
@@ -428,23 +463,6 @@
         await new Promise(function (r) { setTimeout(r, 400 * (i + 1) * (i + 1) + Math.random() * 400); });
       }
     }
-  }
-
-  function findColumn (table, field, taken) {
-    if (!field) return null;
-    var cols = table.columns.filter(function (c) { return taken.indexOf(c) < 0; });
-    var norm = function (s) { return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase(); };
-    return cols.find(function (c) { return c.fieldId && c.fieldId === field.id; }) ||
-      cols.find(function (c) { return c.fieldName === field.name; }) ||
-      cols.find(function (c) { return norm(c.fieldName) === norm(field.name); }) ||
-      null;
-  }
-
-  function toNumber (cell) {
-    if (!cell) return NaN;
-    var v = cell.nativeValue != null ? cell.nativeValue : cell.value;
-    if (v === null || v === '%null%' || v === '') return NaN;
-    return typeof v === 'number' ? v : Number(v);
   }
 
   /**
@@ -549,12 +567,10 @@
   // source, exact name, name without aggregation, underlying field name — each round over all
   // pills before the next, and whatever is still unmatched is filled by role from the free
   // columns: date-like columns for the Date tile, numbers for measures.
-  function isMN (c) { return /^measure (names|values)$/i.test(String(c.fieldName || '')); }
   var DATE_PART_RE = /^(YEAR|YR|TYEAR|QUARTER|QR|TQUARTER|MONTH|MN|MY|TMONTH|WEEK|WK|TWEEK|DAY|DY|MDY|TDAY|WEEKDAY|HOUR|MINUTE|SECOND|ISO[A-Z]*|DATETRUNC|DATEPART)\(/i;
   function looksLikeDateCol (c) {
     return /^date(-?time)?$/i.test(String(c.dataType || '')) || DATE_PART_RE.test(String(c.fieldName || ''));
   }
-  function isNumericCol (c) { return /^(float|int|real|integer|number|double)$/i.test(String(c.dataType || '')); }
   function looksAggregated (c) { return /^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR|STDEV|STDEVP|VAR|VARP|PCT\d+)\(/i.test(String(c.fieldName || '')); }
   function normName (s) { return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase(); }
   function pillId (f) { return f ? String(f.id || f.fieldId || '') : ''; }
@@ -762,8 +778,10 @@
       var key = new Array(cDates.length);
       var lab = new Array(cDates.length);
       var ids = new Array(cDates.length);
+      var raws = new Array(cDates.length);
       for (var k = 0; k < cDates.length; k++) {
         var pc = parsed(k, r[cDates[k].index]);
+        raws[k] = r[cDates[k].index] ? r[cDates[k].index].value : null; // raw cell value, for selecting in Tableau
         key[k] = pc.o;
         lab[k] = pc.f;
         ids[k] = pc.id;
@@ -779,7 +797,8 @@
         fv: cell.formattedValue,
         key: key,
         day: cDay ? dayOf(r[cDay.index]) : null,
-        label: lab.join(' · ')
+        label: lab.join(' · '),
+        raws: raws
       };
       if (gid !== null) byDate.set(gid, pt);
       pts.push(pt);
@@ -819,6 +838,7 @@
       label: label,
       points: pts,
       hasDate: cDates.length > 0,
+      dateFields: cDates.map(function (c) { return c.fieldName; }), // fieldNames as in the summary data
       dateIssue: issue,
       calendar: calendar, // every point has a real date
       grain: calendar ? granularity(cDay.fieldName) : 0
@@ -830,7 +850,7 @@
     var seen = {};
     return (detailFields || []).map(function (f) {
       var name = pillName(f);
-      var base = cleanName(name) || name || 'Measure';
+      var base = keyName(name) || name || 'Measure';
       seen[base] = (seen[base] || 0) + 1;
       return { key: seen[base] > 1 ? base + ' #' + seen[base] : base, label: cleanName(name) || base };
     });
@@ -885,11 +905,6 @@
     return { list: list, byLabel: byLabel };
   }
 
-  function cleanName (name) {
-    return String(name || '').replace(/^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR)\((.*)\)$/i, '$2');
-  }
-
-
   // ---------------------------------------------------------------------------
   // One card (same drawing code as the single KPI Card, with its own state)
   // ---------------------------------------------------------------------------
@@ -905,6 +920,7 @@
 
     el.card.addEventListener('mousemove', onCardHover);
     el.card.addEventListener('mouseleave', hideTooltip);
+    el.card.addEventListener('click', onCardClick);
     // ---------------------------------------------------------------------------
     // Change logic (shared by the card and the tooltip)
     // ---------------------------------------------------------------------------
@@ -1093,6 +1109,7 @@
       paintChange(cmp);
       paintBottom(cmp);
       layout();
+      paintPicked();
     }
 
     function applyFont (node, f) {
@@ -1492,10 +1509,42 @@
       if (dot) dot.style.display = 'none';
     }
 
-    function esc (s) {
-      return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-      });
+    // ---------------------------------------------------------------------------
+    // Click selects in Tableau (optional): the date of a trend-line point, or the latest date
+    // ---------------------------------------------------------------------------
+    function selectionOn () {
+      return !!(cfg && cfg.interaction && cfg.interaction.selectInTableau);
+    }
+
+    /** Index of the point a click means: the nearest trend-line point on the line, else the latest. */
+    function clickedIndex (e) {
+      var last = lastData.points.length - 1;
+      if (cfg.bottom.mode === 'chart' && shown.length >= 2 && el.bottom.contains(e.target)) {
+        var mx = e.clientX - el.bottom.getBoundingClientRect().left;
+        var best = shown[0];
+        shown.forEach(function (s) { if (Math.abs(s.x - mx) < Math.abs(best.x - mx)) best = s; });
+        return best.idx;
+      }
+      return last;
+    }
+
+    function onCardClick (e) {
+      if (!selectionOn() || e.detail > 1 || !lastData || !lastData.points.length) return;
+      if (el.card.classList.contains('is-empty')) return;
+      var names = lastData.dateFields || [];
+      var p = lastData.points[clickedIndex(e)];
+      if (!names.length || !p || !p.raws) return; // no Date tile: nothing to select
+      if (picked === p.label) { clearPicked(); return; }
+      var sel = names.map(function (n, k) { return { fieldName: n, value: [p.raws[k]] }; });
+      if (ExtCore.select(worksheet, sel, 'KPI Card Multi')) { picked = p.label; repaintPicked(); }
+    }
+
+    /** Pointer cursor and a thin outline while a date is selected. */
+    function paintPicked () {
+      var on = selectionOn();
+      el.card.style.cursor = on ? 'pointer' : '';
+      el.card.style.setProperty('--picked-color', (cfg && cfg.bottom.chartColor) || '#ED8095');
+      el.card.classList.toggle('is-picked', on && picked !== null);
     }
 
     // ---------------------------------------------------------------------------
@@ -1556,6 +1605,7 @@
     return {
       update: function (c, data) { cfg = c; lastData = data; paint(); },
       layout: function () { layout(); },
+      paintPicked: function () { paintPicked(); },
       setRowEnd: function (v) {
         if (rowEnd === v) return;
         rowEnd = v;

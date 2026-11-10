@@ -18,6 +18,9 @@
  * (configure.html), which also opens from the right-click menu.
  */
 (function () {
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var esc = ExtCore.esc, isMN = ExtCore.isMN, cleanName = ExtCore.cleanName, findColumn = ExtCore.findColumn;
+
   var el = {};
   var worksheet = null;
   var cfg = null;
@@ -97,7 +100,8 @@
       tableau.extensions.settings.addEventListener(tableau.TableauEventType.SettingsChanged, function () {
         // while the dialog's live preview drives the chart, saves (which lag behind it) are ignored
         if (liveActive) return;
-        cfg = Dl.read(); paint();
+        cfg = Dl.read();
+        if (limitChanged()) refresh(); else paint();
       });
       window.addEventListener('storage', onLiveSettings);
 
@@ -110,7 +114,7 @@
     }).catch(function (err) {
       if (initDone) {
         console.error('Data Lineage failed to start:', err);
-        showEmpty('Could not initialize the extension. See the console for details.');
+        showEmpty('Could not initialize the extension. Click the ! mark in the corner for details.');
         return;
       }
       initDone = true;
@@ -203,7 +207,7 @@
       liveActive = true;
       cfg = Dl.readFrom(o.cfg);
     } catch (err) { return; }
-    paint();
+    if (limitChanged()) refresh(); else paint();
     clearTimeout(infoTimer);
     infoTimer = setTimeout(function () {
       try { if (raw) window.localStorage.setItem('datalineage:info:' + liveId, JSON.stringify(dialogInfo(null))); } catch (err) { /* ignore */ }
@@ -251,56 +255,12 @@
     return info;
   }
 
-  // ---------------------------------------------------------------------------
-  // Last-render cache (same approach as the other extensions)
-  // ---------------------------------------------------------------------------
-  var CACHE_PREFIX = 'datalineage:lastRender:v1:';
-  var CACHE_MAX_AGE = 30 * 24 * 3600 * 1000;
-  var CACHE_MAX_CHARS = 400000;
-  var cacheTried = false;
-
-  function cacheKey () {
-    var host = '';
-    try { host = document.referrer ? new URL(document.referrer).origin : ''; } catch (e) { /* ignore */ }
-    return CACHE_PREFIX + host + '|' + (worksheet && worksheet.name);
-  }
-
   function fieldsSig (fields) {
     var out = {};
     Object.keys(fields).sort().forEach(function (k) {
       out[k] = fields[k].map(function (f) { return (f.id || '') + '|' + (f.name || ''); });
     });
     return JSON.stringify(out);
-  }
-
-  function readCacheEntry () {
-    try {
-      var s = window.localStorage.getItem(cacheKey());
-      if (!s) return null;
-      var c = JSON.parse(s);
-      if (!c || !c.data || !(Date.now() - c.t < CACHE_MAX_AGE)) return null;
-      return c;
-    } catch (e) { return null; }
-  }
-
-  function writeCache (fields, data) {
-    try {
-      var s = JSON.stringify({ sig: fieldsSig(fields), t: Date.now(), data: data });
-      if (s.length > CACHE_MAX_CHARS) return;
-      try {
-        window.localStorage.setItem(cacheKey(), s);
-      } catch (full) {
-        for (var i = window.localStorage.length - 1; i >= 0; i--) {
-          var k = window.localStorage.key(i);
-          if (k && k.indexOf(CACHE_PREFIX) === 0) window.localStorage.removeItem(k);
-        }
-        window.localStorage.setItem(cacheKey(), s);
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  function clearCache () {
-    try { window.localStorage.removeItem(cacheKey()); } catch (e) { /* ignore */ }
   }
 
   // ---------------------------------------------------------------------------
@@ -325,23 +285,6 @@
         return r;
       }).catch(function (err) { tData = ms(); return { error: err }; });
 
-      if (!cacheTried) {
-        cacheTried = true;
-        var entry = readCacheEntry();
-        if (entry && !raw) {
-          raw = entry.data;
-          try { paint(); T.mark('cached result drawn'); } catch (e) { raw = null; entry = null; }
-        }
-        if (entry) {
-          fieldsP.then(function (f) {
-            if (token !== renderToken || raw !== entry.data || entry.sig === fieldsSig(f)) return;
-            raw = null;
-            showEmpty('');
-            T.mark('cached result removed (fields changed)');
-          }).catch(function () { /* handled below */ });
-        }
-      }
-
       var results = await Promise.all([fieldsP, dataP]);
       if (token !== renderToken) return;
       var fields = results[0];
@@ -349,7 +292,6 @@
       if (!fields.levels.length) {
         raw = null;
         graph = null;
-        clearCache();
         if (first) { T.mark('no field on Levels'); T.done('Data Lineage load timings'); }
         showEmpty('Drag dimensions onto <b>Levels</b>, one by one from source to target<br>(e.g. <b>Table</b>, <b>Data Source</b>, <b>Workbook</b>, <b>View</b>). ' +
           'Each one becomes a column and every row is a path.<br>Optional: <b>Details</b> adds subtitles to the nodes (schema, connection type…).');
@@ -372,12 +314,10 @@
         T.line('refresh #' + token + ': fields ' + tFields + ' ms, data ' + tData + ' ms (' +
           (table.data ? table.data.length : 0) + ' rows), draw ' + Math.round(performance.now() - tp) + ' ms');
       }
-      var toSave = raw;
-      (window.requestIdleCallback || function (f) { return setTimeout(f, 800); })(function () { if (raw === toSave) writeCache(fields, toSave); }, { timeout: 4000 });
     } catch (err) {
       console.error('Data Lineage render failed:', err);
       if (first) { T.mark('render failed', err && err.message); T.done('Data Lineage load timings'); }
-      if (token === renderToken) showEmpty('Could not read the worksheet data. See the console for details.');
+      if (token === renderToken) showEmpty('Could not read the worksheet data. Click the ! mark in the corner for details.');
     }
   }
 
@@ -396,46 +336,21 @@
     return fields;
   }
 
-  async function readSummaryData () {
-    var reader = await worksheet.getSummaryDataReaderAsync(undefined, { ignoreSelection: true });
-    try {
-      return await reader.getAllPagesAsync();
-    } finally {
-      await reader.releaseAsync();
-    }
+  /**
+   * The worksheet's summary data, up to the row limit in the settings (Format → Card → Maximum
+   * rows; 0 = all). When rows were left out, a small note says so in the corner.
+   */
+  var lastLimit = null;
+  async function readSummaryData (extra) {
+    var limit = ExtCore.rowLimit(cfg.data.maxRows);
+    var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
+    return table;
   }
 
-  function norm (s) {
-    return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase();
-  }
-
-  function nameParts (s) {
-    var str = String(s || '');
-    var i = str.indexOf('//');
-    if (i < 0) return [norm(str)];
-    return [norm(str.slice(i + 2)), norm(str.slice(0, i))].filter(Boolean);
-  }
-
-  function isMN (c) { return /^measure (names|values)$/i.test(c.fieldName); }
-
-  /** Field id → exact name → normalised name → name parts (renamed pills). */
-  function findColumn (table, field, taken) {
-    if (!field) return null;
-    var cols = table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); });
-    var fid = field.id || field.fieldId;
-    var fn = nameParts(field.name);
-    return cols.find(function (c) { return fid && c.fieldId && c.fieldId === fid; }) ||
-      cols.find(function (c) { return c.fieldName === field.name; }) ||
-      cols.find(function (c) { return norm(c.fieldName) === norm(field.name); }) ||
-      cols.find(function (c) {
-        var cn = nameParts(c.fieldName);
-        return cn.some(function (x) { return fn.indexOf(x) >= 0; });
-      }) ||
-      null;
-  }
-
-  function cleanName (name) {
-    return String(name || '').replace(/^(ATTR|MIN|MAX)\((.*)\)$/i, '$2');
+  /** True when the row limit in the settings no longer matches the data that was read. */
+  function limitChanged () {
+    return lastLimit != null && ExtCore.rowLimit(cfg.data.maxRows) !== lastLimit;
   }
 
   function cellText (cell) {
@@ -1334,27 +1249,17 @@
 
   /** Selects the node's value in Tableau (for dashboard actions). Silently skipped if not supported. */
   function selectInTableau (n) {
-    try {
-      if (!worksheet || !worksheet.selectMarksByValueAsync) return;
-      var f = raw.levels[n.L];
-      var type = tableau.SelectionUpdateType ? tableau.SelectionUpdateType.Replace : 'select-replace';
-      worksheet.selectMarksByValueAsync([{ fieldName: f.key, value: [n.label] }], type)
-        .catch(function (err) { console.info('Data Lineage: selection not applied', err && err.message); });
-    } catch (e) { /* not supported */ }
+    const f = raw.levels[n.L];
+    ExtCore.select(worksheet, [{ fieldName: f.key, value: [n.label] }], 'Data Lineage');
   }
 
   function clearTableauSelection () {
-    try { if (worksheet && worksheet.clearSelectedMarksAsync) worksheet.clearSelectedMarksAsync().catch(function () {}); } catch (e) { /* ignore */ }
+    ExtCore.clearSelection(worksheet);
   }
 
   // ---------------------------------------------------------------------------
   // Tooltip
   // ---------------------------------------------------------------------------
-  function esc (s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
 
   function showTooltip (n, x, y) {
     var T = cfg.tooltip;

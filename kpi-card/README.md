@@ -29,6 +29,8 @@ icons/extension/ the Figma icons as 96 px transparent PNGs
 cd .. && chmod +x serve.sh && ./serve.sh     # from the tableau_extensions repo root
 ```
 
+Preview without Tableau: `http://localhost:8766/kpi-card/dev/preview.html` (`?debug` for load timings). Pick a data set (negative, flat, gaps, no date, Tooltip tile, renamed pill, 2,500 rows) and a card size from the toolbar; the data is about 26 months of made-up daily retail sales.
+
 Then in Tableau Desktop (2024.2+): on the Marks card, open the mark type dropdown, choose **Add Extension**, then
 **Access Local Extensions**, and pick `kpiCard.trex`.
 
@@ -86,6 +88,9 @@ KPI_SHAPES_DIRS="$HOME/Shapes:/Volumes/share/Shapes" ../serve.sh
 When it starts, the server prints the palettes it found. When you pick a shape, it's copied into the workbook. If the
 extension is hosted somewhere without `serve.py`, the Tableau shapes tab shows a note. Upload still works there, and you
 can upload any `.png` file from a Shapes folder.
+
+## Click selects in Tableau
+Optional (Format → Card → Interaction → **Click selects in Tableau**, off by default). Click the card to select its latest date in Tableau, or click a point on the trend line to select that date, so dashboard filter, highlight and go-to-sheet actions fire. Click the same place again (or press Esc) to clear. It needs a field on the Date tile; without one a click does nothing. While on, the card shows a pointer cursor and a thin outline in the trend line colour once a date is selected.
 
 ## Tooltip tile → tooltip
 

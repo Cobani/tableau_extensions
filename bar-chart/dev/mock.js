@@ -99,12 +99,12 @@
         for (var j = 0; j < 8; j++) {
           for (var k = 0; k < 5; k++) {
             var v = (NP - i) * 1000 + rnd() * 9000;
-            rows.push({ Product: 'Product ' + (i + 1), Branch: 'Branch ' + (j + 1), Channel: ['App', 'Web', 'Branch', 'ATM', 'Call'][k],
+            rows.push({ Product: 'Product ' + (i + 1), Store: 'Store ' + (j + 1), Channel: ['Online', 'In store', 'Phone', 'Kiosk', 'Marketplace'][k],
               'SUM(Sales)': v, 'SUM(Profit)': v * (0.1 + rnd() * 0.2), 'SUM(Margin)': v * 0.05, 'SUM(Target)': v * 1.05, Manager: 'M' + j, 'SUM(Quantity)': Math.round(v / 50) });
           }
         }
       }
-      return { tiles: { category: ['Product', 'Branch', 'Channel'], values: ['SUM(Sales)', 'SUM(Profit)'], line: ['SUM(Margin)'], target: ['SUM(Target)'], tooltip: ['Manager', 'SUM(Quantity)'] }, rows: rows };
+      return { tiles: { category: ['Product', 'Store', 'Channel'], values: ['SUM(Sales)', 'SUM(Profit)'], line: ['SUM(Margin)'], target: ['SUM(Target)'], tooltip: ['Manager', 'SUM(Quantity)'] }, rows: rows };
     },
     // One measure; Dimension tile: Age group › Gender (two values, for left-right)
     ages: function () {
@@ -132,8 +132,8 @@
       return { tiles: { category: ['Product'], values: ['SUM(Gross Sales)'] }, rows: names.map(function (n, i) { return { Product: n, 'SUM(Gross Sales)': vals[i] + rnd() * 1e5 }; }) };
     },
     measures: function () {
-      return { tiles: { values: ['SUM(Bank In)', 'SUM(Wallet In)', 'SUM(Top-up)', 'SUM(Card Txns)', 'SUM(SADAD)'] },
-        rows: [{ 'SUM(Bank In)': 262.1e6, 'SUM(Wallet In)': 36.3e6, 'SUM(Top-up)': 74.3e6, 'SUM(Card Txns)': 72.9e6, 'SUM(SADAD)': 31.2e6 }] };
+      return { tiles: { values: ['SUM(Store Orders)', 'SUM(Online Orders)', 'SUM(Phone Orders)', 'SUM(Kiosk Orders)', 'SUM(Marketplace Orders)'] },
+        rows: [{ 'SUM(Store Orders)': 262.1e6, 'SUM(Online Orders)': 36.3e6, 'SUM(Phone Orders)': 74.3e6, 'SUM(Kiosk Orders)': 72.9e6, 'SUM(Marketplace Orders)': 31.2e6 }] };
     },
     top: function () {
       var c = ['Hong Kong', 'Luxembourg', 'Singapore', 'San Marino', 'Djibouti', 'Malta', 'Ireland', 'Vietnam', 'Slovakia', 'Seychelles', 'Belgium', 'Hungary', 'Slovenia', 'UA Emirates', 'Netherlands', 'Maldives', 'Bahrain', 'Cyprus', 'Lithuania', 'Aruba', 'Czechia', 'Estonia', 'Lesotho', 'Belarus', 'Barbados'];
@@ -282,5 +282,17 @@
     if (tries < +h[1]) return new Promise(function () {});
     if (tries < +m[1]) return Promise.reject(new Error('mock: handshake rejected (failInit)'));
     return real.call(tableau.extensions, opts);
+  };
+})();
+
+// getSummaryDataAsync (the extensions use it below 10,000 rows) on top of the mock's reader, honouring maxRows.
+(function () {
+  var ws = window.tableau && window.tableau.extensions && window.tableau.extensions.worksheetContent && window.tableau.extensions.worksheetContent.worksheet;
+  if (!ws || ws.getSummaryDataAsync) return;
+  ws.getSummaryDataAsync = function (opts) {
+    return ws.getSummaryDataReaderAsync(undefined, opts).then(function (r) { return r.getAllPagesAsync(); }).then(function (t) {
+      var n = opts && opts.maxRows;
+      return n ? { columns: t.columns, data: t.data.slice(0, n) } : t;
+    });
   };
 })();

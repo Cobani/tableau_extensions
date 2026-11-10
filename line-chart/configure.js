@@ -31,10 +31,10 @@
     { id: 'axes', label: 'Axes', build: buildAxesTab, keys: ['axisY', 'axisY2', 'axisX'] },
     { id: 'lines', label: 'Lines', build: buildLinesTab, keys: ['lines'] },
     { id: 'legend', label: 'Legend & tooltip', build: buildLegendTab,
-      keys: ['legend', 'chart.tooltip', 'chart.tooltipSort', 'chart.tooltipTotal', 'chart.hoverDim', 'chart.rightClickMenu', 'numbers.tooltipFull'] },
+      keys: ['legend', 'chart.tooltip', 'chart.tooltipSort', 'chart.tooltipTotal', 'chart.hoverDim', 'chart.rightClickMenu', 'interaction', 'numbers.tooltipFull'] },
     { id: 'numbers', label: 'Numbers', build: buildNumbersTab, keys: ['format', 'numbers.font'] },
     { id: 'export', label: 'Export', build: buildExportTab, keys: ['export'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
   ];
 
@@ -540,6 +540,8 @@
     var g3 = group(p, 'Interaction');
     g3.appendChild(checkboxRow('Fade other series on legend hover', 'chart.hoverDim'));
     g3.appendChild(checkboxRow('Right-click menu', 'chart.rightClickMenu'));
+    g3.appendChild(checkboxRow('Click selects in Tableau', 'interaction.selectInTableau'));
+    g3.appendChild(help('Click a point (line chart) / a breakdown segment (waterfall) to select it in Tableau, so dashboard filter and highlight actions fire. Click it again or an empty area to clear.'));
   }
 
   // ---------------------------------------------------------------------------
@@ -578,6 +580,10 @@
     g2.appendChild(colorRow('Color', 'card.bgColor'));
     g2.appendChild(rangeRow('Opacity', 'card.bgOpacity', 0, 100, 1, '%'));
     g2.appendChild(help('0% is fully transparent. Set worksheet and container shading to None in Tableau to see through.'));
+    var gData = group(p, 'Data');
+    gData.appendChild(numberRow('Maximum rows', 'data.maxRows', 0, 1000000, 1));
+    gData.appendChild(h('div', { className: 'help', textContent: 'How many rows are read from the worksheet (0 = all). When rows are left out, a note in the corner of the chart says so.' }));
+
   }
 
   function help (text) { return h('div', { className: 'help', textContent: text }); }

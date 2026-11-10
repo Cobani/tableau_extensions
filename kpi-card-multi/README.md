@@ -77,6 +77,9 @@ settings. Settings are one JSON string under the key `kpiCardMulti1` in the work
 - A slow handshake is never reloaded (Tableau's queue is just busy); the frame reloads only when a file didn't load or
   Tableau rejected the handshake, and offers *Click to reload* after 90 s.
 
+## Click selects in Tableau
+Optional (Format → Card → Interaction → **Click selects in Tableau**, off by default, shared by all cards). Click a card to select its latest date in Tableau, or click a point on its trend line to select that date, so dashboard filter, highlight and go-to-sheet actions fire. Only the date is selected (a measure cannot be selected), so every card shows the outline while a date is selected. Click the same place again (or press Esc) to clear. It needs a field on the Date tile; without one a click does nothing.
+
 ## Tooltip tile → tooltip
 
 Measures dropped on Tableau's own **Tooltip** tile (Marks card) are listed in the tooltip, in tile order:

@@ -11,10 +11,11 @@
  * Tableau persists inside the workbook.
  */
 (function () {
-  var STORAGE_KEY = 'kpiCardMulti1';
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var clone = ExtCore.clone, normalizeHex = ExtCore.normalizeHex, rgba = ExtCore.rgba, fontStack = ExtCore.fontStack,
+    merge = ExtCore.merge, pickScale = ExtCore.pickScale, fixed = ExtCore.fixed, formatScaled = ExtCore.formatScaled;
 
-  var FONT_STACK_FALLBACK =
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  var STORAGE_KEY = 'kpiCardMulti1';
 
   /** Font families offered in the dialog. "Lato" ships with the extension. */
   var FONTS = [
@@ -114,6 +115,14 @@
       periodWord: 'period',
       showSign: true
     },
+    interaction: {
+      selectInTableau: false // click selects the date in Tableau so dashboard actions fire (shared by all cards)
+    },
+    // ---- Data ---------------------------------------------------------------
+    data: {
+      maxRows: 1000 // rows read from the worksheet; 0 = no limit (Format → Card → Maximum rows)
+    },
+
     card: {
       padding: 15, // Filter Icon Title Padding
       bgColor: '#FFFFFF',
@@ -220,22 +229,6 @@
   // -------------------------------------------------------------------------
   // Settings I/O
   // -------------------------------------------------------------------------
-  function clone (o) { return JSON.parse(JSON.stringify(o)); }
-
-  /** Deep-merges stored values over the defaults so new keys get defaults. */
-  function merge (base, over) {
-    var out = clone(base);
-    if (!over || typeof over !== 'object') return out;
-    Object.keys(out).forEach(function (k) {
-      if (!(k in over)) return;
-      if (out[k] && typeof out[k] === 'object' && !Array.isArray(out[k])) {
-        out[k] = merge(out[k], over[k]);
-      } else if (typeof over[k] === typeof out[k] || out[k] === '' || out[k] == null) {
-        out[k] = over[k];
-      }
-    });
-    return out;
-  }
 
   /**
    * Stored shape: { shared: <full settings>, cards: { <card key>: { section: { key: value } } } }
@@ -304,59 +297,6 @@
   // -------------------------------------------------------------------------
   // Formatting helpers
   // -------------------------------------------------------------------------
-  var SCALES = { K: 1e3, M: 1e6, B: 1e9 };
-
-  function pickScale (value, scale) {
-    if (scale === 'dynamic') {
-      var a = Math.abs(value);
-      return a >= 1e9 ? 'B' : a >= 1e6 ? 'M' : a >= 1e3 ? 'K' : '';
-    }
-    return SCALES[scale] ? scale : '';
-  }
-
-  function fixed (n, decimals) {
-    var d = Math.max(0, Math.min(10, Number(decimals) || 0));
-    try {
-      return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: d,
-        maximumFractionDigits: d
-      }).format(n);
-    } catch (e) {
-      return n.toFixed(d);
-    }
-  }
-
-  /**
-   * Formats a number with a K/M/B suffix. `forceScale` lets a companion value
-   * (the change text) reuse the scale chosen for the big number.
-   */
-  function formatScaled (value, scale, decimals, forceScale) {
-    if (!isFinite(value)) return '—';
-    var suffix = forceScale != null ? forceScale : pickScale(value, scale);
-    var divisor = SCALES[suffix] || 1;
-    var text = fixed(value / divisor, decimals);
-    // Avoid "-0.00"
-    if (/^-[0.,]+$/.test(text)) text = text.slice(1);
-    return text + suffix;
-  }
-
-  function fontStack (family) {
-    if (!family) return FONT_STACK_FALLBACK;
-    return '"' + String(family).replace(/"/g, '') + '", ' + FONT_STACK_FALLBACK;
-  }
-
-  function normalizeHex (value) {
-    if (typeof value !== 'string') return null;
-    var hex = value.trim().replace(/^#/, '');
-    if (/^[0-9a-f]{3}$/i.test(hex)) hex = hex.replace(/(.)/g, '$1$1');
-    return /^[0-9a-f]{6}$/i.test(hex) ? '#' + hex.toUpperCase() : null;
-  }
-
-  function rgba (hex, alpha) {
-    var h = normalizeHex(hex) || '#000000';
-    return 'rgba(' + parseInt(h.slice(1, 3), 16) + ', ' + parseInt(h.slice(3, 5), 16) +
-      ', ' + parseInt(h.slice(5, 7), 16) + ', ' + alpha + ')';
-  }
 
   // -------------------------------------------------------------------------
   // Tooltip tile → tooltip. One entry per measure on Tableau's Tooltip tile, matched

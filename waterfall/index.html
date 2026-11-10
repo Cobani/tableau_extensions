@@ -4,45 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Waterfall</title>
-    <script>
-      // Automatic recovery: if a file doesn't arrive, Tableau rejects the handshake, or the handshake
-      // isn't answered in time (see INIT_TIMEOUT in the main JS), reload this frame, up to 3 times.
-      // The count rides in the URL hash.
-      (function () {
-        var m = /extRetry=(\d+)/.exec(location.hash);
-        var n = m ? +m[1] : 0;
-        var base = location.pathname + location.search;
-        var pending = 0;
-        function go (k) {
-          try { history.replaceState(null, '', base + (k ? '#extRetry=' + k : '')); } catch (e) { /* ignore */ }
-          location.reload();
-        }
-        window.ExtBoot = {
-          attempt: n,
-          retry: function (why) {
-            if (pending) return true;
-            if (n >= 3) return false;
-            console.warn('Waterfall: ' + why + ', reloading (attempt ' + (n + 1) + ' of 3)');
-            pending = setTimeout(function () { go(n + 1); }, 200 + Math.random() * 1300);
-            return true;
-          },
-          reload: function () { go(0); },
-          ok: function () {
-            clearTimeout(pending);
-            pending = 0;
-            if (n) { try { history.replaceState(null, '', base); } catch (e) { /* ignore */ } }
-          }
-        };
-      })();
-    </script>
+    <!-- Start-up, reload recovery and error reporting (shared/boot.js). -->
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=040ea08475" data-name="Waterfall" data-ext-version="1.3.0"></script>
     <!-- Start downloading the shared Tableau API library early; the same URL is cached for every extension. -->
     <link rel="preload" as="script" href="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" />
     <link rel="stylesheet" href="../shared/fonts/fonts.css?v=22ceb76171" />
     <link rel="stylesheet" href="./chart.css?v=5b3f069ba2" />
     <script src="../shared/timing.js?v=666dc99b7c"></script>
+    <script src="../shared/core.js?v=2cdac465b4"></script>
     <script src="./icons.js?v=899a3f9c7f"></script>
-    <script src="./config.js?v=b384c3d1ff"></script>
-    <script src="./chart.js?v=0b44045496"></script>
+    <script src="./config.js?v=09aee1f539"></script>
+    <script src="./chart.js?v=8983db0701"></script>
   </head>
 
   <body>
@@ -64,22 +36,16 @@
     <div id="menu" class="menu" role="menu"></div>
 
     <script>
-      // Dev preview only: index.html?mock loads a stand-in for the Tableau API.
-      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=583652977a"><\/script>');
-    </script>
-    <script>
-      // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.
-      if (!(window.tableau && window.tableau.extensions)) {
-        document.write('<script src="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7"><\/script>');
-      }
-    </script>
-    <script>
-      if (window.ExtTiming) ExtTiming.mark('Tableau API library loaded');
-      if (window.tableau && window.tableau.extensions && window.Waterfall) {
-        window.Waterfall.init();
-      } else if (!window.ExtBoot.retry('a file did not load')) {
-        document.getElementById('hint').textContent =
-            'Could not load the Waterfall files. Refresh the page to try again.';
+      // boot.js loads the Tableau API library (and the dev mock with ?mock), then starts the extension.
+      if (window.ExtBoot) {
+        ExtBoot.start(function () { if (!window.Waterfall) return false; window.Waterfall.init(); return true; });
+      } else {
+        // boot.js itself did not arrive: reload this frame, up to 3 times.
+        (function () {
+          var n = +((/extRetry=(\d+)/.exec(location.hash) || [0, 0])[1]);
+          if (n < 3) { location.hash = 'extRetry=' + (n + 1); location.reload(); }
+          else document.getElementById('hint').textContent = 'Could not load the Waterfall files. Refresh the page to try again.';
+        })();
       }
     </script>
   </body>

@@ -47,7 +47,7 @@
     { id: 'tooltip', label: 'Tooltip & Actions', build: buildTooltipTab, keys: ['tooltip', 'interaction.rightClickMenu', 'interaction.dblclick', 'interaction.selectInTableau', 'interaction.dialog'] },
     { id: 'comments', label: 'Comments', build: buildCommentsTab, keys: ['comments.show', 'comments.display', 'comments.marker', 'comments.color', 'comments.size', 'comments.maxWidth', 'comments.author'] },
     { id: 'export', label: 'Export', build: buildExportTab, keys: ['export'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
   ];
   // older links (right-click menu, saved focus) → new tab ids
@@ -1630,6 +1630,10 @@
     g3.appendChild(colorRow('Color', 'card.plotBg'));
     g3.appendChild(rangeRow('Opacity', 'card.plotBgOpacity', 0, 100, 1, '%'));
     g3.appendChild(help('Shades only the area with the bars and axes, e.g. a dark panel under light bars.'));
+    var gData = group(p, 'Data');
+    gData.appendChild(numberRow('Maximum rows', 'data.maxRows', 0, 1000000, 1));
+    gData.appendChild(h('div', { className: 'help', textContent: 'How many rows are read from the worksheet (0 = all). When rows are left out, a note in the corner of the chart says so.' }));
+
   }
 
   function help (text) { return h('div', { className: 'help', textContent: text }); }

@@ -20,23 +20,16 @@
       <button class="btn btn--primary" id="done" type="button">Done</button>
     </footer>
 
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=e0688e311c" data-name="Bar Chart — Format" data-ext-version="1.2.0"></script>
+    <script src="../shared/core.js?v=2cdac465b4"></script>
     <script src="./icons.js?v=58c76ce58f"></script>
-    <script src="./config.js?v=4411805a4f"></script>
-    <script src="./configure.js?v=9881242925"></script>
+    <script src="./config.js?v=06d72740ba"></script>
+    <script src="./configure.js?v=47cf32c88f"></script>
     <script>
-      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=217cd0b383"><\/script>');
-    </script>
-    <script>
-      // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.
-      if (!(window.tableau && window.tableau.extensions)) {
-        document.write('<script src="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7"><\/script>');
-      }
-    </script>
-    <script>
-      if (window.tableau && window.tableau.extensions) {
-        window.BarChartConfigure.init();
+      if (window.ExtBoot) {
+        ExtBoot.start(function () { if (!window.BarChartConfigure) return false; window.BarChartConfigure.init(); return true; }, { dialog: true });
       } else {
-        console.error('Could not load the Tableau Extensions API library.');
+        console.error('Could not load the Bar Chart files.');
       }
     </script>
   </body>

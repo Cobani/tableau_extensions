@@ -21,25 +21,25 @@
   function rnd () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
 
   var MEASURES = [
-    ['SUM(Total Balance)', 3.03e9, 0.004],
-    ['AVG(Avg Balance per Account)', 5484, 0.01],
-    ['AVG(Avg Balance per Non-Zero Account)', 20262, 0.01],
-    ['AVG(Avg Balance per Customer)', 6369, 0.01],
-    ['SUM(Net Balance Change)', -1.18e7, 0.6],
-    ['AVG(Total Deposit Cost)', 0.0237, 0.02],
-    ['AVG(Savings Cost)', 0.0325, 0.03],
-    ['SUM(Profit Accrued)', 85410, 0.2],
-    ['SUM(Profit Paid)', 177400, 0.3],
-    ['SUM(Total Customers)', 467789, 0.002],
-    ['SUM(Total Accounts)', 551612, 0.002],
-    ['SUM(New Accounts)', 1093, 0.4]
+    ['SUM(Total Stock Value)', 3.03e9, 0.004],
+    ['AVG(Avg Order Value)', 5484, 0.01],
+    ['AVG(Avg Basket Size)', 20262, 0.01],
+    ['AVG(Avg Spend per Shopper)', 6369, 0.01],
+    ['SUM(Net Stock Change)', -1.18e7, 0.6],
+    ['AVG(Total Shipping Cost)', 0.0237, 0.02],
+    ['AVG(Packaging Cost)', 0.0325, 0.03],
+    ['SUM(Gross Margin)', 85410, 0.2],
+    ['SUM(Discounts Given)', 177400, 0.3],
+    ['SUM(Total Shoppers)', 467789, 0.002],
+    ['SUM(Total Orders)', 551612, 0.002],
+    ['SUM(New Orders)', 1093, 0.4]
   ];
 
   var n = Math.max(1, Math.min(12, Number(params.get('n')) || 6));
   var days = Math.max(2, Number(params.get('days')) || 60);
   var meas = MEASURES.slice(0, n);
-  // Tooltip tile measures: ?details=N (default 2, max 3). Net Flow swings around zero for +/− colors.
-  var DETAILS = [['SUM(Net Flow)', 0, 4e6], ['AVG(Cost of Funds)', 0.031, 0.002], ['SUM(Active Customers)', 312000, 900]];
+  // Tooltip tile measures: ?details=N (default 2, max 3). Net Revenue swings around zero for +/− colors.
+  var DETAILS = [['SUM(Net Revenue)', 0, 4e6], ['AVG(Cost of Goods)', 0.031, 0.002], ['SUM(Active Shoppers)', 312000, 900]];
   var nd = Math.max(0, Math.min(3, params.has('details') ? Number(params.get('details')) : 2));
   var dets = DETAILS.slice(0, nd);
 
@@ -89,6 +89,8 @@
 
   var worksheet = {
     name: 'KPI Row (mock)',
+    selectMarksByValueAsync: function () { console.log('mock selectMarksByValueAsync', JSON.stringify(arguments[0])); return Promise.resolve(); },
+    clearSelectedMarksAsync: function () { console.log('mock clearSelectedMarksAsync'); return Promise.resolve(); },
     getSummaryDataAsync: function () {
       return new Promise(function (r) { setTimeout(function () { r(buildTable()); }, 60); });
     },

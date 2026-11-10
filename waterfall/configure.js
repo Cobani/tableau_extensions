@@ -24,12 +24,12 @@
   var TABS = [
     { id: 'icon', label: 'Icon', build: buildIconTab, keys: ['icon'] },
     { id: 'text', label: 'Title & text', build: buildTextTab, keys: ['title', 'explanation'] },
-    { id: 'bars', label: 'Bars', build: buildBarsTab, keys: ['bars', 'start', 'end', 'stepDefaults', 'steps'] },
+    { id: 'bars', label: 'Bars', build: buildBarsTab, keys: ['bars', 'interaction', 'start', 'end', 'stepDefaults', 'steps'] },
     { id: 'groups', label: 'Groups', build: buildGroupsTab, keys: ['groups'] },
     { id: 'axes', label: 'Axes', build: buildAxesTab, keys: ['axisY', 'axisX'] },
     { id: 'lines', label: 'Lines', build: buildLinesTab, keys: ['lines'] },
     { id: 'numbers', label: 'Numbers', build: buildNumbersTab, keys: ['numbers', 'format'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card'] }
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data'] }
   ];
 
   // ---------------------------------------------------------------------------
@@ -331,6 +331,8 @@
     g7.appendChild(help('With nothing on the End tile, End = Start + changes.'));
     g7.appendChild(checkboxRow('Tooltip on hover', 'bars.tooltip'));
     g7.appendChild(checkboxRow('Right-click menu', 'bars.rightClickMenu'));
+    g7.appendChild(checkboxRow('Click selects in Tableau', 'interaction.selectInTableau'));
+    g7.appendChild(help('Click a point (line chart) / a breakdown segment (waterfall) to select it in Tableau, so dashboard filter and highlight actions fire. Click it again or an empty area to clear.'));
   }
 
 
@@ -614,6 +616,10 @@
     g2.appendChild(colorRow('Color', 'card.bgColor'));
     g2.appendChild(rangeRow('Opacity', 'card.bgOpacity', 0, 100, 1, '%'));
     g2.appendChild(help('0% is fully transparent. Set worksheet and container shading to None in Tableau to see through.'));
+    var gData = group(p, 'Data');
+    gData.appendChild(numberRow('Maximum rows', 'data.maxRows', 0, 1000000, 1));
+    gData.appendChild(h('div', { className: 'help', textContent: 'How many rows are read from the worksheet (0 = all). When rows are left out, a note in the corner of the chart says so.' }));
+
   }
 
   function help (text) { return h('div', { className: 'help', textContent: text }); }

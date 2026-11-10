@@ -20,6 +20,10 @@
  * (configure.html), which also opens from the chart's right-click menu.
  */
 (function () {
+  // Shared helpers (shared/core.js); tested in tests/core.test.js.
+  var esc = ExtCore.esc, toNumber = ExtCore.toNumber, isMN = ExtCore.isMN, isNumericCol = ExtCore.isNumericCol,
+    norm = ExtCore.norm, cleanName = ExtCore.cleanName, findColumn = ExtCore.findColumn;
+
   var el = {};
   var worksheet = null;
   var cfg = null;
@@ -102,7 +106,8 @@
         function () {
           // while the dialog's live preview drives the chart, saves (which lag behind it) are ignored
           if (liveActive) return;
-          cfg = Bc.read(); paint();
+          cfg = Bc.read();
+          if (limitChanged()) refresh(); else paint();
         }
       );
       window.addEventListener('storage', onLiveSettings);
@@ -116,7 +121,7 @@
     }).catch(function (err) {
       if (initDone) {
         console.error('Bar Chart failed to start:', err);
-        showEmpty('Could not initialize the extension. See the console for details.');
+        showEmpty('Could not initialize the extension. Click the ! mark in the corner for details.');
         return;
       }
       initDone = true;
@@ -220,7 +225,7 @@
       liveActive = true;
       cfg = Bc.merge(Bc.DEFAULTS, o.cfg);
     } catch (err) { return; }
-    schedule();
+    if (limitChanged()) refresh(); else schedule();
     clearTimeout(infoTimer);
     infoTimer = setTimeout(function () {
       try { if (raw) window.localStorage.setItem('barchart:info:' + liveId, JSON.stringify(dialogInfo(null))); } catch (err) { /* ignore */ }
@@ -296,70 +301,12 @@
     return info;
   }
 
-  // ---------------------------------------------------------------------------
-  // Last-render cache (same approach as Waterfall)
-  // ---------------------------------------------------------------------------
-  var CACHE_PREFIX = 'barchart:lastRender:v2:';
-  var CACHE_MAX_AGE = 30 * 24 * 3600 * 1000;
-  var CACHE_MAX_CHARS = 400000;
-  var cacheTried = false;
-
-  function cacheKey () {
-    var host = '';
-    try { host = document.referrer ? new URL(document.referrer).origin : ''; } catch (e) { /* ignore */ }
-    return CACHE_PREFIX + host + '|' + (worksheet && worksheet.name);
-  }
-
   function fieldsSig (fields) {
     var out = {};
     Object.keys(fields).sort().forEach(function (k) {
       out[k] = fields[k].map(function (f) { return (f.id || '') + '|' + (f.name || ''); });
     });
     return JSON.stringify(out);
-  }
-
-  function enc (k, v) {
-    var r = this[k];
-    if (r instanceof Date) return { $d: r.getTime() };
-    if (typeof r === 'number' && !isFinite(r)) return { $n: String(r) };
-    return v;
-  }
-  function dec (k, v) {
-    if (v && typeof v === 'object') {
-      if (Object.prototype.hasOwnProperty.call(v, '$d')) return new Date(v.$d);
-      if (Object.prototype.hasOwnProperty.call(v, '$n')) return Number(v.$n);
-    }
-    return v;
-  }
-
-  function readCacheEntry () {
-    try {
-      var s = window.localStorage.getItem(cacheKey());
-      if (!s) return null;
-      var c = JSON.parse(s, dec);
-      if (!c || !c.data || !(Date.now() - c.t < CACHE_MAX_AGE)) return null;
-      return c;
-    } catch (e) { return null; }
-  }
-
-  function writeCache (fields, data) {
-    try {
-      var s = JSON.stringify({ sig: fieldsSig(fields), t: Date.now(), data: data }, enc);
-      if (s.length > CACHE_MAX_CHARS) return;
-      try {
-        window.localStorage.setItem(cacheKey(), s);
-      } catch (full) {
-        for (var i = window.localStorage.length - 1; i >= 0; i--) {
-          var k = window.localStorage.key(i);
-          if (k && k.indexOf(CACHE_PREFIX) === 0) window.localStorage.removeItem(k);
-        }
-        window.localStorage.setItem(cacheKey(), s);
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  function clearCache () {
-    try { window.localStorage.removeItem(cacheKey()); } catch (e) { /* ignore */ }
   }
 
   // ---------------------------------------------------------------------------
@@ -370,7 +317,6 @@
   var TILES = ['category', 'values', 'line', 'target', 'tooltip', 'detail'];
 
   async function refresh () {
-    if (raw && !raw.rowsAll) raw = null; // cache from an older version
     var token = ++renderToken;
     var T = window.ExtTiming || { mark: function () {}, done: function () {}, line: function () {} };
     var t0 = performance.now();
@@ -387,30 +333,12 @@
         return r;
       }).catch(function (err) { tData = ms(); return { error: err }; });
 
-      if (!cacheTried) {
-        cacheTried = true;
-        var entry = readCacheEntry();
-        if (entry && !raw) {
-          raw = entry.data;
-          try { paint(); T.mark('cached result drawn'); } catch (e) { raw = null; entry = null; }
-        }
-        if (entry) {
-          fieldsP.then(function (f) {
-            if (token !== renderToken || raw !== entry.data || entry.sig === fieldsSig(f)) return;
-            raw = null;
-            showEmpty('');
-            T.mark('cached result removed (fields changed)');
-          }).catch(function () { /* handled below */ });
-        }
-      }
-
       var results = await Promise.all([fieldsP, dataP]);
       if (token !== renderToken) return;
       var fields = results[0];
 
       if (!fields.values.length) {
         raw = null;
-        clearCache();
         if (first) { T.mark('no measure on Measure'); T.done('Bar Chart load timings'); }
         showEmpty('Drag a measure onto <b>Measure</b> and a dimension onto <b>Dimension</b>.<br>' +
           'More Dimension fields become the breakdown and drill-down levels. Optional: <b>Line</b> draws a line over the bars, ' +
@@ -435,13 +363,10 @@
         T.line('refresh #' + token + ': fields ' + tFields + ' ms, data ' + tData + ' ms (' +
           (table.data ? table.data.length : 0) + ' rows), draw ' + Math.round(performance.now() - tp) + ' ms');
       }
-      // saving the last render can take a while on big data: do it when the browser is idle
-      var toSave = raw;
-      (window.requestIdleCallback || function (f) { return setTimeout(f, 800); })(function () { if (raw === toSave) writeCache(fields, toSave); }, { timeout: 4000 });
     } catch (err) {
       console.error('Bar Chart render failed:', err);
       if (first) { T.mark('render failed', err && err.message); T.done('Bar Chart load timings'); }
-      if (token === renderToken) showEmpty('Could not read the worksheet data. See the console for details.');
+      if (token === renderToken) showEmpty('Could not read the worksheet data. Click the ! mark in the corner for details.');
     }
   }
 
@@ -471,44 +396,24 @@
     return /^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|STDEV|STDEVP|VAR|VARP|PCT\d+)\(/i.test(String(f.name || ''));
   }
 
-  async function readSummaryData () {
-    var reader = await worksheet.getSummaryDataReaderAsync(undefined, { ignoreSelection: true });
-    try {
-      return await reader.getAllPagesAsync();
-    } finally {
-      await reader.releaseAsync();
-    }
+  /**
+   * The worksheet's summary data, up to the row limit in the settings (Format → Card → Maximum
+   * rows; 0 = all). When rows were left out, a small note says so in the corner.
+   */
+  var lastLimit = null;
+  async function readSummaryData (extra) {
+    var limit = ExtCore.rowLimit(cfg.data.maxRows);
+    var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
+    return table;
   }
 
-  function norm (s) {
-    return String(s || '').replace(/^[A-Z_]+\((.*)\)$/i, '$1').trim().toLowerCase();
+  /** True when the row limit in the settings no longer matches the data that was read. */
+  function limitChanged () {
+    return lastLimit != null && ExtCore.rowLimit(cfg.data.maxRows) !== lastLimit;
   }
 
-  function nameParts (s) {
-    var str = String(s || '');
-    var i = str.indexOf('//');
-    if (i < 0) return [norm(str)];
-    return [norm(str.slice(i + 2)), norm(str.slice(0, i))].filter(Boolean);
-  }
-
-  function isMN (c) { return /^measure (names|values)$/i.test(c.fieldName); }
-  function isNumericCol (c) { return /^(float|int|real|integer|number)$/i.test(String(c.dataType || '')); }
   function isDateCol (c) { return /date/i.test(String(c.dataType || '')); }
-
-  function findColumn (table, field, taken) {
-    if (!field) return null;
-    var cols = table.columns.filter(function (c) { return taken.indexOf(c) < 0 && !isMN(c); });
-    var fid = field.id || field.fieldId;
-    var fn = nameParts(field.name);
-    return cols.find(function (c) { return fid && c.fieldId && c.fieldId === fid; }) ||
-      cols.find(function (c) { return c.fieldName === field.name; }) ||
-      cols.find(function (c) { return norm(c.fieldName) === norm(field.name); }) ||
-      cols.find(function (c) {
-        var cn = nameParts(c.fieldName);
-        return cn.some(function (x) { return fn.indexOf(x) >= 0; });
-      }) ||
-      null;
-  }
 
   /** Renamed pills: unmatched fields take the free columns in order (see Waterfall). */
   function matchLeftovers (table, reqs, taken, pivoted) {
@@ -533,23 +438,6 @@
         return (r.field && r.field.name) + ' → ' + r.col.fieldName;
       }));
     }
-  }
-
-  function toNumber (cell) {
-    if (!cell) return NaN;
-    var v = cell.nativeValue != null ? cell.nativeValue : cell.value;
-    if (v === null || v === '%null%' || v === '') return NaN;
-    return typeof v === 'number' ? v : Number(v);
-  }
-
-  var DATE_PARTS = { YEAR: 'Year', QUARTER: 'Quarter', MONTH: 'Month', WEEK: 'Week', DAY: 'Day', WEEKDAY: 'Weekday', HOUR: 'Hour',
-    TYR: 'Year', TQR: 'Quarter', TMN: 'Month', TWK: 'Week', TDY: 'Day', MY: 'Month', QY: 'Quarter', MDY: 'Day' };
-
-  function cleanName (name) {
-    var s = String(name || '');
-    var m = /^([A-Z]+)\((.*)\)$/i.exec(s);
-    if (m && DATE_PARTS[m[1].toUpperCase()]) return DATE_PARTS[m[1].toUpperCase()] + ' of ' + m[2];
-    return s.replace(/^(SUM|AVG|MIN|MAX|CNT|CNTD|COUNT|COUNTD|MEDIAN|AGG|ATTR|STDEV|VAR)\((.*)\)$/i, '$2');
   }
 
   function cellText (cell) {
@@ -1457,7 +1345,6 @@
     });
   }
 
-
   // ---------------------------------------------------------------------------
   // Paint
   // ---------------------------------------------------------------------------
@@ -1469,7 +1356,7 @@
       v = buildView();
     } catch (e) {
       console.error('Bar Chart: could not build the chart', e);
-      showEmpty('Could not draw the chart. See the console for details.');
+      showEmpty('Could not draw the chart. Click the ! mark in the corner for details.');
       return;
     }
     view = v;
@@ -1625,7 +1512,7 @@
       }
     }
 
-    var t = cfg.title;
+    t = cfg.title;
     applyFont(el.title, t);
     el.title.textContent = t.text ? fillParams(t.text) : defaultTitle(v);
     el.title.style.textAlign = t.align || 'left';
@@ -4100,7 +3987,6 @@
   /** Selects the bar's members in Tableau (for dashboard actions). Silently skipped if not supported. */
   function selectInTableau (n) {
     try {
-      if (!worksheet || !worksheet.selectMarksByValueAsync) return;
       var sel = [];
       var root = n; var chain = [];
       while (root) { chain.unshift(root); root = root.parent; }
@@ -4110,14 +3996,12 @@
       }
       chain.slice(1).forEach(function (c, i) { if (raw.dims[i]) sel.push({ fieldName: raw.dims[i].name, value: [c.label] }); });
       (n.panelVals || []).forEach(function (pv) { sel.push({ fieldName: pv.field.name, value: [pv.value] }); }); // small multiples: that panel only
-      if (!sel.length) return;
-      var type = tableau.SelectionUpdateType ? tableau.SelectionUpdateType.Replace : 'select-replace';
-      worksheet.selectMarksByValueAsync(sel, type).catch(function (err) { console.info('Bar Chart: selection not applied', err && err.message); });
+      ExtCore.select(worksheet, sel, 'Bar Chart');
     } catch (e) { /* not supported */ }
   }
 
   function clearTableauSelection () {
-    try { if (worksheet && worksheet.clearSelectedMarksAsync) worksheet.clearSelectedMarksAsync().catch(function () {}); } catch (e) { /* ignore */ }
+    ExtCore.clearSelection(worksheet);
   }
 
   // ---------------------------------------------------------------------------
@@ -4289,11 +4173,6 @@
   function closeNote () { if (el.note) el.note.style.display = 'none'; }
 
   // ---------------------------------------------------------------------------
-  function esc (s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
 
   function showEmpty (html) {
     el.card.classList.add('is-empty');

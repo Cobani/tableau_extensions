@@ -20,23 +20,16 @@
       <button class="btn btn--primary" id="done" type="button">Done</button>
     </footer>
 
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=040ea08475" data-name="Waterfall — Format" data-ext-version="1.3.0"></script>
+    <script src="../shared/core.js?v=2cdac465b4"></script>
     <script src="./icons.js?v=899a3f9c7f"></script>
-    <script src="./config.js?v=b384c3d1ff"></script>
-    <script src="./configure.js?v=32db2f21bf"></script>
+    <script src="./config.js?v=09aee1f539"></script>
+    <script src="./configure.js?v=9bf8f8b247"></script>
     <script>
-      if (/[?&]mock\b/.test(location.search)) document.write('<script src="./dev/mock.js?v=583652977a"><\/script>');
-    </script>
-    <script>
-      // Tableau Extensions API is bundled in ./lib (no CDN). Skipped when a dev mock already defined it.
-      if (!(window.tableau && window.tableau.extensions)) {
-        document.write('<script src="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7"><\/script>');
-      }
-    </script>
-    <script>
-      if (window.tableau && window.tableau.extensions) {
-        window.WaterfallConfigure.init();
+      if (window.ExtBoot) {
+        ExtBoot.start(function () { if (!window.WaterfallConfigure) return false; window.WaterfallConfigure.init(); return true; }, { dialog: true });
       } else {
-        console.error('Could not load the Tableau Extensions API library.');
+        console.error('Could not load the Waterfall files.');
       }
     </script>
   </body>
