@@ -1,0 +1,31 @@
+name: Checks
+
+# Runs on every push and pull request: the same checks as `python3 release.py --check`
+# (syntax, manifests, cache-busting stamps, lint, unit tests) plus a browser smoke test that
+# opens every extension and its Format dialog with the dev mock.
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get install -y libxml2-utils
+      - run: npm install --no-audit --no-fund
+      - name: Syntax, manifests, stamps, lint, tests
+        run: python3 release.py --check
+      - name: Browser smoke test
+        run: |
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+          python3 serve.py &
+          sleep 2
+          node tests/smoke.js
