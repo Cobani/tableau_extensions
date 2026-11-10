@@ -1,6 +1,6 @@
 # Waterfall — Tableau Viz Extension
 
-A waterfall chart (Start → changes → End) based on the *Balance flow* mockup (`balance-flow-figma.html`). The icon,
+A waterfall chart (Start → changes → End) based on the *Stock flow* Figma mockup. The icon,
 title, explanation and card options are the same as **KPI Card 3**, and so is the number formatting.
 
 <p>
@@ -32,7 +32,7 @@ In Tableau Desktop (2024.2+): Marks card → mark type dropdown → **Add Extens
 `waterfall.trex`.
 
 To try it without Tableau, open <http://localhost:8766/waterfall/dev/preview.html>. It has four sample data sets (the Figma
-balance flow, a breakdown dimension, raw SAR values, negative values; the breakdown set has two dimensions) and opens the Format dialog next to the chart.
+stock flow, a breakdown dimension, raw values, negative values; the breakdown set has two dimensions) and opens the Format dialog next to the chart.
 
 | Marks card tile | What to drop | Drives |
 | --- | --- | --- |
@@ -50,7 +50,7 @@ balance flow, a breakdown dimension, raw SAR values, negative values; the breakd
   exact value is used — the same as with no Breakdown on the Marks card. The console says which way it went
   (*Start/End without the Breakdown: N row(s)*). Otherwise the value is taken once. If the
   members disagree, the most common value is shown and the tooltip says so; make that measure with
-  `{ EXCLUDE [Breakdown fields] : SUM([Balance]) }`. Dev preview: *Breakdown, balances repeat per row (LOD)*.
+  `{ EXCLUDE [Breakdown fields] : SUM([Opening Stock]) }`. Dev preview: *Breakdown, balances repeat per row (LOD)*.
 - If outflows are stored as positive amounts, tick **Invert sign** for those bars.
 - A change of exactly 0 is written with its bar's sign: **+0.0**, or **−0.0** when *Invert sign* is ticked (it also takes the Decrease colour and joins the decreases group). A change that only rounds to zero keeps its own sign.
 - If Tableau delivers the changes as *Measure Names / Measure Values*, the extension pivots them back. Nothing to do.
@@ -63,7 +63,7 @@ Viz extensions can't add their own entries to Tableau's right-click menu. There 
 - **Click a breakdown segment** (Format → Bars → All bars → *Click selects in Tableau*, off by default) to select that
   member in Tableau, so dashboard filter and highlight actions fire. Click it again, click an empty area or press
   Escape to clear. Bars without a Breakdown have nothing to select.
-- **Right-click a bar** in the chart → *Format "Bank In"…*, Groups…, Axes…, Lines…, Numbers…. **Double-click** a bar
+- **Right-click a bar** in the chart → *Format "Online Sales"…*, Groups…, Axes…, Lines…, Numbers…. **Double-click** a bar
   opens its settings directly.
 
 The dialog is modeless, so the chart updates as you change things. **Cancel** undoes everything since the dialog
@@ -75,7 +75,7 @@ opened, and **Reset tab** restores the defaults for that tab.
 | Title & text | as KPI Card 3. An empty title shows "Start → End" |
 | Bars | pick **Start**, any **change**, or **End**, then set it:<br>• label · colour (changes: Increase/Decrease colour or custom) · invert sign<br>• **total value**: show/hide, place (above, inside top/middle/bottom, below, or at the end it moves to), size, weight, colour<br>• **clipped-bar marker** (bar is longer than it looks): show/hide, slanted lines (Figma) / zigzag / gap, position, colours<br>• **breakdown** (changes): show/hide, **which Breakdown dimensions** this bar splits by (tick one or several) and their **order in the segment name** (▲ ▼), name separator, colours (shades of the bar colour, or one colour per member), divider lines, show values, member names, place (inside / left / right), size, weight, text colour, hide on small segments<br>• **segment order** (changes): same as All bars, or its own — the order of the segments and of the tooltip rows<br>• *Apply these settings to all changes*<br>**Order of the changes:** as on the Marks card · value high→low / low→high · size (without sign) largest / smallest first; sort **all changes together** or **within each group** (groups stay in place). Start and End never move.<br>**All bars:** width, corner radius, Increase/Decrease colours, breakdown order (default / value / size / name A→Z, Z→A — also the tooltip order), calculate End, tooltip, right-click menu |
 | Groups | none · **increases / decreases** (runs of consecutive ups and downs, like *Incoming · +412.6* in Figma) · **custom** groups you name and assign. Per group: text, colour, show total. Style: line (solid, dashed, dotted, bracket), width, inset, text size and weight, separator, optional shading behind the bars |
-| Axes | **Vertical:** starts at zero / close to the data (room below, %) / fixed value · fixed or automatic maximum · tick count · side · title (e.g. *SAR M*) · font, size, weight, colour · axis line · own number format or the shared one. **Horizontal:** labels on/off, horizontal (wrapping) / angled / vertical, max lines, font, size, weight, colour, axis line |
+| Axes | **Vertical:** starts at zero / close to the data (room below, %) / fixed value · fixed or automatic maximum · tick count · side · title (e.g. *Stock (M)*) · font, size, weight, colour · axis line · own number format or the shared one. **Horizontal:** labels on/off, horizontal (wrapping) / angled / vertical, max lines, font, size, weight, colour, axis line |
 | Lines | horizontal gridlines, vertical gridlines, connector lines, zero line: each with show, colour, width, solid / dashed / dotted |
 | Numbers | **All numbers the same** or **Each label its own** · K / M / B / Dynamic / full / Percentage / Percentage dynamic / workbook format · 0–1 ratio · decimals · unit text and position · "+" on increases · negatives as −201.4, -201.4 or (201.4) · chart font |
 | Card | as KPI Card 3: padding, space above the chart, dashed divider, background colour and opacity |
@@ -91,7 +91,7 @@ bars.
 
 ## Settings and deploying
 
-Change settings are stored per measure, by the pill's name (e.g. `SUM(Bank In)`). Everything is saved in the workbook.
+Change settings are stored per measure, by the pill's name (e.g. `SUM(Online Sales)`). Everything is saved in the workbook.
 
 **Renaming pills.** Renaming a pill on the Marks card (double-click, type `//New name`, Shift+Enter) keeps its
 settings and its breakdown: the chart remembers the pill names it last saw, and a name that disappears while a new one

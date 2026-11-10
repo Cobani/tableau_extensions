@@ -63,8 +63,8 @@ everything else applies to the whole row.
   height), gap between cards, and the selected card's **width weight** (2 = twice as wide).
 - The dashed divider is off by default (Card tab). When on, it is drawn on the right of every card; untick "Divider after last card in row" to leave it off the last card of each row.
 
-Cards are matched to their settings by measure name without the aggregation (`SUM(Total Balance)` → `Total
-Balance`), so changing SUM to AVG keeps a card's settings; renaming the field starts that card from the shared
+Cards are matched to their settings by measure name without the aggregation (`SUM(Total Stock Value)` → `Total
+Stock Value`), so changing SUM to AVG keeps a card's settings; renaming the field starts that card from the shared
 settings. Settings are one JSON string under the key `kpiCardMulti1` in the workbook.
 
 ## Performance

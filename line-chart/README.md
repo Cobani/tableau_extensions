@@ -34,8 +34,8 @@ In Tableau Desktop (2024.2+): Marks card → mark type dropdown → **Add Extens
 `line-chart.trex` (in the `tableau-extensions` folder; it loads the extension from GitHub Pages).
 
 To try it without Tableau, open <http://localhost:8766/line-chart/dev/preview.html>. It has seven sample data sets (monthly flows
-with areas, lines and a dual axis; transactions by channel with a Color dimension; actual + forecast with a band;
-daily raw SAR values with exact dates and weekend gaps; YEAR + MONTH pills as percentages; negative values; no date)
+with areas, lines and a dual axis; orders by channel with a Color dimension; actual + forecast with a band;
+daily raw order values with exact dates and weekend gaps; YEAR + MONTH pills as percentages; negative values; no date)
 and opens the Format dialog next to the chart. Each data set keeps its own settings; some start with settings that
 show off a feature. **Reset settings** brings those back.
 
@@ -61,7 +61,7 @@ show off a feature. **Reset settings** brings those back.
   fire. Click it again, click empty space or press Escape to clear.
 - **Legend**: click an item to hide or show that series, hover to highlight it, double-click to format it. Hiding
   is for this session only; to hide a series for everyone, set it to *Hidden* in Format → Series.
-- **Right-click** a line, an area or a legend item → *Format "Deposits"…*, *Hide "Deposits"*, Series…, Areas &
+- **Right-click** a line, an area or a legend item → *Format "Revenue"…*, *Hide "Revenue"*, Series…, Areas &
   stacking…, Reference lines & band…, Axes…, Lines…, Legend & tooltip…, Numbers…. **Double-click** a line opens its
   settings directly. (Viz extensions can't add entries to Tableau's own right-click menu.)
 - **Format Extension** button at the bottom of the Marks card opens the same dialog.
@@ -72,11 +72,11 @@ opened, and **Reset tab** restores the defaults for that tab.
 | Tab | Options |
 | --- | --- |
 | Icon | as KPI Card 3: built-in Figma icons, Tableau shapes, upload, size, colour. Default icon: line chart |
-| Title & text | as KPI Card 3. An empty title shows the measure names ("Deposits vs Withdrawals") |
+| Title & text | as KPI Card 3. An empty title shows the measure names ("Revenue vs Returns") |
 | Series | pick **All series (defaults)** or one series, then: label · **draw as line, area or hidden** · colour (or the palette colour) · **left or right axis** (dual axis) · width · solid / dashed / dotted · straight / smooth / step · **dash the last N segments** (e.g. an incomplete month) · markers (none, every point, last, highest and lowest) and their size · **value labels** (none, last value right of the line, every point, highest and lowest, first and last) with size, weight and colour · **tooltip change** vs the previous point (as KPI Card's % Change: show, % or pp change, 0–1 ratio, decimals, increase is good, previous value, positive / negative / no-change colours). **Chart:** palette (House, Tableau 10, Color blind, Blues, Warm), missing values, even or by-date spacing |
 | Areas | overlap · **stacked** · **100% stacked** · fill opacity · gradient fill · outline on/off · a quick line / area / hidden switch for every series |
 | Reference lines | any number of horizontal lines: **constant (target)**, average, median, min, max or latest value, of one series or of every visible series on an axis · label, show value, label side, colour, width, style, text size. **Band between two measures:** pick a lower and an upper measure (e.g. *Forecast Low* / *Forecast High*), name, colour, opacity, hide the two lines, dashed edges. **Forecast / projection:** pick the first forecast point; from there lines are dashed on a shaded background with a label |
-| Axes | **Left and right axis**, each: starts at zero / close to the data (room around the data, %) / fixed value · fixed or automatic maximum · tick count · title (e.g. *SAR M*) · font, size, weight, colour · axis line · own number format or the shared one. **Horizontal:** labels on/off, horizontal / angled / vertical (labels that don't fit are skipped; the last point is always labelled), title, font, axis line, tick marks |
+| Axes | **Left and right axis**, each: starts at zero / close to the data (room around the data, %) / fixed value · fixed or automatic maximum · tick count · title (e.g. *Revenue (M)*) · font, size, weight, colour · axis line · own number format or the shared one. **Horizontal:** labels on/off, horizontal / angled / vertical (labels that don't fit are skipped; the last point is always labelled), title, font, axis line, tick marks |
 | Lines | horizontal gridlines, vertical gridlines, zero line, hover crosshair: each with show, colour, width, solid / dashed / dotted |
 | Legend & tooltip | legend on/off, top / bottom / right, alignment, click to hide / show, **latest value** next to each name, font · tooltip on/off, row order, full numbers, stacked total · fade other series on legend hover · right-click menu |
 | Numbers | K / M / B / Dynamic / full / Percentage / Percentage dynamic / workbook format · 0–1 ratio · decimals · unit text and position · "+" on positive values · negatives as −201.4, -201.4 or (201.4) · chart font |
@@ -94,7 +94,7 @@ The last tab of the Format window saves and loads every setting of the chart. **
 
 ## Settings and deploying
 
-Series settings are stored by the pill's name (e.g. `SUM(Deposits)`), or `SUM(Transactions) · App` with a Color
+Series settings are stored by the pill's name (e.g. `SUM(Revenue)`), or `SUM(Orders) · Channel` with a Color
 dimension. Everything is saved in the workbook.
 
 **Renaming pills.** Renaming a measure pill (double-click, type `//New name`, Shift+Enter) keeps its settings, its

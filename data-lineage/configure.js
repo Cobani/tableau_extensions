@@ -19,7 +19,22 @@
   var info = { liveId: null, focus: null, levels: [], extras: [], params: [], pathCount: 0 };
   var openLevel = 0; // level whose card is open in the Levels tab
 
-  var WEIGHTS = [[300, 'Light'], [400, 'Regular'], [500, 'Medium'], [600, 'Semibold'], [700, 'Bold'], [900, 'Black']];
+  var WEIGHTS = ExtDialog.WEIGHTS;
+
+  // Controls shared by every Format dialog: shared/dialog.js.
+  const kit = ExtDialog.kit({
+    get: get,
+    set: set,
+    fonts: Dl.FONTS,
+    textNullAsEmpty: true,
+    selectFirstIfMissing: true
+  });
+  const h = ExtDialog.h, P = ExtDialog.P, group = ExtDialog.group, help = ExtDialog.help,
+    readAsDataUrl = ExtDialog.readAsDataUrl, setStatus = ExtDialog.setStatus, copyText = ExtDialog.copyText,
+    download = ExtDialog.download, getAt = ExtDialog.getAt, setAt = ExtDialog.setAt, delAt = ExtDialog.delAt;
+  const row = kit.row, textRow = kit.textRow, numberRow = kit.numberRow, rangeRow = kit.rangeRow,
+    checkboxRow = kit.checkboxRow, selectRow = kit.selectRow, segRow = kit.segRow, colorRow = kit.colorRow,
+    fontFamilyRow = kit.fontFamilyRow, fontRows = kit.fontRows;
 
   var TABS = [
     { id: 'icon', label: 'Icon', build: buildIconTab, keys: ['icon'] },
@@ -97,14 +112,6 @@
     cfg = Dl.normalize(cfg);
     changed();
     buildTabs();
-  }
-
-  function help (text) { return h('div', { className: 'help', textContent: text }); }
-
-  /** Path helper: P('a.b', 'c.d') or P(['names', key], 'header') → array. */
-  function P (base, rest) {
-    var a = Array.isArray(base) ? base.slice() : String(base).split('.');
-    return rest == null ? a : a.concat(String(rest).split('.'));
   }
 
   // ---------------------------------------------------------------------------
@@ -405,17 +412,6 @@
 
   var presetUi = { scope: 'look', name: '', keepFields: true, msg: null, pasted: '' };
 
-  function getAt (o, path) { return path.split('.').reduce(function (x, k) { return x == null ? undefined : x[k]; }, o); }
-
-  function setAt (o, path, v) {
-    var keys = path.split('.');
-    var last = keys.pop();
-    var t = keys.reduce(function (x, k) { if (x[k] == null || typeof x[k] !== 'object') x[k] = {}; return x[k]; }, o);
-    if (v === undefined) delete t[last]; else t[last] = v;
-  }
-
-  function delAt (o, path) { setAt(o, path, undefined); }
-
   /** Only the settings that differ from the defaults (smaller files, future-proof). */
   function diffFromDefaults (cur, def) {
     if (Array.isArray(cur) || cur == null || typeof cur !== 'object') return JSON.stringify(cur) === JSON.stringify(def) ? undefined : Dl.clone(cur);
@@ -480,27 +476,6 @@
 
   function fileName (name) {
     return (String(name || 'data-lineage-preset').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'data-lineage-preset') + '.json';
-  }
-
-  function download (text, name) {
-    try {
-      var url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-      var a = h('a', { href: url, download: name });
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
-      return true;
-    } catch (e) { return false; }
-  }
-
-  function copyText (text, ta) {
-    var fallback = function () {
-      try { ta.focus(); ta.select(); return document.execCommand('copy'); } catch (e) { return false; }
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      return navigator.clipboard.writeText(text).then(function () { return true; }, fallback);
-    }
-    return Promise.resolve(fallback());
   }
 
   function presetMsg (g) {
@@ -841,155 +816,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Controls
-  // ---------------------------------------------------------------------------
-  function fontRows (g, section, withItalic) {
-    g.appendChild(fontFamilyRow('Font', P(section, 'font')));
-    g.appendChild(numberRow('Size (px)', P(section, 'size'), 6, 160, 1));
-    g.appendChild(selectRow('Weight', P(section, 'weight'), WEIGHTS));
-    g.appendChild(colorRow('Color', P(section, 'color')));
-    if (withItalic !== false) g.appendChild(checkboxRow('Italic', P(section, 'italic')));
-  }
-
-  function fontFamilyRow (label, path) {
-    var r = row(label);
-    var wrap = h('div', { className: 'inline' });
-    var sel = h('select');
-    Dl.FONTS.forEach(function (f) { sel.appendChild(h('option', { value: f, textContent: f })); });
-    sel.appendChild(h('option', { value: '__custom', textContent: 'Other…' }));
-    var custom = h('input', { type: 'text', placeholder: 'Installed font name' });
-    var current = get(path);
-    if (Dl.FONTS.indexOf(current) >= 0) { sel.value = current; custom.hidden = true; } else { sel.value = '__custom'; custom.value = current; }
-    sel.addEventListener('change', function () {
-      custom.hidden = sel.value !== '__custom';
-      if (sel.value !== '__custom') { set(path, sel.value); } else { custom.focus(); }
-    });
-    custom.addEventListener('input', function () { if (custom.value.trim()) set(path, custom.value.trim()); });
-    wrap.append(sel, custom);
-    r.appendChild(wrap);
-    return r;
-  }
-
-  function textRow (label, path, placeholder) {
-    var r = row(label);
-    var cur = get(path);
-    var input = h('input', { type: 'text', value: cur == null ? '' : cur, placeholder: placeholder || '' });
-    input.addEventListener('input', function () { set(path, input.value); });
-    r.appendChild(input);
-    return r;
-  }
-
-  function numberRow (label, path, min, max, step) {
-    var r = row(label);
-    var input = h('input', { type: 'number', min: min, max: max, step: step, value: get(path) });
-    input.addEventListener('input', function () {
-      var n = Number(input.value);
-      if (input.value === '' || !isFinite(n)) return;
-      set(path, Math.max(min, Math.min(max, n)));
-    });
-    r.appendChild(input);
-    return r;
-  }
-
-  function rangeRow (label, path, min, max, step, unit) {
-    var r = row(label);
-    var wrap = h('div', { className: 'inline' });
-    var input = h('input', { type: 'range', min: min, max: max, step: step, value: get(path) });
-    var out = h('span', { className: 'readout', textContent: get(path) + (unit || '') });
-    input.addEventListener('input', function () { set(path, Number(input.value)); out.textContent = input.value + (unit || ''); });
-    wrap.append(input, out);
-    r.appendChild(wrap);
-    return r;
-  }
-
-  function selectRow (label, path, options, help, after) {
-    var r = row(label);
-    var sel = h('select');
-    options.forEach(function (o) { sel.appendChild(h('option', { value: String(o[0]), textContent: o[1] })); });
-    sel.value = String(get(path));
-    if (sel.selectedIndex < 0) sel.selectedIndex = 0;
-    sel.addEventListener('change', function () {
-      var orig = options.find(function (o) { return String(o[0]) === sel.value; })[0];
-      set(path, orig);
-      if (after) after();
-    });
-    r.appendChild(sel);
-    if (help) { var frag = document.createDocumentFragment(); frag.append(r, h('div', { className: 'help', textContent: help })); return wrapRows(frag); }
-    return r;
-  }
-
-  function segRow (label, path, options, after) {
-    var r = row(label);
-    var seg = h('div', { className: 'seg' });
-    options.forEach(function (o) {
-      var b = h('button', { type: 'button', textContent: o[1] });
-      b.setAttribute('aria-pressed', String(get(path) === o[0]));
-      b.addEventListener('click', function () {
-        set(path, o[0]);
-        Array.prototype.forEach.call(seg.children, function (c) { c.setAttribute('aria-pressed', 'false'); });
-        b.setAttribute('aria-pressed', 'true');
-        if (after) after();
-      });
-      seg.appendChild(b);
-    });
-    r.appendChild(seg);
-    return r;
-  }
-
-  function checkboxRow (label, path, after) {
-    var r = row(label);
-    var input = h('input', { type: 'checkbox' });
-    input.checked = !!get(path);
-    input.addEventListener('change', function () { set(path, input.checked); if (after) after(); });
-    r.appendChild(h('div', { className: 'inline' }, [input]));
-    return r;
-  }
-
-  function colorRow (label, path, after) {
-    var r = row(label);
-    var wrap = h('div', { className: 'inline' });
-    var picker = h('input', { type: 'color', value: Dl.normalizeHex(get(path)) || '#000000' });
-    var hex = h('input', { type: 'text', className: 'hex', value: get(path), maxLength: 7, spellcheck: false });
-    picker.addEventListener('input', function () {
-      hex.value = picker.value.toUpperCase(); hex.classList.remove('is-invalid');
-      set(path, hex.value); if (after) after();
-    });
-    hex.addEventListener('input', function () {
-      var v = Dl.normalizeHex(hex.value);
-      hex.classList.toggle('is-invalid', !v);
-      if (v) { picker.value = v; set(path, v); if (after) after(); }
-    });
-    hex.addEventListener('blur', function () { hex.value = get(path); hex.classList.remove('is-invalid'); });
-    wrap.append(picker, hex);
-    r.appendChild(wrap);
-    return r;
-  }
-
-  function wrapRows (frag) { var d = h('div'); d.appendChild(frag); return d; }
-
-  function row (label) {
-    var r = h('div', { className: 'row' });
-    r.appendChild(h('label', { textContent: label }));
-    return r;
-  }
-
-  function group (parent, title) {
-    var g = h('div', { className: 'group' });
-    g.appendChild(h('h3', { className: 'group-title', textContent: title }));
-    parent.appendChild(g);
-    return g;
-  }
-
-  function h (tag, props, children) {
-    var n = document.createElement(tag);
-    Object.keys(props || {}).forEach(function (k) {
-      if (k === 'role') n.setAttribute('role', props[k]); else n[k] = props[k];
-    });
-    (children || []).forEach(function (c) { n.appendChild(c); });
-    return n;
-  }
-
-  // ---------------------------------------------------------------------------
   // Images
   // ---------------------------------------------------------------------------
 
@@ -1034,15 +860,6 @@
         img.onerror = function () { reject(new Error('unsupported image format')); };
         img.src = url;
       });
-    });
-  }
-
-  function readAsDataUrl (blob) {
-    return new Promise(function (resolve, reject) {
-      var fr = new FileReader();
-      fr.onload = function () { resolve(fr.result); };
-      fr.onerror = function () { reject(fr.error); };
-      fr.readAsDataURL(blob);
     });
   }
 
@@ -1121,10 +938,6 @@
     var a = document.activeElement;
     var typing = a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /text|number|search/.test(a.type)));
     if (!typing) rebuild();
-  }
-
-  function setStatus (text) {
-    document.getElementById('status').textContent = text;
   }
 
   function cleanupLive () {

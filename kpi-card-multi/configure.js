@@ -18,7 +18,27 @@
   var detailList = [];   // [{ key, label }] Details tile measures, sent by the extension
   var detailIdx = 0;     // measure open on the Tooltip tab
 
-  var WEIGHTS = [[300, 'Light'], [400, 'Regular'], [500, 'Medium'], [600, 'Semibold'], [700, 'Bold'], [900, 'Black']];
+  var WEIGHTS = ExtDialog.WEIGHTS;
+
+  // Controls shared by every Format dialog: shared/dialog.js.
+  // Rows for a per-card setting say "this card" while a card is selected.
+  const rowDecorator = function (r, path, label) {
+    if (path && currentKey != null && KpiCardMultiConfig.isPerCard(path)) {
+      label.appendChild(h('span', { className: 'tag-card', textContent: 'this card' }));
+    }
+  };
+  const kit = ExtDialog.kit({
+    get: get,
+    set: set,
+    fonts: KpiCardMultiConfig.FONTS,
+    fontPath: function (section, key) { return section + '.' + key; },
+    rowDecorator: rowDecorator
+  });
+  const h = ExtDialog.h, group = ExtDialog.group, escapeHtml = ExtDialog.escapeHtml,
+    blobToIconDataUrl = ExtDialog.blobToIconDataUrl, setStatus = ExtDialog.setStatus, baseUrl = ExtDialog.baseUrl;
+  const row = kit.row, textRow = kit.textRow, numberRow = kit.numberRow, rangeRow = kit.rangeRow,
+    checkboxRow = kit.checkboxRow, selectRow = kit.selectRow, segRow = kit.segRow, colorRow = kit.colorRow,
+    unitRow = kit.unitRow, fontFamilyRow = kit.fontFamilyRow, fontRows = kit.fontRows;
 
   var TABS = [
     { id: 'icon', label: 'Icon', build: buildIconTab, keys: ['icon'] },
@@ -476,9 +496,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Controls
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
   // Tooltip tab: measures on Tableau's Tooltip tile (list sent by the extension)
   // ---------------------------------------------------------------------------
   function buildDetailsTab (p) {
@@ -637,226 +654,6 @@
     g.appendChild(h('div', { className: 'help', textContent: 'The first matching rule wins. Rules compare the raw value: a 0–1 ratio stays 0.45 (not 45%), and K / M / B are not applied.' }));
   }
 
-  function fontRows (g, section, withItalic) {
-    g.appendChild(fontFamilyRow('Font', section + '.font'));
-    g.appendChild(numberRow('Size (px)', section + '.size', 6, 160, 1));
-    g.appendChild(selectRow('Weight', section + '.weight', WEIGHTS));
-    g.appendChild(colorRow('Color', section + '.color'));
-    if (withItalic !== false) g.appendChild(checkboxRow('Italic', section + '.italic'));
-  }
-
-  function fontFamilyRow (label, path) {
-    var r = row(label, path);
-    var wrap = h('div', { className: 'inline' });
-    var sel = h('select');
-    KpiCardMultiConfig.FONTS.forEach(function (f) { sel.appendChild(h('option', { value: f, textContent: f })); });
-    sel.appendChild(h('option', { value: '__custom', textContent: 'Other…' }));
-    var custom = h('input', { type: 'text', placeholder: 'Installed font name' });
-    var current = get(path);
-    if (KpiCardMultiConfig.FONTS.indexOf(current) >= 0) { sel.value = current; custom.hidden = true; } else { sel.value = '__custom'; custom.value = current; }
-    sel.addEventListener('change', function () {
-      custom.hidden = sel.value !== '__custom';
-      if (sel.value !== '__custom') { set(path, sel.value); } else { custom.focus(); }
-    });
-    custom.addEventListener('input', function () { if (custom.value.trim()) set(path, custom.value.trim()); });
-    wrap.append(sel, custom);
-    r.appendChild(wrap);
-    return r;
-  }
-
-  function textRow (label, path, placeholder) {
-    var r = row(label, path);
-    var input = h('input', { type: 'text', value: get(path), placeholder: placeholder || '' });
-    input.addEventListener('input', function () { set(path, input.value); });
-    r.appendChild(input);
-    return r;
-  }
-
-  // Currency signs offered under the Unit box (clicking one fills the box).
-  // Saudi riyal and Turkish lira first, then by how widely the currency is used.
-  var UNIT_SIGNS = [
-    ['⃁', 'Saudi riyal'], ['₺', 'Turkish lira'], ['৳', 'Bangladeshi taka'],
-    ['$', 'US dollar'],
-    ['€', 'Euro'], ['£', 'Pound sterling'], ['¥', 'Japanese yen / Chinese yuan'],
-    ['₹', 'Indian rupee'], ['₩', 'Korean won'], ['₽', 'Russian ruble'],
-    ['₱', 'Philippine peso'], ['฿', 'Thai baht']
-  ];
-
-  function unitRow (label, path, placeholder) {
-    var r = textRow(label, path, placeholder);
-    var input = r.querySelector('input[type="text"]');
-    var field = h('div', { className: 'unit-field' });
-    r.replaceChild(field, input);
-    field.appendChild(input);
-    var signs = h('div', { className: 'unit-signs' });
-    UNIT_SIGNS.forEach(function (s) {
-      var b = h('button', { type: 'button', className: 'unit-sign', textContent: s[0], title: s[1] });
-      b.addEventListener('click', function () {
-        input.value = s[0];
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.focus();
-      });
-      signs.appendChild(b);
-    });
-    field.appendChild(signs);
-    return r;
-  }
-
-  function numberRow (label, path, min, max, step) {
-    var r = row(label, path);
-    var input = h('input', { type: 'number', min: min, max: max, step: step, value: get(path) });
-    input.addEventListener('input', function () {
-      var n = Number(input.value);
-      if (input.value === '' || !isFinite(n)) return;
-      set(path, Math.max(min, Math.min(max, n)));
-    });
-    r.appendChild(input);
-    return r;
-  }
-
-  function rangeRow (label, path, min, max, step, unit) {
-    var r = row(label, path);
-    var wrap = h('div', { className: 'inline' });
-    var input = h('input', { type: 'range', min: min, max: max, step: step, value: get(path) });
-    var out = h('span', { className: 'readout', textContent: get(path) + (unit || '') });
-    input.addEventListener('input', function () { set(path, Number(input.value)); out.textContent = input.value + (unit || ''); });
-    wrap.append(input, out);
-    r.appendChild(wrap);
-    return r;
-  }
-
-  function selectRow (label, path, options, help) {
-    var r = row(label, path);
-    var sel = h('select');
-    options.forEach(function (o) { sel.appendChild(h('option', { value: String(o[0]), textContent: o[1] })); });
-    sel.value = String(get(path));
-    sel.addEventListener('change', function () {
-      var orig = options.find(function (o) { return String(o[0]) === sel.value; })[0];
-      set(path, orig);
-    });
-    r.appendChild(sel);
-    if (help) { var frag = document.createDocumentFragment(); frag.append(r, h('div', { className: 'help', textContent: help })); return wrapRows(frag); }
-    return r;
-  }
-
-  function segRow (label, path, options, after) {
-    var r = row(label, path);
-    var seg = h('div', { className: 'seg' });
-    options.forEach(function (o) {
-      var b = h('button', { type: 'button', textContent: o[1] });
-      b.setAttribute('aria-pressed', String(get(path) === o[0]));
-      b.addEventListener('click', function () {
-        set(path, o[0]);
-        Array.prototype.forEach.call(seg.children, function (c) { c.setAttribute('aria-pressed', 'false'); });
-        b.setAttribute('aria-pressed', 'true');
-        if (after) after();
-      });
-      seg.appendChild(b);
-    });
-    r.appendChild(seg);
-    return r;
-  }
-
-  function checkboxRow (label, path, after) {
-    var r = row(label, path);
-    var input = h('input', { type: 'checkbox' });
-    input.checked = !!get(path);
-    input.addEventListener('change', function () { set(path, input.checked); if (after) after(); });
-    r.appendChild(h('div', { className: 'inline' }, [input]));
-    return r;
-  }
-
-  function colorRow (label, path, after) {
-    var r = row(label, path);
-    var wrap = h('div', { className: 'inline' });
-    var picker = h('input', { type: 'color', value: KpiCardMultiConfig.normalizeHex(get(path)) || '#000000' });
-    var hex = h('input', { type: 'text', className: 'hex', value: get(path), maxLength: 7, spellcheck: false });
-    picker.addEventListener('input', function () {
-      hex.value = picker.value.toUpperCase(); hex.classList.remove('is-invalid');
-      set(path, hex.value); if (after) after();
-    });
-    hex.addEventListener('input', function () {
-      var v = KpiCardMultiConfig.normalizeHex(hex.value);
-      hex.classList.toggle('is-invalid', !v);
-      if (v) { picker.value = v; set(path, v); if (after) after(); }
-    });
-    hex.addEventListener('blur', function () { hex.value = get(path); hex.classList.remove('is-invalid'); });
-    wrap.append(picker, hex);
-    r.appendChild(wrap);
-    return r;
-  }
-
-  function wrapRows (frag) { var d = h('div'); d.appendChild(frag); return d; }
-
-  function row (label, path) {
-    var r = h('div', { className: 'row' });
-    var l = h('label', { textContent: label });
-    if (path && currentKey != null && KpiCardMultiConfig.isPerCard(path)) {
-      l.appendChild(h('span', { className: 'tag-card', textContent: 'this card' }));
-    }
-    r.appendChild(l);
-    return r;
-  }
-
-  function group (parent, title) {
-    var g = h('div', { className: 'group' });
-    g.appendChild(h('h3', { className: 'group-title', textContent: title }));
-    parent.appendChild(g);
-    return g;
-  }
-
-  function h (tag, props, children) {
-    var n = document.createElement(tag);
-    Object.keys(props || {}).forEach(function (k) {
-      if (k === 'role') n.setAttribute('role', props[k]); else n[k] = props[k];
-    });
-    (children || []).forEach(function (c) { n.appendChild(c); });
-    return n;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Images
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Converts an image file/blob into a compact data URL for the workbook.
-   * Small SVGs are kept as vectors; everything else is rasterised so its
-   * longer side is 96 px (4× the 24 px display size).
-   */
-  function blobToIconDataUrl (blob) {
-    return readAsDataUrl(blob).then(function (url) {
-      var isSvg = /svg/i.test(blob.type) || /^data:image\/svg/i.test(url);
-      if (isSvg && url.length < 60000) return url;
-      return new Promise(function (resolve, reject) {
-        var img = new Image();
-        img.onload = function () {
-          var w = img.naturalWidth || 96;
-          var hh = img.naturalHeight || 96;
-          var k = 96 / Math.max(w, hh);
-          if (k >= 1 && url.length < 60000) { resolve(url); return; }
-          var c = document.createElement('canvas');
-          c.width = Math.max(1, Math.round(w * Math.min(k, 1)));
-          c.height = Math.max(1, Math.round(hh * Math.min(k, 1)));
-          var ctx = c.getContext('2d');
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, 0, 0, c.width, c.height);
-          resolve(c.toDataURL('image/png'));
-        };
-        img.onerror = function () { reject(new Error('unsupported image format')); };
-        img.src = url;
-      });
-    });
-  }
-
-  function readAsDataUrl (blob) {
-    return new Promise(function (resolve, reject) {
-      var fr = new FileReader();
-      fr.onload = function () { resolve(fr.result); };
-      fr.onerror = function () { reject(fr.error); };
-      fr.readAsDataURL(blob);
-    });
-  }
-
   // ---------------------------------------------------------------------------
   // State + persistence
   // ---------------------------------------------------------------------------
@@ -893,20 +690,8 @@
     }
   }
 
-  function setStatus (text) {
-    document.getElementById('status').textContent = text;
-  }
-
   function close () {
     tableau.extensions.ui.closeDialog(' ');
-  }
-
-  function baseUrl () {
-    return window.location.href.split(/[?#]/)[0].replace(/[^/]*$/, '');
-  }
-
-  function escapeHtml (s) {
-    return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
   }
 
   window.KpiCardMultiConfigure = { init: init };

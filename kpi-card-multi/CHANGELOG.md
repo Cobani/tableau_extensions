@@ -3,6 +3,7 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `kpiCardMulti.trex`.
 
 ## 1.2.0 — 2026-11-10
+- The extension now has its own icon in Tableau (remove and re-add the extension to see it).
 - New option Click selects in Tableau (Card tab, off by default, shared by all cards): click a card or a trend line point to select its date so dashboard actions fire.
 - New setting Format → Card → Maximum rows: the extension reads at most this many rows from the worksheet (default 1,000; 0 = all) and shows a note in the corner when rows were left out.
 - Leftovers of the old last-render cache are deleted from the browser.

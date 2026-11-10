@@ -3,6 +3,7 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `line-chart.trex`.
 
 ## 1.2.0 — 2026-11-10
+- The extension now has its own icon in Tableau (remove and re-add the extension to see it).
 - Optional: click a point to select it in Tableau, so dashboard filter and highlight actions fire (Format, Legend and tooltip, Click selects in Tableau).
 - New setting Format → Card → Maximum rows: the extension reads at most this many rows from the worksheet (default 1,000; 0 = all) and shows a note in the corner when rows were left out.
 - Chart data is no longer kept in the browser between visits (the last-render cache is removed; old entries are deleted).

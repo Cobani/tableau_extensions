@@ -151,7 +151,7 @@ If you edit the `.trex`, remove the extension and add it again, because Tableau 
 
 ### Performance with many cards
 
-Measured on Tableau Server (Savings Accounts dashboard, 11 cards): Tableau answers **every extension call from every card through one queue**, one call at a time, about 90 ms each. First all handshakes (`initialize-add-in-instance`), then the data calls. So the number of calls per card decides how long the last card waits.
+Measured on Tableau Server (Stock overview dashboard, 11 cards): Tableau answers **every extension call from every card through one queue**, one call at a time, about 90 ms each. First all handshakes (`initialize-add-in-instance`), then the data calls. So the number of calls per card decides how long the last card waits.
 
 - **2 calls per card**: the handshake and one `getSummaryDataAsync` (`get-summary-data`). The summary-data reader needed 3 (create reader, get page, release).
 - **Marks card read once per browser.** `getVisualSpecificationAsync` is only called when this browser hasn't seen the sheet's column set before; the fields per column set are kept in localStorage (`kpi-card:fields:v1`, newest 60). New fields on the Marks card change the columns, so they're read again.

@@ -7,9 +7,9 @@
   "settings": {
     "headers": {
       "memberColors": {
-        "Daily": "#7B4FC9",
-        "Monthly": "#7B4FC9",
-        "Term": "#7B4FC9"
+        "Apparel": "#7B4FC9",
+        "Footwear": "#7B4FC9",
+        "Home": "#7B4FC9"
       }
     },
     "totals": {
@@ -21,7 +21,7 @@
       "diagonal": true
     },
     "explanation": {
-      "text": "From product (rows) to product (columns), SAR M"
+      "text": "From category (rows) to category (columns), revenue (M)"
     }
   }
 }
