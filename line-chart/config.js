@@ -120,6 +120,13 @@
     weight: 600
   };
 
+  /** One dated event marker (cfg.events.items is a list of these). */
+  var EVENT = {
+    date: '', // YYYY-MM-DD
+    label: '',
+    color: '' // empty → cfg.events.color
+  };
+
   function axisFmtDefault () { var f = fmtCopy(); f.decimals = 0; return f; }
 
   function yAxis (position) {
@@ -245,6 +252,23 @@
       shadeColor: '#F2F4F7',
       label: 'Forecast',
       labelColor: '#8C96A3'
+    },
+    // Dated event markers: a vertical line + short label at each date (empty list = nothing drawn).
+    events: {
+      show: true,
+      items: [], // list of EVENT: { date: 'YYYY-MM-DD', label, color ('' = the shared colour below) }
+      color: '#68707D',
+      style: 'dashed', // solid | dashed | dotted
+      labelSize: 11,
+      labelPosition: 'top' // top | bottom
+    },
+    // Small multiples: one small chart per Color member or per measure ('none' = the single chart).
+    panels: {
+      by: 'none', // none | color | measure
+      columns: 0, // 0 = automatic from the width (panels at least ~220 px wide)
+      gap: 12, // px between panels
+      sharedY: true, // one value scale for all panels (split by Color only; measure panels always have their own)
+      titleSize: 12
     },
 
     // ---- Axes -------------------------------------------------------------
@@ -494,6 +518,7 @@
     THEME_MAP: THEME_MAP,
     SERIES: SERIES,
     REF: REF,
+    EVENT: EVENT,
     FORMAT: FORMAT,
     PALETTES: PALETTES,
     FONTS: FONTS,

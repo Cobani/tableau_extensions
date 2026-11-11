@@ -267,17 +267,25 @@
     var PN = S.cfg.panels;
     var panes = B.panelList()
       .filter(function (p) { return p.v.nodes.length; });
+    var totalPanes = panes.length;
+    var cap = Math.round(Number(PN.maxPanels)) || 0;
+    if (cap > 0 && panes.length > cap) panes = panes.slice(0, cap);
     S.el.svg.style.display = 'none';
     while (S.el.svg.firstChild) S.el.svg.removeChild(S.el.svg.firstChild);
-    S.drawn = []; S.catRefs = [];
+    S.drawn = []; S.catRefs = []; S.events = [];
     if (!host) { host = document.createElement('div'); host.className = 'panes'; S.el.plot.appendChild(host); }
     host.innerHTML = '';
     var n = panes.length;
     var W = S.el.plot.clientWidth; var H = S.el.plot.clientHeight;
+    var minW = Number(PN.minWidth) || 0; // automatic columns: as many as fit panels of at least this width
     var cols = PN.layout === 'rows' ? 1 : PN.layout === 'columns' ? n
-      : PN.columns > 0 ? Math.min(PN.columns, n) : Math.max(1, Math.min(n, Math.round(Math.sqrt(n * (W / Math.max(1, H))))));
+      : PN.columns > 0 ? Math.min(PN.columns, n)
+        : minW > 0 ? Math.max(1, Math.min(n, Math.floor((W + PN.gap) / (minW + PN.gap))))
+          : Math.max(1, Math.min(n, Math.round(Math.sqrt(n * (W / Math.max(1, H))))));
+    var rowsN = Math.ceil(n / cols);
+    var capped = totalPanes > n;
     host.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
-    host.style.gridTemplateRows = 'repeat(' + Math.ceil(n / cols) + ', minmax(0, 1fr))';
+    host.style.gridTemplateRows = 'repeat(' + rowsN + ', minmax(0, 1fr))' + (capped ? ' auto' : '');
     host.style.gap = PN.gap + 'px';
     panes.forEach(function (p) {
       var d = document.createElement('div'); d.className = 'pane';
@@ -303,7 +311,28 @@
       var ext = exts[k];
       if (e) exts[k] = ext ? { lo: Math.min(ext.lo, e.lo), hi: Math.max(ext.hi, e.hi), llo: Math.min(ext.llo, e.llo), lhi: Math.max(ext.lhi, e.lhi) } : e;
     });
-    panes.forEach(function (p) { B.drawChart(p.v, { svg: p.svg, W: p.W, H: p.H, append: true, extent: exts[p.v.measure || ''] || null }); });
+    // Outer axes only (shared value axis): value labels on the first column (the last row with horizontal bars),
+    // dimension labels on the last row of each column (the first column with horizontal bars)
+    var edge = !!PN.edgeAxes && !!PN.shareAxis && !B.measurePanels();
+    var vert = S.cfg.chart.orientation !== 'horizontal';
+    var AVo = S.cfg.axisV.position === 'opposite'; var ACo = S.cfg.axisC.position === 'opposite';
+    panes.forEach(function (p, i) {
+      var o = { svg: p.svg, W: p.W, H: p.H, append: true, extent: exts[p.v.measure || ''] || null };
+      if (edge) {
+        var col = i % cols; var row = Math.floor(i / cols);
+        var firstCol = col === 0; var lastCol = col === cols - 1 || i + 1 >= n;
+        var firstRow = row === 0; var lastRow = i + cols >= n;
+        var vOuter = vert ? (AVo ? lastCol : firstCol) : (AVo ? firstRow : lastRow);
+        var cOuter = vert ? (ACo ? firstRow : lastRow) : (ACo ? lastCol : firstCol);
+        o.hideValueAxis = !vOuter; o.hideCatAxis = !cOuter;
+      }
+      B.drawChart(p.v, o);
+    });
+    if (capped) {
+      var note = document.createElement('div'); note.className = 'pane-note';
+      note.textContent = 'Showing ' + n + ' of ' + totalPanes + ' panels';
+      host.appendChild(note);
+    }
   }
 
   // ---------------------------------------------------------------------------

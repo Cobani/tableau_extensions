@@ -142,6 +142,8 @@
 
   function onHover (e) {
     if (!S.cfg || S.el.menu.style.display === 'block' || S.state.pinned) return;
+    var evEl = e.target && e.target.closest ? e.target.closest('[data-ev]') : null; // a dated event marker
+    if (evEl) { onEventHover(e, S.events[Number(evEl.getAttribute('data-ev'))]); return; }
     var d = itemFromEvent(e);
     if (!d) {
       if (!S.hoverClear) S.hoverClear = setTimeout(function () { S.hoverClear = null; S.lastHover = null; hideTooltip(); setHover(null); }, 140);
@@ -168,6 +170,24 @@
     }
     if (!S.cfg.tooltip.show) return;
     showTooltip(d, e.clientX, e.clientY, false, seg != null ? Number(seg) : null);
+  }
+
+  /** Hover on an event line or its label: the event's text and date in the extension's own tooltip. */
+  function onEventHover (e, ev) {
+    clearTimeout(S.hoverClear); S.hoverClear = null;
+    if (!ev || !S.cfg.tooltip.show) return;
+    if (S.lastHover && S.lastHover.d === ev) { placeTooltip(e.clientX, e.clientY); return; }
+    S.lastHover = { d: ev, seg: null };
+    setHover(null);
+    clearTableauTip();
+    var tt = S.el.tooltip;
+    var when = new Date(ev.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    tt.innerHTML = (ev.label ? '<div class="tt-name">' + esc(ev.label) + '</div>' : '') + '<div class="tt-note">' + esc(when) + '</div>';
+    tt.style.fontFamily = Bc.fontStack(S.cfg.numbers.font);
+    tt.classList.remove('is-pinned');
+    tt.style.display = 'block';
+    S.ttSize = { w: tt.offsetWidth, h: tt.offsetHeight };
+    placeTooltip(e.clientX, e.clientY);
   }
 
   /**

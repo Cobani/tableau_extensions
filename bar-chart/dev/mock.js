@@ -7,7 +7,7 @@
  * - Settings live in localStorage, so the chart and the Format dialog (two
  *   frames) see each other's changes, like they do inside Tableau.
  * - Sample data: ?data=sales | monthly | compare | grouped | stacked |
- *   progress | negative | nested | raw | measures | top | ages
+ *   progress | negative | nested | raw | measures | top | ages | dated
  * - ?rename: the first Axis pill is "renamed" (//New name), so the Marks card
  *   reports a different name than the data column, as Tableau does.
  */
@@ -63,6 +63,16 @@
       var vals = [42.8, 45.0, 41.9, 38.8, 37.6, 46.5, 46.0, 41.4, 35.2, 31.4, 37.7, 49.5];
       return { tiles: { category: ['MONTH(Flight Date)'], values: ['AVG(Arrival Delay)'], line: ['AVG(Departure Delay)'] },
         rows: MONTHS.map(function (m, i) { return { 'MONTH(Flight Date)': m, 'AVG(Arrival Delay)': vals[i], 'AVG(Departure Delay)': vals[i] * (0.7 + rnd() * 0.3) }; }) };
+    },
+    // A real date column (dataType 'date') on the Dimension tile, two regions: date axis, events, small multiples
+    dated: function () {
+      var rows = [];
+      for (var m = 0; m < 12; m++) {
+        ['East', 'West'].forEach(function (r, j) {
+          rows.push({ 'Order Date': '2024-' + (m < 9 ? '0' : '') + (m + 1) + '-01', Region: r, 'SUM(Sales)': Math.round(40000 + rnd() * 30000 + m * 1500 + j * 5000) });
+        });
+      }
+      return { tiles: { category: ['Order Date', 'Region'], values: ['SUM(Sales)'] }, rows: rows };
     },
     compare: function () {
       var prods = ['Nail polish', 'Eyebrow pencil', 'Rouge', 'Lipstick', 'Eyeshadows', 'Eyeliner', 'Foundation', 'Lip gloss', 'Mascara', 'Shampoo', 'Hair conditioner', 'Body lotion', 'Shower gel', 'Soap', 'Deodorant', 'Hand cream'];
@@ -168,7 +178,7 @@
     var seenF = {};
     var cols = allFields().filter(function (f) { if (seenF[f.name]) return false; seenF[f.name] = 1; return true; }).map(function (f, i) {
       var name = RENAME && f.tile === 'category' && i === 0 ? 'Calculation_8812' : f.name;
-      return { fieldName: name, fieldId: '[' + name + ']', dataType: isDim(f) || /^ATTR\(/.test(f.name) ? 'string' : 'float', index: i, src: f.name };
+      return { fieldName: name, fieldId: '[' + name + ']', dataType: /^Order Date$/.test(f.name) ? 'date' : isDim(f) || /^ATTR\(/.test(f.name) ? 'string' : 'float', index: i, src: f.name };
     });
     var data = DS.rows.map(function (r) { return cols.map(function (c) { return cell(r[c.src]); }); });
     return { columns: cols.map(function (c) { return { fieldName: c.fieldName, fieldId: c.fieldId, dataType: c.dataType, index: c.index }; }), data: data };

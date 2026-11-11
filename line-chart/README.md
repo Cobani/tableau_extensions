@@ -98,6 +98,23 @@ Areas always fill down to zero, so an axis with an area on it starts at zero eve
 Stacking happens per axis, in Marks card order. With **100% stacked**, the areas take the left axis (0–100%) and any
 lines move to the right axis.
 
+### Event markers
+
+Format → Reference lines → **Events**: add a date, a short label and (optionally) a colour; the chart draws a vertical
+line at that date with the label at the top or bottom of the plot. On a date axis the line is placed between the
+neighbouring points (at its real distance with *Spacing: By date*); on any other x axis it sits at the first x value that
+reads as a date on or after the event. Dates outside the chart are not drawn. Labels never overlap: a label that would
+touch another drops to the next row (3 rows), then is cut with "…" (hover the line for the full label and date).
+Shared colour, line style and label size are below the list. No events listed means nothing is drawn.
+
+### Small multiples
+
+Format → Series → **Small multiples**. *Split by Color dimension* draws one small chart per Color member (same x axis,
+shared value axis unless you switch it off, titled with the member name); *Split by Measure* draws one per measure,
+each with its own scale. Columns 0 = automatic (panels at least about 220 px wide). Value labels sit on the first column
+(shared axis), x labels on the bottom row, one legend for all. Hover, crosshair, click-to-select and tooltips work in the
+panel under the pointer. More than 24 panels: the first 24 are drawn and a note says "Showing 24 of N panels".
+
 ### Presets tab
 
 The last tab of the Format window saves and loads every setting of the chart. **Export** a preset as "Look only" (leaves out per-series colours and styles, the band's lower / upper series, the forecast start, title and explanation text, export file name) or "Everything"; download it as .json, copy it, or keep it under **My presets** on this computer. **Import** from a file or pasted text; "Keep this chart's…" keeps the sheet-specific settings. Presets store only values that differ from the defaults, and carry a version so older files keep working.

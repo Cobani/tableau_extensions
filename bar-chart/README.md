@@ -107,6 +107,26 @@ card too; every field there becomes a `name: value` tooltip row.
 - **Comments**: right-click → *Add comment*. They're saved in the workbook (while authoring), shown as a marker (dot,
   flag, pin, bubble) or a callout, and listed in the tooltip and on the Comments tab.
 
+### Dated event markers
+
+With a **date** on the Dimension tile, mark moments such as a launch or a price change: *Format → Gridlines & Target →
+Events → Add event* (date, label, colour). Each event is a dashed line across the plot at the bar whose date period
+holds the event date (a vertical line with vertical bars, a horizontal one with horizontal bars) and a short label at
+the edge of the plot. Labels never overlap or leave the plot (up to three rows, then they are shortened with “…” and
+the full text is in the hover). Hover the line to see the label and date. Events outside the dates shown, and any
+event on a non-date axis, are not drawn. The list is empty by default, so nothing changes for existing charts.
+Line colour, style, label size and label side are in the same group.
+
+### Small multiples
+
+Format → *Grouping, Breakdown & Drill* → **Small multiples**: *Split by* a Dimension field draws one chart per value,
+each with its own title. Options: arrange (grid, one under another, side by side), *Panels per row* (0 = automatic),
+*Minimum panel width* (with automatic columns: as many columns as fit panels at least that wide, e.g. 220 px; 0 = the
+older rule based on the chart's shape), space between panels, *Same value axis in every panel*, *Axis labels on the
+outer panels only* (value labels on the first column, dimension labels on the last row, when the axis is shared),
+panel title size, weight, colour and alignment, and *Show at most (panels)*, which keeps the first N panels and adds
+the note “Showing N of M panels” (0 = all). Every new option defaults to the previous behaviour.
+
 ## Format dialog
 
 **Format Extension** at the bottom of the Marks card, or right-click the chart. The dialog is modeless, so the chart
@@ -126,7 +146,7 @@ defaults.
 | Value Text | value labels (place — also *inside the lollipop head* —, content, which bars, distance) · overlapping labels · text · badges · stacked segment labels and totals (optional “Total” legend item) · **one number format for the whole chart** · chart font · null values · **field names** (default, custom or a parameter's value) |
 | Member Icons | an icon per bar (by name, measure or a Dimension field's value): place, size, background, colour, fallback |
 | Grouping, Breakdown & Drill | **one row per Dimension field** with its role — *Bars* (the first fields; outer ones group them), *Split bars* (its values split each bar, like a dimension on Color; several combine), *Breakdown* (segments, tooltip, drill-down) or *Panels* (one chart per value — small multiples, like a dimension on Rows / Columns: grid, one under another or side by side, shared value axis, panel titles); with 2+ measures a **Measure Names** row: *Bars* (one bar per measure), *Split bars* (the measures split each bar) or *Panels* (one chart per measure, each with its own axis; combines with Panels fields) — and a summary of what the chart does · Automatic split · axis type · group labels (style tucked away) · segments · drill-down (3 modes) |
-| Gridlines & Target | measure and dimension axis lines · value gridlines · lines between categories · zero line · target markers · reference lines and bands |
+| Gridlines & Target | measure and dimension axis lines · value gridlines · lines between categories · zero line · target markers · reference lines and bands · **Events** (dated markers, see below) |
 | Sort & Top N | sort · Top N of any Dimension field, within each parent or overall, by any measure, with Others |
 | Legend | position, order, markers, totals, included items, Top N naming, item names, title, text, interaction, box |
 | Line Chart | **show / hide the lines** · per Line measure: name, colour, shape, markers, values · shared or own number format for line values + line axis · line axis |

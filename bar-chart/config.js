@@ -395,7 +395,10 @@
       titleWeight: 600,
       titleColor: '#17202B',
       titleAlign: 'left',
-      gap: 14
+      gap: 14,
+      minWidth: 0, // grid, automatic columns: 0 = from the chart's shape (the original rule); e.g. 220 = as many columns as fit panels at least that wide
+      edgeAxes: false, // shared value axis: value labels only on the outer panels (first column / last row), dimension labels only on the last row
+      maxPanels: 0 // 0 = every panel; otherwise only the first N, with a note "Showing N of M panels"
     },
 
     // ---- Lines (grid, zero, references, targets) ---------------------------------
@@ -405,6 +408,15 @@
       zero: { show: false, color: '#ECEEF1', width: 1, style: 'solid' }
     },
     refs: [], // list of REF
+    // Dated event markers: a line at the bar whose date bucket holds each date (only with a date on the Dimension axis)
+    events: {
+      show: true,
+      items: [], // { date: 'YYYY-MM-DD', label: 'text', color: '' ('' = the colour below) }
+      color: '#68707D',
+      style: 'dashed', // solid | dashed | dotted
+      labelSize: 11,
+      labelPosition: 'top' // top | bottom (horizontal bars: right | left edge of the plot)
+    },
     target: { // Target tile
       show: true,
       style: 'line', // line | dot | triangle | none

@@ -78,3 +78,7 @@
 .preset-inline-help { margin: 0; }
 .preset-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .preset-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Events list: date, label, colour, remove */
+.event-row { display: grid; grid-template-columns: 128px 1fr 34px 30px; gap: 6px; align-items: center; margin: 4px 0; }
+.event-row input[type="color"] { width: 34px; height: 26px; padding: 0; }

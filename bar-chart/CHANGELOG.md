@@ -3,6 +3,8 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
 ## 1.2.0 — 2026-11-10
+- Small multiples: new 'Small multiples' group on the Grouping tab (Split by, minimum panel width for automatic columns, axis labels on outer panels only, show at most N panels with a 'Showing N of M panels' note). Defaults keep today's look.
+- New: dated event markers. With a date on the Dimension tile, Gridlines & Target → Events draws a labelled line at the bar holding each event date (hover shows label and date). Empty by default.
 - Presets tab: apply a brand theme or save this chart's look as a theme (shared with the other extensions).
 - Optional Tableau tooltip: Tooltip & Actions → Use Tableau's tooltip shows the tooltip designed in Tableau (Tableau 2024.2 or newer); off by default.
 - Save as picture: the export menu now also saves the chart as a PNG (Export tab: Save as picture button).

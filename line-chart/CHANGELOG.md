@@ -3,6 +3,8 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `line-chart.trex`.
 
 ## 1.2.0 — 2026-11-10
+- New: small multiples (Series tab): split into one small chart per Color member or per measure, shared or own value scale, up to 24 panels.
+- New: dated event markers (Reference lines tab → Events): a vertical line and label at any date, with overlap-free labels and a hover tooltip.
 - Brand theme: apply or save a theme from the Presets tab.
 - Save as picture: the export menu now also saves the chart as a PNG (Format → Export → Save as picture button).
 - Tableau's own tooltip (optional): Format → Legend & tooltip → Use Tableau's tooltip shows the tooltip designed in Worksheet → Tooltip; the hover line stays.

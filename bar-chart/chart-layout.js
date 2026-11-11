@@ -735,4 +735,53 @@
   B.progressMaxFn = progressMaxFn;
   B.refValues = refValues;
   B.commentsOf = commentsOf;
+  // ---------------------------------------------------------------------------
+  // Dated event markers (Gridlines & Target tab → Events)
+  // ---------------------------------------------------------------------------
+  /** Start of the bucket after the one starting at `d` (ms), given the step from the bucket before. */
+  function bucketEnd (d, prev) {
+    var day = 86400000;
+    var dt = new Date(d);
+    if (prev == null) return d + day;
+    var gap = Math.round((d - prev) / day);
+    var months = gap >= 28 && gap <= 31 ? 1 : gap >= 89 && gap <= 92 ? 3 : gap >= 181 && gap <= 184 ? 6 : gap >= 365 && gap <= 366 ? 12 : 0;
+    if (months && dt.getDate() === 1) return new Date(dt.getFullYear(), dt.getMonth() + months, 1).getTime();
+    return d + (d - prev);
+  }
+
+  /**
+   * The events to draw in a view: [{ i (index in v.nodes), date (ms), text, label, color }].
+   * Only with a date axis; an event belongs to the bar whose date bucket (from its own date to the next
+   * bar's date) holds the event date; events before the first or after the last bucket are left out.
+   */
+  function eventMarks (v) {
+    var EV = S.cfg.events;
+    if (!EV || EV.show === false || !EV.items || !EV.items.length || v.axisType !== 'date') return [];
+    var dates = [];
+    v.nodes.forEach(function (n) { if (n.depth === 0 && n.date != null && dates.indexOf(n.date) < 0) dates.push(n.date); });
+    if (!dates.length) return [];
+    dates.sort(function (a, b) { return a - b; });
+    var out = [];
+    var used = {};
+    EV.items.forEach(function (it) {
+      var m = it && /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(it.date || '').trim());
+      if (!m) return;
+      var t = new Date(+m[1], +m[2] - 1, +m[3]).getTime();
+      var k = -1;
+      for (var j = 0; j < dates.length; j++) {
+        var end = j + 1 < dates.length ? dates[j + 1] : bucketEnd(dates[j], j ? dates[j - 1] : null);
+        if (t >= dates[j] && t < end) { k = j; break; }
+      }
+      if (k < 0) return;
+      var idx = -1;
+      for (var q = 0; q < v.nodes.length; q++) { if (v.nodes[q].depth === 0 && v.nodes[q].date === dates[k]) { idx = q; break; } }
+      if (idx < 0) return;
+      var key = idx + '|' + t + '|' + (it.label || '');
+      if (used[key]) return;
+      used[key] = 1;
+      out.push({ i: idx, date: t, dateText: m[0], text: String(it.label || ''), color: it.color || EV.color });
+    });
+    return out;
+  }
+  B.eventMarks = eventMarks;
 })();

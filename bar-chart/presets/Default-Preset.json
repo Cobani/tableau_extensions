@@ -283,7 +283,10 @@
       "titleWeight": 600,
       "titleColor": "#17202B",
       "titleAlign": "left",
-      "gap": 14
+      "gap": 14,
+      "minWidth": 0,
+      "edgeAxes": false,
+      "maxPanels": 0
     },
     "lines": {
       "valueGrid": {
@@ -306,6 +309,14 @@
       }
     },
     "refs": [],
+    "events": {
+      "show": true,
+      "items": [],
+      "color": "#68707D",
+      "style": "dashed",
+      "labelSize": 11,
+      "labelPosition": "top"
+    },
     "target": {
       "show": true,
       "style": "line",

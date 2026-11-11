@@ -58,7 +58,7 @@
     { id: 'labels', label: 'Value Text', build: tabValueText, keys: ['labels', 'format', 'numbers.font', 'numbers.nullAs', 'names', 'lollipop.valueInHead'] },
     { id: 'icons', label: 'Member Icons', build: buildIconsTab, keys: ['icons'] },
     { id: 'grouping', label: 'Grouping, Breakdown & Drill', build: tabGrouping, keys: ['chart.seriesBy', 'chart.seriesDims', 'chart.panelDims', 'chart.panelMeasures', 'chart.showAll', 'chart.barLevel', 'chart.axisType', 'panels', 'groups', 'breakdown', 'drill'] },
-    { id: 'lines', label: 'Gridlines & Target', build: tabLines, keys: ['lines', 'refs', 'target', 'axisV.showLine', 'axisV.lineColor', 'axisC.showLine', 'axisC.lineColor', 'axisC.lineWidth'] },
+    { id: 'lines', label: 'Gridlines & Target', build: tabLines, keys: ['lines', 'refs', 'events', 'target', 'axisV.showLine', 'axisV.lineColor', 'axisC.showLine', 'axisC.lineColor', 'axisC.lineWidth'] },
     { id: 'sort', label: 'Sort & Top N', build: tabSort, keys: ['topN', 'axisC.sort', 'axisC.sortBy'] },
     { id: 'legend', label: 'Legend', build: buildLegendTab, keys: ['legend'] },
     { id: 'line', label: 'Line Chart', build: buildLineTab, keys: ['chart.showLines', 'lineDefaults', 'lineSeries', 'lineAxis'] },
@@ -340,7 +340,7 @@
       patch: { chart: { orientation: 'horizontal', style: 'progress' }, shape: { endShape: 'pill', corners: 'all' }, labels: { position: 'insideEnd' }, progress: { showRemaining: false }, axisV: { show: false }, lines: { valueGrid: { show: false }, zero: { show: false } }, spacing: { width: 58 } } }
   ];
 
-  var PRESET_RESETS = ['chart', 'progress', 'lollipop', 'diverging', 'spacing', 'shape', 'fill', 'border', 'shadow', 'hover', 'colors', 'labels', 'axisV', 'axisC', 'brk', 'lines', 'legend', 'icons', 'target', 'refs'];
+  var PRESET_RESETS = ['chart', 'progress', 'lollipop', 'diverging', 'spacing', 'shape', 'fill', 'border', 'shadow', 'hover', 'colors', 'labels', 'axisV', 'axisC', 'brk', 'lines', 'legend', 'icons', 'target', 'refs', 'events'];
 
   function deepAssign (target, patch) {
     Object.keys(patch).forEach(function (k) {
@@ -1116,6 +1116,39 @@
     add.addEventListener('click', function () { cfg.refs.push(Bc.clone(Bc.REF)); changed(); rebuild(); });
     gr.appendChild(add);
 
+    // ---- Events: dated markers (a date on the Dimension tile) ---------------------------------
+    var EV = cfg.events;
+    var ge = group(p, 'Events');
+    ge.appendChild(help('Needs a date on the Dimension tile. Each event is drawn as a line at the bar whose date holds it; events outside the dates shown are left out.'));
+    ge.appendChild(checkboxRow('Show events', 'events.show', rebuild));
+    if (EV.show) {
+      ge.appendChild(colorRow('Line color', 'events.color'));
+      ge.appendChild(segRow('Line style', 'events.style', LINE_STYLES));
+      ge.appendChild(numberRow('Label size (px)', 'events.labelSize', 6, 36, 1));
+      ge.appendChild(segRow('Labels at', 'events.labelPosition', [['top', 'Top (right edge if horizontal)'], ['bottom', 'Bottom (left edge if horizontal)']]));
+    }
+    EV.items.forEach(function (it, i) {
+      var box = h('div', { className: 'subcard' });
+      var base = ['events', 'items', i];
+      var dr = row('Date');
+      var di = h('input', { type: 'date', value: /^\d{4}-\d{2}-\d{2}$/.test(it.date || '') ? it.date : '' });
+      di.addEventListener('change', function () { it.date = di.value; changed(); });
+      dr.appendChild(di);
+      box.appendChild(dr);
+      box.appendChild(textRow('Label', P(base, 'label'), 'e.g. Campaign launch'));
+      var cr = colorRow('Color', P(base, 'color'));
+      var hexIn = cr.querySelector('.hex');
+      if (hexIn) hexIn.placeholder = 'line color';
+      box.appendChild(cr);
+      var del = h('button', { type: 'button', className: 'btn btn--small', textContent: 'Remove' });
+      del.addEventListener('click', function () { EV.items.splice(i, 1); changed(); rebuild(); });
+      box.appendChild(del);
+      ge.appendChild(box);
+    });
+    var addEv = h('button', { type: 'button', className: 'btn', textContent: 'Add event' });
+    addEv.addEventListener('click', function () { EV.items.push({ date: '', label: '', color: '' }); changed(); rebuild(); });
+    ge.appendChild(addEv);
+
     var TG = cfg.target;
     var gt = group(p, 'Target markers (Target tile)');
     if (!info.hasTarget) gt.appendChild(h('p', { className: 'note', textContent: 'Drop a measure on the Target tile to draw a marker on every bar. Progress bars can fill up to it.' }));
@@ -1735,7 +1768,7 @@
     'series', 'lineSeries', 'colors.custom', 'colors.highlight', 'colors.valueField', 'icons.members',
     'breakdown.dims', 'breakdown.colors', 'comments.items', 'chart.seriesDims', 'chart.panelDims', 'chart.panelMeasures',
     'interaction.hidden', 'topN.by', 'axisC.sortBy', 'title.text', 'explanation.text', 'export.fileName', 'layout',
-    'names', 'legend.names', 'diverging.sides', 'progress.detailField'
+    'names', 'legend.names', 'diverging.sides', 'progress.detailField', 'events.items'
   ];
 
   var presetUi = { scope: 'look', name: '', keepFields: true, msg: null, pasted: '' };
@@ -2242,6 +2275,7 @@
     put(p, G('Zero line'));
     put(p, G('Target markers'));
     put(p, G('Reference lines'));
+    put(p, G('Events'));
     void vert;
   }
 
@@ -2435,15 +2469,43 @@
     ], null, rebuild));
 
     // ---- Panels (small multiples) ---------------------------------------------------------
+    var PN = cfg.panels;
+    var gp = null;
+    if (lv.length || R.mRole === 'panel') {
+      gp = group(p, 'Small multiples');
+      // one field splits the chart into panels (the role buttons above allow several)
+      if (lv.length) {
+        var splitOpts = [['', 'None']].concat(lv.map(function (f) { return [f.key, f.name]; }));
+        var splitNow = R.panel.length === 1 ? lv[R.panel[0]].key : '';
+        if (R.panel.length > 1) splitOpts.push(['*multi', R.panel.map(function (i) { return lv[i].name; }).join(' · ') + ' (combined)']);
+        var splitSel = h('select');
+        splitOpts.forEach(function (o) { splitSel.appendChild(h('option', { value: o[0], textContent: o[1] })); });
+        splitSel.value = R.panel.length > 1 ? '*multi' : splitNow;
+        splitSel.addEventListener('change', function () {
+          if (splitSel.value === '*multi') return;
+          R.panel.slice().forEach(function (i) { if (lv[i].key !== splitSel.value) setFieldRole(i, 'bars'); });
+          if (splitSel.value) setFieldRole(lv.findIndex(function (f) { return f.key === splitSel.value; }), 'panel');
+        });
+        var splitRow = row('Split by');
+        splitRow.appendChild(splitSel);
+        gp.appendChild(splitRow);
+        gp.appendChild(help('One chart per value of the field, like a dimension on Tableau’s Rows or Columns. The buttons under Fields above can combine several fields.'));
+      }
+    }
     if (R.panel.length || R.mRole === 'panel') {
-      var PN = cfg.panels;
-      var gp = group(p, 'Panels');
       gp.appendChild(segRow('Arrange', 'panels.layout', [['grid', 'Grid'], ['rows', 'One under another'], ['columns', 'Side by side']], rebuild));
       if (PN.layout === 'grid') {
         gp.appendChild(numberRow('Panels per row', 'panels.columns', 0, 12, 1));
         gp.appendChild(help('0 = automatic, from the chart’s shape.'));
+        if (!PN.columns) {
+          gp.appendChild(numberRow('Minimum panel width (px)', 'panels.minWidth', 0, 2000, 10));
+          gp.appendChild(help('0 = from the chart’s shape. With e.g. 220, the columns are as many as fit panels at least that wide.'));
+        }
       }
-      gp.appendChild(checkboxRow('Same value axis in every panel', 'panels.shareAxis'));
+      gp.appendChild(checkboxRow('Same value axis in every panel', 'panels.shareAxis', rebuild));
+      if (PN.shareAxis && R.mRole !== 'panel') gp.appendChild(checkboxRow('Axis labels on the outer panels only', 'panels.edgeAxes'));
+      gp.appendChild(numberRow('Show at most (panels)', 'panels.maxPanels', 0, 500, 1));
+      gp.appendChild(help('0 = every panel. Beyond the limit a note says “Showing N of M panels” (24 is a good limit).'));
       if (R.mRole === 'panel') gp.appendChild(help('With a panel per measure, each measure keeps its own axis (like Measure Names on Rows in Tableau); panels of the same measure share it.'));
       gp.appendChild(numberRow('Space between panels (px)', 'panels.gap', 0, 60, 1));
       gp.appendChild(checkboxRow('Panel titles', 'panels.showTitle', rebuild));

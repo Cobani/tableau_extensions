@@ -31,14 +31,15 @@
   /**
    * Draws one chart. opts (small multiples): svg / W / H of a panel, append (keep the
    * other panels' hit areas), extentOnly (just return the value range), extent
-   * (use this value range, so panels share one axis).
+   * (use this value range, so panels share one axis), hideValueAxis / hideCatAxis (no labels on
+   * that axis: inner panels with Outer axes only).
    */
   function drawChart (v, opts) {
     opts = opts || {};
     var svg = opts.svg || B.S.el.svg;
     if (!opts.extentOnly) {
       while (svg.firstChild) svg.removeChild(svg.firstChild);
-      if (!opts.append) { B.S.drawn = []; B.S.catRefs = []; }
+      if (!opts.append) { B.S.drawn = []; B.S.catRefs = []; B.S.events = []; }
     }
     var W = Math.max(1, opts.W || B.S.el.plot.clientWidth);
     var H = Math.max(1, opts.H || B.S.el.plot.clientHeight);
@@ -57,8 +58,8 @@
     var stacked = lay === 'stacked' || lay === 'stacked100' || lay === 'diverging';
     var sideBySide = lay === 'regular' && K > 1;
     var overlap = lay === 'overlap';
-    var AV = B.S.cfg.axisV;
-    var AC = B.S.cfg.axisC;
+    var AV = opts.hideValueAxis ? Bc.merge(B.S.cfg.axisV, { show: false }) : B.S.cfg.axisV; // small multiples, outer axes only
+    var AC = opts.hideCatAxis ? Bc.merge(B.S.cfg.axisC, { show: false }) : B.S.cfg.axisC;
     var LB = B.S.cfg.labels;
     var IC = B.S.cfg.icons;
     var G = B.S.cfg.groups;
@@ -580,6 +581,83 @@
         }
       });
     });
+
+    // ---- dated event markers (Events group on the Gridlines & Target tab) ------------------
+    // Layers are only added when an event is drawn, so charts without events stay as they were.
+    var evMarks = B.eventMarks(v);
+    if (evMarks.length) {
+      var EVC = B.S.cfg.events;
+      var evSize = Math.max(6, Number(EVC.labelSize) || 11);
+      var evHit = node('g', { class: 'layer-evhit' }); // under the bars: hover without stealing their clicks
+      svg.insertBefore(evHit, L.bars);
+      var evTop = node('g', { class: 'layer-events' });
+      svg.appendChild(evTop);
+      var atTop = EVC.labelPosition !== 'bottom';
+      var rowsUsed = [[], [], []];
+      /** Room for a label of width `want` starting at `anchor` and growing in direction dir (1 / -1), among the placed ones. */
+      var evFit = function (list, anchor, dir, want) {
+        var w = want;
+        for (var k = 0; k < list.length; k++) {
+          var a = list[k];
+          if (dir > 0) {
+            if (a.x1 + 4 > anchor && a.x0 - 4 < anchor + want) { if (a.x0 - 4 <= anchor) return 0; w = Math.min(w, a.x0 - 4 - anchor); }
+          } else if (a.x0 - 4 < anchor && a.x1 + 4 > anchor - want) { if (a.x1 + 4 >= anchor) return 0; w = Math.min(w, anchor - (a.x1 + 4)); }
+        }
+        return w;
+      };
+      var laneW = Math.max(40, Math.min(180, (px1 - px0 - 4) / 3 - 4));
+      var halo = { stroke: '#FFFFFF', 'stroke-opacity': 0.85, 'stroke-width': 3, 'paint-order': 'stroke', 'font-family': Bc.fontStack(family), 'font-size': evSize, 'font-weight': 600 };
+      var evPos = evMarks.map(function (ev) { return Math.round(cStart[ev.i] + slot / 2) + 0.5; });
+      evMarks.map(function (ev, k) { return k; }).sort(function (a, b) { return evPos[a] - evPos[b]; }).forEach(function (k) {
+        var ev = evMarks[k];
+        var c = evPos[k];
+        var id = B.S.events.length;
+        B.S.events.push({ label: ev.text, dateText: ev.dateText, date: ev.date, color: ev.color });
+        var a1 = vert ? [c, py0] : [px0, c];
+        var a2 = vert ? [c, py1] : [px1, c];
+        evTop.appendChild(node('line', { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: ev.color, 'stroke-width': 1.5, 'stroke-dasharray': Bc.dashArray(EVC.style, 1.5), 'pointer-events': 'none', class: 'event-line' }));
+        evHit.appendChild(node('line', { x1: a1[0], y1: a1[1], x2: a2[0], y2: a2[1], stroke: '#000', 'stroke-opacity': 0, 'stroke-width': 10, 'pointer-events': 'stroke', 'data-ev': id, class: 'event-hit' }));
+        if (!ev.text) return;
+        var full = B.textWidth(ev.text, evSize, 600, family);
+        var tx = null; var ty = 0; var anchorSide = 'start'; var shown = ev.text; var cut = false;
+        if (vert) {
+          var room = [px1 - (c + 3), (c - 3) - px0];
+          var dir = room[0] >= full || room[0] >= room[1] ? 1 : -1;
+          var anchor = dir > 0 ? c + 3 : c - 3;
+          var want = Math.min(full, Math.max(0, dir > 0 ? room[0] : room[1]));
+          var best = -1; var bestW = 0;
+          for (var r = 0; r < 3; r++) {
+            var w = evFit(rowsUsed[r], anchor, dir, want);
+            if (w >= want - 0.5) { best = r; bestW = want; break; }
+            if (w > bestW) { best = r; bestW = w; }
+          }
+          if (best >= 0 && bestW >= 16) {
+            cut = bestW < full - 0.5;
+            if (cut) shown = B.ellipsize(ev.text, bestW, evSize, 600, family);
+            var sw = Math.min(bestW, B.textWidth(shown, evSize, 600, family));
+            rowsUsed[best].push(dir > 0 ? { x0: anchor, x1: anchor + sw } : { x0: anchor - sw, x1: anchor });
+            tx = anchor; anchorSide = dir > 0 ? 'start' : 'end';
+            ty = atTop ? py0 + evSize + 1 + best * (evSize + 3) : py1 - 3 - best * (evSize + 3);
+          }
+        } else {
+          var ly0 = c - 3 - evSize; var ly1 = c + 1;
+          for (var q = 0; q < 3; q++) {
+            if (rowsUsed[q].some(function (a) { return a.x0 < ly1 + 1 && a.x1 > ly0 - 1; })) continue;
+            rowsUsed[q].push({ x0: ly0, x1: ly1 });
+            cut = full > laneW;
+            if (cut) shown = B.ellipsize(ev.text, laneW, evSize, 600, family);
+            tx = atTop ? px1 - 3 - q * (laneW + 4) : px0 + 3 + q * (laneW + 4);
+            anchorSide = atTop ? 'end' : 'start';
+            ty = c - 3;
+            break;
+          }
+        }
+        if (tx == null) return; // no room: the line and its tooltip remain
+        var t = node('text', Object.assign({ x: tx, y: ty, 'text-anchor': anchorSide, fill: ev.color, 'data-ev': id, 'pointer-events': 'all', class: 'event-label' }, halo), shown);
+        if (cut) t.appendChild(node('title', {}, ev.text));
+        evTop.appendChild(t);
+      });
+    }
 
     // ---- line overlay -------------------------------------------------------------------
     if (lines.length) {

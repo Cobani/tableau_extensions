@@ -40,9 +40,9 @@
   var TABS = [
     { id: 'icon', label: 'Icon', build: buildIconTab, keys: ['icon'] },
     { id: 'text', label: 'Title & text', build: buildTextTab, keys: ['title', 'explanation'] },
-    { id: 'series', label: 'Series', build: buildSeriesTab, keys: ['seriesDefaults', 'series', 'chart.palette', 'chart.paletteEdits', 'chart.missing', 'chart.xSpacing'] },
+    { id: 'series', label: 'Series', build: buildSeriesTab, keys: ['seriesDefaults', 'series', 'chart.palette', 'chart.paletteEdits', 'chart.missing', 'chart.xSpacing', 'panels'] },
     { id: 'areas', label: 'Areas', build: buildAreasTab, keys: ['areas'] },
-    { id: 'refs', label: 'Reference lines', build: buildRefsTab, keys: ['refs', 'band', 'forecast'] },
+    { id: 'refs', label: 'Reference lines', build: buildRefsTab, keys: ['refs', 'events', 'band', 'forecast'] },
     { id: 'axes', label: 'Axes', build: buildAxesTab, keys: ['axisY', 'axisY2', 'axisX'] },
     { id: 'lines', label: 'Lines', build: buildLinesTab, keys: ['lines'] },
     { id: 'legend', label: 'Legend & tooltip', build: buildLegendTab,
@@ -296,6 +296,18 @@
       g5.appendChild(segRow('Spacing', 'chart.xSpacing', [['even', 'Even'], ['time', 'By date']]));
       g5.appendChild(help('By date: points sit at their real distance in time, so missing dates leave room.'));
     }
+
+    var gSm = group(p, 'Small multiples');
+    gSm.appendChild(selectRow('Split by', 'panels.by', [['none', 'None (one chart)'], ['color', 'Color dimension' + (info.colorDim ? ' (' + info.colorDim + ')' : '')], ['measure', 'Measure']], null, rebuild));
+    if (cfg.panels.by !== 'none') {
+      gSm.appendChild(help(cfg.panels.by === 'color'
+        ? 'One small chart per member of the Color field, same x axis in each. Needs a field on the Color tile.'
+        : 'One small chart per measure, each with its own value scale. At most 24 panels are drawn.'));
+      gSm.appendChild(numberRow('Columns (0 = automatic)', 'panels.columns', 0, 12, 1));
+      gSm.appendChild(numberRow('Gap (px)', 'panels.gap', 0, 60, 1));
+      if (cfg.panels.by === 'color') gSm.appendChild(checkboxRow('Shared value axis', 'panels.sharedY'));
+      gSm.appendChild(numberRow('Panel title size (px)', 'panels.titleSize', 6, 32, 1));
+    }
   }
 
   /** Palette colours as clickable swatches under the Color row: click one to use it for this series. */
@@ -436,6 +448,37 @@
     var addWrap = h('div', { className: 'group' });
     addWrap.appendChild(add);
     p.appendChild(addWrap);
+
+    var ev = cfg.events;
+    var gE = group(p, 'Events');
+    gE.appendChild(checkboxRow('Show events', 'events.show'));
+    gE.appendChild(help('A vertical line and a short label at a date, e.g. a launch or a price change. Dates outside the chart are not drawn.'));
+    ev.items.forEach(function (it, k) {
+      var line = h('div', { className: 'event-row' });
+      var date = h('input', { type: 'date', value: it.date || '', title: 'Date' });
+      date.addEventListener('input', function () { set(['events', 'items', k, 'date'], date.value); });
+      var label = h('input', { type: 'text', value: it.label || '', placeholder: 'Label', title: 'Label' });
+      label.addEventListener('input', function () { set(['events', 'items', k, 'label'], label.value); });
+      var col = h('input', { type: 'color', value: Lc.normalizeHex(it.color) || Lc.normalizeHex(ev.color) || '#68707D', title: 'Color (empty = the shared color)' });
+      col.addEventListener('input', function () { set(['events', 'items', k, 'color'], col.value.toUpperCase()); });
+      var rm = h('button', { type: 'button', className: 'btn', textContent: '×', title: 'Remove event' });
+      rm.addEventListener('click', function () { cfg.events.items.splice(k, 1); changed(); rebuild(); });
+      [date, label, col, rm].forEach(function (n) { line.appendChild(n); });
+      gE.appendChild(line);
+    });
+    var addEv = h('button', { type: 'button', className: 'btn btn--primary', textContent: 'Add event' });
+    addEv.addEventListener('click', function () {
+      cfg.events.items.push(Lc.clone(Lc.EVENT));
+      changed();
+      rebuild();
+    });
+    gE.appendChild(addEv);
+    if (ev.items.length) {
+      gE.appendChild(colorRow('Color', 'events.color'));
+      gE.appendChild(segRow('Style', 'events.style', LINE_STYLES));
+      gE.appendChild(numberRow('Label size (px)', 'events.labelSize', 6, 24, 1));
+      gE.appendChild(segRow('Label position', 'events.labelPosition', [['top', 'Top'], ['bottom', 'Bottom']]));
+    }
 
     var b = cfg.band;
     var g1 = group(p, 'Band between two measures');
@@ -625,7 +668,7 @@
    * presets leave them out, and an import keeps the chart's own unless asked otherwise.
    */
   var FIELD_PATHS = [
-    'series', 'layout.measures', 'band.lower', 'band.upper', 'forecast.from',
+    'series', 'layout.measures', 'events.items', 'band.lower', 'band.upper', 'forecast.from',
     'title.text', 'explanation.text', 'export.fileName'
   ];
 

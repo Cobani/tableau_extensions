@@ -25,7 +25,8 @@
   var worksheet = null;
   var cfg = null;
   var model = null; // see extract()
-  var view = null; // last layout: { xs: [px], series: [...], ... } for hover
+  var view = null; // layout of the plot under the pointer (the first one after a redraw): { xpx, top, act, ... } for hover
+  var views = []; // every drawn plot: one, or one per small-multiples panel (view.ox / oy = its offset in the svg)
   var hidden = {}; // series hidden from the legend (this session only)
   var hoverKey = null; // legend item under the mouse
   var renderToken = 0;
@@ -1071,12 +1072,123 @@
     var svg = el.svg;
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     view = null;
+    views = [];
     hoverKey = null;
     var W = Math.max(1, el.plot.clientWidth);
     var H = Math.max(1, el.plot.clientHeight);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     if (W < 60 || H < 50) return;
 
+    var groups = panelGroups(list);
+    if (groups) drawPanels(svg, groups, W, H);
+    else views.push(drawPlot(svg, list, W, H, {}));
+    view = views[0] || null;
+    drawSelection();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Small multiples (Format → Series → Small multiples). drawPlot() below draws ONE plot into a w × h box; this
+  // splits the series into groups and calls it once per panel, so every other setting applies inside each panel.
+  // ---------------------------------------------------------------------------
+  var MAX_PANELS = 24;
+  var MIN_PANEL_W = 220;
+
+  /** [{ title, list }] for panels.by = color | measure, or null (single chart: 'none', or nothing to split). */
+  function panelGroups (list) {
+    var by = cfg.panels && cfg.panels.by;
+    if (by !== 'color' && by !== 'measure') return null;
+    var out = [];
+    var at = {};
+    list.forEach(function (s) {
+      var k = by === 'color' ? s.member : s.mkey;
+      if (k == null) return;
+      if (!Object.prototype.hasOwnProperty.call(at, k)) {
+        var m = by === 'measure' ? model.measures.filter(function (x) { return x.key === s.mkey; })[0] : null;
+        at[k] = out.length;
+        out.push({ title: by === 'color' ? String(k) : (m ? m.name : s.name), list: [] });
+      }
+      out[at[k]].list.push(s);
+    });
+    return out.length > 1 || (out.length === 1 && by === 'color') ? out : null;
+  }
+
+  function drawPanels (svg, groups, W, H) {
+    var P = cfg.panels;
+    var total = groups.length;
+    var shownN = Math.min(total, MAX_PANELS);
+    var gap = Math.max(0, Number(P.gap) || 0);
+    var noteH = total > shownN ? 16 : 0;
+    var cols = Math.floor(Number(P.columns)) > 0 ? Math.floor(Number(P.columns)) : Math.floor((W + gap) / (MIN_PANEL_W + gap));
+    cols = Math.max(1, Math.min(cols, shownN));
+    var rows = Math.ceil(shownN / cols);
+    var cw = (W - gap * (cols - 1)) / cols;
+    var ch = (H - noteH - gap * (rows - 1)) / rows;
+    var titleSize = Math.max(6, Number(P.titleSize) || 12);
+    var titleH = titleSize + 8;
+    var sharedY = P.by === 'color' && P.sharedY !== false;
+    var family = cfg.numbers.font;
+    var shownGroups = groups.slice(0, shownN);
+
+    // Shared value scale: the extent of every panel's values; and one left / right margin, so the plots line up.
+    var extra = null;
+    var padL = 0;
+    var padR = 0;
+    if (sharedY) {
+      extra = { left: [], right: [] };
+      shownGroups.forEach(function (g) {
+        var r = drawPlot(svg, g.list, cw, ch - titleH, { dry: 1 });
+        if (r) ['left', 'right'].forEach(function (side) { r.vals[side].forEach(function (v) { extra[side].push(v); }); });
+      });
+      shownGroups.forEach(function (g) {
+        var r = drawPlot(svg, g.list, cw, ch - titleH, { dry: 2, extra: extra });
+        if (r) { padL = Math.max(padL, r.left); padR = Math.max(padR, r.right); }
+      });
+    }
+
+    shownGroups.forEach(function (g, k) {
+      var col = k % cols;
+      var x = col * (cw + gap);
+      var y = Math.floor(k / cols) * (ch + gap);
+      var pg = node('g', { transform: 'translate(' + x.toFixed(2) + ',' + y.toFixed(2) + ')', 'data-panel': k });
+      svg.appendChild(pg);
+      pg.appendChild(node('text', {
+        x: 6, y: titleSize + 1, fill: '#2B3138', 'font-size': titleSize, 'font-weight': 600, 'font-family': Lc.fontStack(family)
+      }, ellipsize(g.title, Math.max(20, cw - 12), titleSize, 600, family)));
+      var inner = node('g', { transform: 'translate(0,' + titleH + ')' });
+      pg.appendChild(inner);
+      var v = drawPlot(inner, g.list, cw, ch - titleH, {
+        idp: '-p' + k,
+        hideX: k + cols < shownN, // x axis labels only on the bottom panel of each column
+        hideL: sharedY && col > 0,
+        hideR: sharedY && col < cols - 1 && k + 1 < shownN,
+        padL: sharedY ? padL : null,
+        padR: sharedY ? padR : null,
+        extra: extra
+      });
+      if (v) {
+        v.ox = x;
+        v.oy = y + titleH;
+        v.cell = { x: x, y: y, w: cw, h: ch };
+        views.push(v);
+      }
+    });
+    if (noteH) {
+      svg.appendChild(node('text', {
+        x: W - 4, y: H - 4, 'text-anchor': 'end', fill: '#8C96A3', 'font-size': 10, 'font-family': Lc.fontStack(family)
+      }, 'Showing ' + shownN + ' of ' + total + ' panels'));
+    }
+  }
+
+  /**
+   * Draws one plot (the whole chart, or one panel) into root, W × H px, and returns its hover layout.
+   * opts (all optional; {} = the single chart): dry 1 → only return the values it would scale to;
+   * dry 2 → only return its left / right margins; extra = values of the other panels (shared scale);
+   * hideL / hideR / hideX = leave out that axis' labels; padL / padR = margin to use instead of its own;
+   * idp = suffix for ids (clip paths, gradients) that must differ per panel.
+   */
+  function drawPlot (root, list, W, H, opts) {
+    var idp = opts.idp || '';
+    if (W < 60 || H < 50) return null;
     var family = cfg.numbers.font;
     var n = model.xs.length;
     var mode = cfg.areas.mode;
@@ -1148,6 +1260,8 @@
     });
     if (bandOn) [bl, bu].forEach(function (s) { s.vals.forEach(function (v) { vals[bandSide].push(v); }); });
     refs.forEach(function (rf) { vals[rf.axis].push(rf.v); });
+    if (opts.dry === 1) return { vals: vals };
+    if (opts.extra) ['left', 'right'].forEach(function (side) { opts.extra[side].forEach(function (v) { vals[side].push(v); }); });
     var onSide = function (side) {
       return act.some(function (s) { return s.axis === side; }) || (bandOn && bandSide === side) ||
         refs.some(function (rf) { return rf.axis === side; });
@@ -1159,8 +1273,8 @@
     var scR = useRight ? scaleFor(aR, vals.right, areaOn('right'), false) : null;
 
     // ---- margins ------------------------------------------------------------
-    var showL = !!scL && aL.show;
-    var showR = !!scR && aR.show;
+    var showL = !!scL && aL.show && !opts.hideL;
+    var showR = !!scR && aR.show && !opts.hideR;
     var txL = showL ? tickTexts(aL, scL, pctLeft) : [];
     var txR = showR ? tickTexts(aR, scR, false) : [];
     var maxW = function (arr, a) { return arr.length ? Math.max.apply(null, arr.map(function (t) { return textWidth(t, a.size, a.weight, a.font); })) : 0; };
@@ -1168,6 +1282,14 @@
     var titleR = showR && aR.title ? aR.size + 6 : 0;
     var left = showL ? Math.ceil(maxW(txL, aL)) + 8 + titleL : 6;
     var right = showR ? Math.ceil(maxW(txR, aR)) + 8 + titleR : 6;
+    if (opts.dry === 2) {
+      // natural margins with the axes shown (the hide flags do not apply in this pass)
+      var nl = aL.show && scL ? Math.ceil(maxW(tickTexts(aL, scL, pctLeft), aL)) + 8 + (aL.title ? aL.size + 6 : 0) : 6;
+      var nr = aR.show && scR ? Math.ceil(maxW(tickTexts(aR, scR, false), aR)) + 8 + (aR.title ? aR.size + 6 : 0) : 6;
+      return { left: nl, right: nr };
+    }
+    if (opts.padL != null) left = opts.padL;
+    if (opts.padR != null) right = opts.padR;
 
     var lastRoom = 0;
     var top = 8;
@@ -1217,6 +1339,7 @@
       xlH = orient === 'auto' ? ax.size + 8 : orient === 'angled' ? shownW * 0.7071 + ax.size * 0.8 + 8 : shownW + 10;
     }
     var xTitleH = ax.show && ax.title ? ax.size + 8 : 0;
+    if (opts.hideX) { xlH = 0; xTitleH = 0; } // small multiples: only the bottom panels carry x labels
     var plotH = H - top - xlH - xTitleH;
     if (plotH < 30) { xlH = 0; shown = []; xTitleH = 0; plotH = H - top - 4; }
     var bottomY = top + plotH;
@@ -1230,8 +1353,8 @@
 
     // ---- layers -------------------------------------------------------------
     var defs = node('defs');
-    svg.appendChild(defs);
-    var clipId = 'lc-clip';
+    root.appendChild(defs);
+    var clipId = 'lc-clip' + idp;
     var cp = node('clipPath', { id: clipId });
     cp.appendChild(node('rect', { x: left - 8, y: top - 1, width: plotW + 16, height: plotH + 2 }));
     defs.appendChild(cp);
@@ -1240,7 +1363,7 @@
     var gBack = node('g'), gGrid = node('g'), gAreas = node('g'), gBand = node('g'), gLines = node('g'),
       gRefs = node('g'), gMarks = node('g'), gLabels = node('g'), gAxes = node('g'), gHover = node('g', { 'pointer-events': 'none' }),
       gSel = node('g', { 'pointer-events': 'none' });
-    [gBack, gGrid, gAreas, gBand, gLines, gRefs, gMarks, gLabels, gAxes, gSel, gHover].forEach(function (g) { svg.appendChild(g); });
+    [gBack, gGrid, gAreas, gBand, gLines, gRefs, gMarks, gLabels, gAxes, gSel, gHover].forEach(function (g) { root.appendChild(g); });
     var halo = { 'paint-order': 'stroke', stroke: '#FFFFFF', 'stroke-width': 3, 'stroke-linejoin': 'round' };
     var withHalo = function (o) { Object.keys(halo).forEach(function (k) { o[k] = halo[k]; }); return o; };
 
@@ -1283,7 +1406,7 @@
       var fill = s.color;
       var fillOp = op;
       if (cfg.areas.gradient) {
-        var gid = 'lc-grad-' + s.i;
+        var gid = 'lc-grad-' + s.i + idp;
         var lg = node('linearGradient', { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 });
         lg.appendChild(node('stop', { offset: '0%', 'stop-color': s.color, 'stop-opacity': Math.min(1, op * 1.35) }));
         lg.appendChild(node('stop', { offset: '100%', 'stop-color': s.color, 'stop-opacity': op * 0.25 }));
@@ -1352,6 +1475,9 @@
         if (dashed.length > 1) { var a2 = attrs(true); a2.d = curvePath(toPts(dashed), sc.curve); gLines.appendChild(node('path', a2)); }
       });
     });
+
+    // ---- dated event markers (above the grid and the lines, below the points) ---------
+    var evHover = drawEvents(root, gRefs, eventMarks(xpx, n, useTime, t0, t1, left, plotW, inset), left, plotW, top, bottomY, family);
 
     // ---- reference lines ----------------------------------------------------
     refs.forEach(function (rf) {
@@ -1452,6 +1578,7 @@
       gAxes.appendChild(node('line', { x1: left, x2: left + plotW, y1: by, y2: by, stroke: ax.lineColor, 'stroke-width': ax.lineWidth, 'shape-rendering': 'crispEdges' }));
     }
     shown.forEach(function (i) {
+      if (opts.hideX) return;
       if (ax.ticks) {
         var tx = Math.round(xpx[i]) + 0.5;
         gAxes.appendChild(node('line', { x1: tx, x2: tx, y1: bottomY, y2: bottomY + 4, stroke: ax.lineColor, 'shape-rendering': 'crispEdges' }));
@@ -1469,7 +1596,8 @@
     });
     if (xTitleH) axisText(ax, { x: left + plotW / 2, y: H - 3, 'text-anchor': 'middle' }, ax.title);
 
-    view = {
+    return {
+      events: evHover,
       xpx: xpx, top: top, bottomY: bottomY, left: left, plotW: plotW, gHover: gHover, gSel: gSel, mode: mode,
       act: act.map(function (s) {
         var yf = Y(s.axis);
@@ -1479,17 +1607,146 @@
           py0: s.isArea && s.y0 ? s.y0.map(function (v) { return isFinite(v) ? yf(v) : NaN; }) : null
         };
       }),
-      band: bandOn ? { lower: bl, upper: bu } : null
+      band: bandOn ? { lower: bl, upper: bu } : null,
+      ox: 0,
+      oy: 0
     };
-    drawSelection();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dated event markers (Format → Reference lines → Events)
+  // ---------------------------------------------------------------------------
+  /** 'YYYY-MM-DD' → UTC ms at midnight, or null. */
+  function parseDay (str) {
+    var m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(str == null ? '' : str).trim());
+    if (!m) return null;
+    var t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+    return isNaN(t) ? null : t;
+  }
+
+  /**
+   * [{ x, label, date, color }] for the events that fall inside the visible range, sorted by x.
+   * Time axis: interpolated between the neighbouring points (or by real distance with spacing "By date").
+   * Any other axis: the first x value that reads as a date at or after the event's date; none → not drawn.
+   */
+  function eventMarks (xpx, n, useTime, t0, t1, left, plotW, inset) {
+    var E = cfg.events;
+    if (!E || !E.show || !E.items || !E.items.length || !model) return [];
+    var xs = model.xs;
+    var out = [];
+    E.items.forEach(function (raw) {
+      var it = Lc.merge(Lc.EVENT, raw);
+      var d = parseDay(it.date);
+      if (d == null || !n) return;
+      var x = null;
+      if (model.hasTime) {
+        if (d < xs[0].t || d > xs[n - 1].t) return;
+        if (useTime) {
+          x = left + inset + (d - t0) / ((t1 - t0) || 1) * (plotW - 2 * inset);
+        } else {
+          for (var i = 0; i < n - 1 && x == null; i++) {
+            if (d >= xs[i].t && d <= xs[i + 1].t) {
+              var span = xs[i + 1].t - xs[i].t;
+              x = xpx[i] + (span ? (d - xs[i].t) / span : 0) * (xpx[i + 1] - xpx[i]);
+            }
+          }
+        }
+      } else {
+        for (var k = 0; k < n && x == null; k++) {
+          var lt = parseDay(xs[k].label);
+          if (lt == null && /\d/.test(xs[k].label)) { lt = Date.parse(xs[k].label); if (isNaN(lt)) lt = null; }
+          if (lt != null && lt >= d) x = xpx[k];
+        }
+      }
+      if (x == null) return;
+      out.push({ x: x, label: String(it.label || ''), date: String(it.date).trim().slice(0, 10), color: Lc.normalizeHex(it.color) || Lc.normalizeHex(E.color) || '#68707D' });
+    });
+    return out.sort(function (a, b) { return a.x - b.x; });
+  }
+
+  /**
+   * Draws the event lines + labels into a new layer inserted before `before` (nothing is added when there are none).
+   * Labels sit at the top (or bottom) of the plot, to the right of their line (left of it near the right edge); a label
+   * that would touch an earlier one drops to the next row (3 rows); after that it is cut to the free room with an
+   * ellipsis, and the full text goes into a <title>. Returns the hover list [{ x, label, date }].
+   */
+  function drawEvents (root, before, evs, left, plotW, top, bottomY, family) {
+    if (!evs.length) return [];
+    var E = cfg.events;
+    var g = node('g');
+    root.insertBefore(g, before);
+    var size = Math.max(6, Number(E.labelSize) || 11);
+    var plotR = left + plotW;
+    var atBottom = E.labelPosition === 'bottom';
+    var occupied = [[], [], []]; // per row: [x0, x1] already used
+    var halo = { 'paint-order': 'stroke', stroke: '#FFFFFF', 'stroke-width': 3, 'stroke-linejoin': 'round' };
+    var free = function (row, a, b) {
+      return occupied[row].every(function (o) { return b + 4 <= o[0] || a - 4 >= o[1]; });
+    };
+    evs.forEach(function (ev, idx) {
+      var xx = Math.round(ev.x) + 0.5;
+      g.appendChild(node('line', {
+        x1: xx, x2: xx, y1: top, y2: bottomY, stroke: ev.color, 'stroke-width': 1, 'stroke-dasharray': Lc.dashArray(E.style, 1),
+        'shape-rendering': 'crispEdges', 'data-event': idx
+      }));
+      if (!ev.label) return;
+      var w = textWidth(ev.label, size, 600, family);
+      var a = ev.x + 3;
+      var anchor = 'start';
+      if (a + w > plotR && ev.x - 3 - w >= left) { a = ev.x - 3 - w; anchor = 'end'; }
+      var row = -1;
+      for (var r = 0; r < 3 && row < 0; r++) if (a + w <= plotR + 0.5 && free(r, a, a + w)) row = r;
+      var text = ev.label;
+      var cut = false;
+      if (row < 0) {
+        // no row has room for the whole label: take the row with the most free space to the right
+        anchor = 'start';
+        a = ev.x + 3;
+        var best = -1;
+        var room = 0;
+        for (var r2 = 0; r2 < 3; r2++) {
+          var lim = plotR;
+          var blocked = false;
+          occupied[r2].forEach(function (o) {
+            if (o[1] + 4 > a && o[0] - 4 < a) blocked = true;
+            else if (o[0] >= a && o[0] - 4 < lim) lim = o[0] - 4;
+          });
+          var avail = blocked ? 0 : lim - a;
+          if (avail > room) { room = avail; best = r2; }
+        }
+        if (best < 0 || room < size * 2) return; // no room: the line alone marks the date
+        row = best;
+        text = ellipsize(ev.label, room, size, 600, family);
+        w = textWidth(text, size, 600, family);
+        cut = true;
+      }
+      occupied[row].push([anchor === 'end' ? a : a, a + w]);
+      var ty = atBottom ? bottomY - 4 - row * (size + 3) : top + size + row * (size + 3);
+      var tn = node('text', Object.assign({
+        x: anchor === 'end' ? a + w : a, y: ty, 'text-anchor': anchor, fill: ev.color, 'font-size': size, 'font-weight': 600, 'font-family': Lc.fontStack(family)
+      }, halo), text);
+      if (cut) tn.appendChild(node('title', {}, ev.label + ' (' + ev.date + ')'));
+      g.appendChild(tn);
+    });
+    return evs.map(function (ev) { return { x: ev.x, label: ev.label, date: ev.date }; });
   }
 
   // ---------------------------------------------------------------------------
   // Hover: crosshair + tooltip with every series at that point
   // ---------------------------------------------------------------------------
+  /** Pointer position inside the plot (or small-multiples panel) under it; that plot becomes `view`. */
   function mousePos (e) {
     var r = el.svg.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    var m = { x: e.clientX - r.left, y: e.clientY - r.top };
+    if (views.length > 1) {
+      var hit = null;
+      views.forEach(function (v) {
+        if (m.x >= v.cell.x && m.x <= v.cell.x + v.cell.w && m.y >= v.cell.y && m.y <= v.cell.y + v.cell.h) hit = v;
+      });
+      if (!hit) return { x: -1e6, y: -1e6 }; // between panels: not in any plot
+      view = hit;
+    }
+    return view ? { x: m.x - view.ox, y: m.y - view.oy } : m;
   }
 
   function nearestIndex (mx) {
@@ -1497,6 +1754,17 @@
     var best = 0;
     for (var i = 1; i < xs.length; i++) if (Math.abs(xs[i] - mx) < Math.abs(xs[best] - mx)) best = i;
     return best;
+  }
+
+  /** The event line within 4 px of the pointer (nearest), or null. */
+  function eventAt (m) {
+    if (!view || !view.events || !view.events.length || m.y < view.top || m.y > view.bottomY) return null;
+    var best = null;
+    view.events.forEach(function (ev) {
+      var d = Math.abs(ev.x - m.x);
+      if (d <= 4 && (!best || d < best.d)) best = { d: d, ev: ev };
+    });
+    return best && best.ev;
   }
 
   function inPlot (m) {
@@ -1527,6 +1795,8 @@
     if (!inPlot(m)) { hideTooltip(); clearCrosshair(); tableauHover(null); return; }
     var i = nearestIndex(m.x);
     drawCrosshair(i);
+    var evh = eventAt(m);
+    if (evh) { tableauHover(null); showEventTooltip(evh, e); return; }
     if (useTableauTooltip()) { hideTooltip(); tableauHoverAt(i, e); return; } // crosshair stays; only the extension's box is replaced
     if (cfg.chart.tooltip) showTooltip(i, e); else hideTooltip();
   }
@@ -1586,25 +1856,29 @@
   }
 
   function drawSelection () {
-    if (!view || !view.gSel) return;
-    var g = view.gSel;
-    while (g.firstChild) g.removeChild(g.firstChild);
-    if (!selected || !model) return;
-    var i = -1;
-    model.xs.forEach(function (x, k) { if (x.label === selected.label) i = k; });
-    if (i < 0) { selected = null; return; }
-    var x = Math.round(view.xpx[i]) + 0.5;
-    var ch = cfg.lines.crosshair;
-    if (ch.show) g.appendChild(node('line', Object.assign({ x1: x, x2: x, y1: view.top, y2: view.bottomY }, lineAttrs(ch))));
-    view.act.forEach(function (a) {
-      if (!isFinite(a.py[i]) || !isFinite(a.s.vals[i])) return;
-      if (selected.member != null && a.s.member !== selected.member) return;
-      g.appendChild(node('circle', { cx: view.xpx[i], cy: a.py[i], r: Math.max(3.5, a.s.sc.width + 2), fill: a.s.color, stroke: '#FFFFFF', 'stroke-width': 2 }));
+    views.forEach(function (v) {
+      if (!v.gSel) return;
+      var g = v.gSel;
+      while (g.firstChild) g.removeChild(g.firstChild);
+      if (!selected || !model) return;
+      var i = -1;
+      model.xs.forEach(function (x, k) { if (x.label === selected.label) i = k; });
+      if (i < 0) { selected = null; return; }
+      var x = Math.round(v.xpx[i]) + 0.5;
+      var ch = cfg.lines.crosshair;
+      if (ch.show) g.appendChild(node('line', Object.assign({ x1: x, x2: x, y1: v.top, y2: v.bottomY }, lineAttrs(ch))));
+      v.act.forEach(function (a) {
+        if (!isFinite(a.py[i]) || !isFinite(a.s.vals[i])) return;
+        if (selected.member != null && a.s.member !== selected.member) return;
+        g.appendChild(node('circle', { cx: v.xpx[i], cy: a.py[i], r: Math.max(3.5, a.s.sc.width + 2), fill: a.s.color, stroke: '#FFFFFF', 'stroke-width': 2 }));
+      });
     });
   }
 
   function clearCrosshair () {
-    if (view && view.gHover) while (view.gHover.firstChild) view.gHover.removeChild(view.gHover.firstChild);
+    views.forEach(function (v) {
+      if (v.gHover) while (v.gHover.firstChild) v.gHover.removeChild(v.gHover.firstChild);
+    });
   }
 
   function drawCrosshair (i) {
@@ -1653,6 +1927,16 @@
     html += '</div>';
     if (!rows.length && !view.band) { hideTooltip(); return; }
 
+    placeTooltip(html, e);
+  }
+
+  /** Event line under the pointer: its full label and date in the extension's tooltip. */
+  function showEventTooltip (ev, e) {
+    placeTooltip('<div class="tt-name">' + esc(ev.label || 'Event') + '</div><div class="tt-rows"><div class="tt-row"><span class="nm">' +
+      esc(ev.date) + '</span></div></div>', e);
+  }
+
+  function placeTooltip (html, e) {
     var tt = el.tooltip;
     tt.innerHTML = html;
     tt.style.fontFamily = Lc.fontStack(cfg.numbers.font);
@@ -1786,6 +2070,7 @@
     el.card.classList.add('is-empty');
     hideTooltip();
     view = null;
+    views = [];
     el.hint.innerHTML = html;
   }
 

@@ -47,6 +47,7 @@
       raw: null, // extracted data, see extract()
       view: null, // what the last paint drew, see buildView()
       drawn: [], // hit areas: { node, s, kind, i, v (the view / panel it belongs to), lv (line point value) }
+      events: [], // dated event markers drawn: { label, dateText, color } (hover tooltip)
       catRefs: [], // nodes of the names on the axis (data-cat), across panels
       renderToken: 0,
       uid: 0,
