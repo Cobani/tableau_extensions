@@ -45,7 +45,7 @@
     { id: 'links', label: 'Links & highlight', build: buildLinksTab, keys: ['links', 'highlight'] },
     { id: 'legend', label: 'Headers & legend', build: buildLegendTab, keys: ['headers', 'legend'] },
     { id: 'search', label: 'Search & actions', build: buildSearchTab, keys: ['search', 'collapse', 'tooltip', 'interaction'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data.maxRows'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data.maxRows', 'export'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
   ];
 
@@ -341,6 +341,8 @@
     g2.appendChild(checkboxRow('Show tooltip', 'tooltip.show'));
     g2.appendChild(checkboxRow('Details', 'tooltip.showDetails'));
     g2.appendChild(checkboxRow('Upstream / downstream counts', 'tooltip.showCounts'));
+    g2.appendChild(checkboxRow('Use Tableau\u2019s tooltip', 'interaction.tableauTooltip'));
+    g2.appendChild(help('Shows the tooltip you design in Tableau (Worksheet \u2192 Tooltip), including viz in tooltip, instead of this extension\u2019s own tooltip. Needs Tableau 2024.2 or newer.'));
 
     var g3 = group(p, 'Actions');
     g3.appendChild(checkboxRow('Select in Tableau', 'interaction.selectInTableau'));
@@ -383,6 +385,9 @@
     g3.appendChild(colorRow('Color', 'card.plotBg'));
     g3.appendChild(rangeRow('Opacity', 'card.plotBgOpacity', 0, 100, 1, '%'));
     g3.appendChild(help('Also used behind the column headers while scrolling.'));
+    var gExp = group(p, 'Export');
+    gExp.appendChild(checkboxRow('Save as picture button', 'export.picture'));
+    gExp.appendChild(help('Shows a button in the top-right corner (on hover) that saves the chart as a PNG picture. The whole lineage is saved, also the part you would have to scroll to.'));
     var gData = group(p, 'Data');
     gData.appendChild(numberRow('Maximum rows', 'data.maxRows', 0, 1000000, 1));
     gData.appendChild(h('div', { className: 'help', textContent: 'How many rows are read from the worksheet (0 = all). When rows are left out, a note in the corner of the chart says so.' }));
@@ -627,6 +632,17 @@
         r.append(t, h('div', { className: 'inline' }, [apply, dl, del]));
         g3.appendChild(r);
       });
+    }
+
+    // ---- Brand theme (shared by all extensions)
+    if (window.ExtTheme && ExtTheme.section) {
+      p.appendChild(ExtTheme.section({
+        h: h,
+        name: 'Data Lineage',
+        themeMap: Dl.THEME_MAP,
+        getSettings: function () { return cfg; },
+        applySettings: function (next) { cfg = Dl.normalize(next); changed(); rebuild(); }
+      }));
     }
   }
 

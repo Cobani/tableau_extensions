@@ -145,3 +145,8 @@ test('menuItems: run rejects cleanly with no element, and returns a promise', as
 });
 
 test('button is exposed', function () { assert.equal(typeof S.button, 'function'); });
+
+test('fileName: arrows become words', function () {
+  const win = h.sandbox(['shared/core.js', 'shared/snapshot.js']);
+  assert.match(win.ExtSnapshot.fileName('Opening Stock \u2192 Closing Stock', 'png'), /^Opening Stock to Closing Stock \d{4}-\d\d-\d\d\.png$/);
+});

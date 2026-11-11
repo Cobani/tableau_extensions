@@ -36,7 +36,8 @@
       "italic": true
     },
     "export": {
-      "button": "hover"
+      "button": "hover",
+      "picture": true
     },
     "data": {
       "maxRows": 1000
@@ -503,6 +504,7 @@
       "rightClickMenu": true,
       "dblclick": "drill",
       "dialog": "onTop",
+      "tableauTooltip": false,
       "selectInTableau": true
     },
     "comments": {

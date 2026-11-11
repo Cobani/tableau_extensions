@@ -57,7 +57,7 @@
     });
 
     el.card.addEventListener('mousemove', onCardHover);
-    el.card.addEventListener('mouseleave', hideTooltip);
+    el.card.addEventListener('mouseleave', onCardLeave);
     el.card.addEventListener('click', onCardClick);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') clearPicked(); });
 
@@ -674,6 +674,7 @@
       }
       var pt = {
         i: i,
+        ri: i, // position of this row in the summary data as Tableau sent it (Tableau tooltip)
         v: v,
         fv: cell.formattedValue,
         key: key,
@@ -702,7 +703,7 @@
     } else if (pts.length > 1) {
       // No date: collapse to one total.
       var total = pts.reduce(function (s, p) { return s + p.v; }, 0);
-      pts = [{ i: 0, v: total, fv: null, key: [], label: '' }];
+      pts = [{ i: 0, ri: pts[0].ri, v: total, fv: null, key: [], label: '' }];
     }
 
     var issue = '';
@@ -975,6 +976,22 @@
     paintBottom(cmp);
     layout();
     paintPicked();
+    syncSnapshot();
+  }
+
+  // Save as picture (optional): PNG only, the card is HTML with a small SVG trend line.
+  var snap = null;
+  function syncSnapshot () {
+    var on = !!(cfg && cfg.export && cfg.export.picture) && window.ExtSnapshot;
+    if (on && !snap) {
+      snap = ExtSnapshot.button({
+        host: el.card,
+        element: el.card,
+        title: function () { return (el.title && el.title.textContent) || (lastData && lastData.label) || worksheet && worksheet.name || 'KPI Card'; }
+      });
+    }
+    if (on) snap.refresh();
+    else if (snap) { snap.destroy(); snap = null; }
   }
 
   function applyFont (node, f) {
@@ -1342,6 +1359,7 @@
    */
   function onCardHover (e) {
     if (!cfg || !lastData || !lastData.points.length || el.card.classList.contains('is-empty')) return;
+    if (tableauTipOn() && tableauHover(e)) return;
     var chartTip = cfg.bottom.showTooltip && cfg.bottom.mode === 'chart' && shown.length >= 2;
     if (chartTip && el.bottom.contains(e.target)) { onHover(e); return; }
     var all = lastData.points;
@@ -1365,6 +1383,41 @@
     if (top + th > vh - 4) top = e.clientY - th - 14;
     tt.style.left = Math.max(4, Math.min(left, vw - tw - 4)) + 'px';
     tt.style.top = Math.max(4, Math.min(top, vh - th - 4)) + 'px';
+  }
+
+  // Tableau's own tooltip (optional). Over the trend line it maps to the row of the hovered date,
+  // anywhere else on the card to the row of the latest date. Row = position in the summary data as sent.
+  var tipFailed = false;  // this Tableau has no hoverTupleAsync: use our own tooltip from now on
+  var tipRow;             // row last sent to Tableau (undefined = none)
+
+  function tableauTipOn () {
+    return !!(cfg && cfg.interaction && cfg.interaction.tableauTooltip) && !tipFailed;
+  }
+
+  function tableauHover (e) {
+    var all = lastData.points;
+    var idx = all.length - 1;
+    var dot = document.getElementById('hover-dot');
+    if (cfg.bottom.mode === 'chart' && shown.length >= 2 && el.bottom.contains(e.target)) {
+      var mx = e.clientX - el.bottom.getBoundingClientRect().left;
+      var best = shown[0];
+      shown.forEach(function (s) { if (Math.abs(s.x - mx) < Math.abs(best.x - mx)) best = s; });
+      idx = best.idx;
+      if (dot) { dot.setAttribute('cx', best.x); dot.setAttribute('cy', best.y); dot.style.display = ''; }
+    } else if (dot) {
+      dot.style.display = 'none';
+    }
+    var ri = all[idx] && all[idx].ri != null ? all[idx].ri : null;
+    if (ri === tipRow) return true; // same row: nothing to send
+    if (ExtCore.hoverTooltip(worksheet, ri, { x: e.clientX, y: e.clientY }) === false) { tipFailed = true; return false; }
+    tipRow = ri;
+    el.tooltip.style.display = 'none';
+    return true;
+  }
+
+  function onCardLeave () {
+    hideTooltip();
+    if (tipRow !== undefined) { tipRow = undefined; ExtCore.hoverTooltip(worksheet, null); }
   }
 
   function hideTooltip () {

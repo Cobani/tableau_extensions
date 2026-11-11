@@ -200,9 +200,9 @@
 
     var out = [];
     var dateCache = {}; // the same axis values repeat on many rows
-    rows.forEach(function (row) {
+    rows.forEach(function (row, rowIdx) {
       var mn = cMN ? norm(row[cMN.index].formattedValue || row[cMN.index].value) : null;
-      var o = { d: [], dd: [], v: {}, fv: {}, l: {}, t: NaN, x: {}, xt: {}, xf: {} };
+      var o = { d: [], dd: [], v: {}, fv: {}, l: {}, t: NaN, x: {}, xt: {}, xf: {}, sri: rowIdx }; // sri: position in the summary data as Tableau sent it (Tableau's own tooltip)
       cats.forEach(function (r, i) {
         var cell = r.col ? row[r.col.index] : null;
         o.d.push(cellText(cell));
@@ -379,7 +379,7 @@
     rows = topNRows(rows, L);
     var last = L ? barIdx[L - 1] : -1;
     B.S.raw.rows = rows.map(function (r) {
-      return { c: barIdx.map(function (i) { return r.d[i]; }), b: r.d, sm: S.length ? S.map(function (i) { return r.d[i]; }).join(' \u00b7 ') : null, pm: P.length ? P.map(function (i) { return r.d[i]; }).join(' \u00b7 ') : null, cd: last >= 0 ? r.dd[last] : null, d: r.d, v: r.v, fv: r.fv, l: r.l, t: r.t, x: r.x, xt: r.xt || {}, xf: r.xf || {}, oth: !!r.oth };
+      return { c: barIdx.map(function (i) { return r.d[i]; }), b: r.d, sm: S.length ? S.map(function (i) { return r.d[i]; }).join(' \u00b7 ') : null, pm: P.length ? P.map(function (i) { return r.d[i]; }).join(' \u00b7 ') : null, cd: last >= 0 ? r.dd[last] : null, d: r.d, v: r.v, fv: r.fv, l: r.l, t: r.t, x: r.x, xt: r.xt || {}, xf: r.xf || {}, oth: !!r.oth, sri: r.sri };
     });
   }
 
@@ -437,7 +437,7 @@
       var p = parentOf(r);
       if (keep[p][r.d[k]]) { out.push(r); return; }
       if (!T.others) return;
-      var c = { d: r.d.slice(), dd: r.dd.slice(), v: {}, fv: {}, l: {}, x: {}, xt: r.xt || {}, t: r.t, oth: true };
+      var c = { d: r.d.slice(), dd: r.dd.slice(), v: {}, fv: {}, l: {}, x: {}, xt: r.xt || {}, t: r.t, oth: true, sri: r.sri };
       for (var j = k; j < c.d.length; j++) { if (j > k && (isSeriesField(j) || S.raw.panelIdx.indexOf(j) >= 0)) continue; c.d[j] = label; c.dd[j] = null; }
       var div = T.othersAgg === 'avg' ? (restIn[r.d.slice(0, k).join(SEP)] || 1) : 1;
       Object.keys(r.v).forEach(function (m) { c.v[m] = r.v[m] / div; });

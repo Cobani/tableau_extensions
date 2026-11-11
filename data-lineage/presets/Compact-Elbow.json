@@ -166,7 +166,11 @@
       "rightClickMenu": true,
       "dblclick": "format",
       "dialog": "onTop",
-      "selectInTableau": true
+      "selectInTableau": true,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": false
     }
   }
 }

@@ -655,6 +655,8 @@
     g2.appendChild(selectRow('Double-click', 'interaction.dblclick', [['format', 'Opens its settings'], ['none', 'Nothing']]));
     g2.appendChild(segRow('Format window', 'interaction.dialog', [['onTop', 'Always on top'], ['floating', 'Floating']]));
     g2.appendChild(help('Always on top: the Format window stays in front of Tableau until Done or Cancel; the matrix behind it still updates live. Floating: you can click the workbook while it is open, but Tableau may cover it. Applies the next time the window opens.'));
+    g2.appendChild(checkboxRow('Use Tableau’s tooltip', 'interaction.tableauTooltip'));
+    g2.appendChild(help('Shows the tooltip you design in Tableau (Worksheet → Tooltip), including viz in tooltip, instead of this extension’s own tooltip. Needs Tableau 2024.2 or newer. Subtotal and total cells show no tooltip then.'));
     g2.appendChild(checkboxRow('Click selects in Tableau', 'interaction.selectInTableau'));
     g2.appendChild(help('Selects the cell’s marks, so dashboard filter and highlight actions run.'));
   }
@@ -666,6 +668,8 @@
     var g1 = group(p, 'Export button');
     g1.appendChild(segRow('Show', 'export.button', [['hover', 'On hover'], ['always', 'Always'], ['never', 'Never']]));
     g1.appendChild(help('The button at the top right, and the right-click menu, export to Excel or CSV and copy the table.'));
+    g1.appendChild(checkboxRow('Save as picture button', 'export.picture'));
+    g1.appendChild(help('Shows a button in the top-right corner (on hover) that saves the chart as a PNG picture. Here it is an entry in the export menu, and the whole table is saved, not only the visible part.'));
     var g2 = group(p, 'Files');
     g2.appendChild(textRow('File name', 'export.fileName', 'Empty = the title'));
     g2.appendChild(help('Today’s date is added, e.g. “Transfers 2026-10-20.xlsx”.'));
@@ -1000,6 +1004,17 @@
         r.append(t, h('div', { className: 'inline' }, [apply, dl, del]));
         g3.appendChild(r);
       });
+    }
+
+    // ---- Brand theme (shared by all extensions)
+    if (window.ExtTheme && ExtTheme.section) {
+      p.appendChild(ExtTheme.section({
+        h: h,
+        name: 'Matrix',
+        themeMap: Mx.THEME_MAP,
+        getSettings: function () { return cfg; },
+        applySettings: function (next) { cfg = next; changed(); rebuild(); }
+      }));
     }
   }
   function buildIconTab (p) {

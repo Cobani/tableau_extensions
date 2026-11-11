@@ -56,6 +56,14 @@ show off a feature. **Reset settings** brings those back.
   point with full, unabbreviated values (Tableau's own format when the point is a single value), plus the stacked
   total, each area's share with 100% stacking, and the band range. Under each series: the change vs the previous
   point (↗ +3.25%, KPI Card arrows, coloured good / bad) and the previous value — set per series on the Series tab.
+- **Tableau's tooltip** (Format → Legend & tooltip → *Use Tableau's tooltip*, off by default): hovering shows the tooltip
+  you designed in Tableau (Worksheet → Tooltip, including viz in tooltip) instead of this extension's box; the hover line
+  stays. With a Color dimension or several measures it uses the series nearest the pointer, else the first row of that
+  date. Needs Tableau 2024.2 or newer; older versions keep the extension's own tooltip.
+- **Save as picture** (Format → Export → *Save as picture button*, on by default): the export button's menu also saves
+  the whole chart (title, legend, plot) as a PNG picture.
+- **Brand theme** (Format → Presets → last group): apply a theme file, pasted theme or one of your saved themes, or save
+  this chart's look as a theme.
 - **Click** a point (Format → Legend & tooltip → *Click selects in Tableau*, off by default): selects that date, and
   the series under the mouse when there is a Color dimension, in Tableau, so dashboard filter and highlight actions
   fire. Click it again, click empty space or press Escape to clear.

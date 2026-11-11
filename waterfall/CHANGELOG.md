@@ -3,6 +3,9 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `waterfall.trex`.
 
 ## 1.3.0 — 2026-11-10
+- New: Brand theme section in the Presets tab (apply or save a theme shared by all extensions).
+- New: Use Tableau's tooltip (Format → Bars → All bars) shows the tooltip designed in Tableau instead of the extension's own.
+- New: Save as picture button (Format → Card → Export) saves the chart as a PNG.
 - Format dialog: Undo and Redo (buttons and Ctrl/Cmd+Z), and a search box that finds a setting on any tab.
 - New Presets tab: save a look and reuse it in other worksheets or workbooks (export / import as a file or via the clipboard, My presets in this browser).
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).

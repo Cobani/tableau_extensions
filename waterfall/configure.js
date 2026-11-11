@@ -45,7 +45,7 @@
     { id: 'axes', label: 'Axes', build: buildAxesTab, keys: ['axisY', 'axisX'] },
     { id: 'lines', label: 'Lines', build: buildLinesTab, keys: ['lines'] },
     { id: 'numbers', label: 'Numbers', build: buildNumbersTab, keys: ['numbers', 'format'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data', 'export'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
   ];
 
@@ -360,6 +360,8 @@
     g7.appendChild(checkboxRow('Tooltip on hover', 'bars.tooltip'));
     g7.appendChild(checkboxRow('Right-click menu', 'bars.rightClickMenu'));
     g7.appendChild(checkboxRow('Click selects in Tableau', 'interaction.selectInTableau'));
+    g7.appendChild(checkboxRow('Use Tableau\u2019s tooltip', 'interaction.tableauTooltip'));
+    g7.appendChild(help('Shows the tooltip you design in Tableau (Worksheet \u2192 Tooltip), including viz in tooltip, instead of this extension\u2019s own tooltip. Needs Tableau 2024.2 or newer.'));
     g7.appendChild(help('Click a point (line chart) / a breakdown segment (waterfall) to select it in Tableau, so dashboard filter and highlight actions fire. Click it again or an empty area to clear.'));
   }
 
@@ -644,6 +646,9 @@
     g2.appendChild(colorRow('Color', 'card.bgColor'));
     g2.appendChild(rangeRow('Opacity', 'card.bgOpacity', 0, 100, 1, '%'));
     g2.appendChild(help('0% is fully transparent. Set worksheet and container shading to None in Tableau to see through.'));
+    var gExp = group(p, 'Export');
+    gExp.appendChild(checkboxRow('Save as picture button', 'export.picture'));
+    gExp.appendChild(help('Shows a button in the top-right corner (on hover) that saves the chart as a PNG picture.'));
     var gData = group(p, 'Data');
     gData.appendChild(numberRow('Maximum rows', 'data.maxRows', 0, 1000000, 1));
     gData.appendChild(h('div', { className: 'help', textContent: 'How many rows are read from the worksheet (0 = all). When rows are left out, a note in the corner of the chart says so.' }));
@@ -1103,6 +1108,15 @@
         r.append(t, h('div', { className: 'inline' }, [apply, dl, del]));
         g3.appendChild(r);
       });
+    }
+    if (window.ExtTheme && ExtTheme.section) {
+      p.appendChild(ExtTheme.section({
+        h: h,
+        name: 'Waterfall',
+        themeMap: Wf.THEME_MAP,
+        getSettings: function () { return cfg; },
+        applySettings: function (next) { cfg = next; changed(); buildTabs(); }
+      }));
     }
   }
 

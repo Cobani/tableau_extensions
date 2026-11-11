@@ -217,7 +217,11 @@
       rightClickMenu: true
     },
     interaction: {
-      selectInTableau: false // click a Breakdown segment to select it in Tableau (dashboard actions)
+      selectInTableau: false, // click a Breakdown segment to select it in Tableau (dashboard actions)
+      tableauTooltip: false // hover shows the tooltip designed in Tableau instead of this extension's own
+    },
+    export: {
+      picture: false // button in the top-right corner that saves the chart as a PNG
     },
     start: endBar(),
     end: endBar(),

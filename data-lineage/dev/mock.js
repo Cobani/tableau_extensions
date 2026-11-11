@@ -204,6 +204,7 @@
       worksheetContent: {
         worksheet: {
           name: 'Mock sheet',
+          hoverTupleAsync: function (id, ctx) { console.log('mock hoverTupleAsync', id, JSON.stringify(ctx || null)); return Promise.resolve(); },
           addEventListener: function () {},
           getVisualSpecificationAsync: function () {
             return Promise.resolve({ activeMarksSpecificationIndex: 0, marksSpecifications: [{ encodings: encodings() }] });

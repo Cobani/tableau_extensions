@@ -161,6 +161,7 @@
     },
     export: {
       button: 'hover', // hover | always | never
+      picture: true, // "Picture (PNG)" entry in the export menu (ExtSnapshot)
       fileName: '' // empty → the title
     },
     // ---- Data ---------------------------------------------------------------
@@ -558,6 +559,7 @@
       rightClickMenu: true,
       dblclick: 'drill', // drill | format | none
       dialog: 'onTop', // onTop (modal: stays in front of Tableau) | floating (modeless: can go behind Tableau)
+      tableauTooltip: false, // hover shows Tableau's own tooltip (Worksheet > Tooltip) instead of this one; needs Tableau 2024.2+
       selectInTableau: true, // click a bar, its value or its name selects the category in Tableau (dashboard actions); click again or on empty space to undo
       hidden: [] // category / series keys hidden from the right-click menu
     },

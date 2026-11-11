@@ -329,6 +329,7 @@
       dblclick: 'format', // format | none
       dialog: 'onTop', // onTop (modal: stays in front of Tableau) | floating (modeless: can go behind Tableau)
       selectInTableau: false, // click a cell selects its marks (dashboard actions)
+      tableauTooltip: false, // show the tooltip designed in Tableau instead of this extension's own
       headerSort: true // click a column header to sort the rows by it
     },
 
@@ -339,7 +340,8 @@
       includeTitle: true,
       excelSecondary: 'rich', // rich (same cell, as shown) | omit (numbers stay numbers)
       dataPct: true, // data export: add the % of total and other shown calculations
-      dataTotals: false // data export: add subtotal / total rows
+      dataTotals: false, // data export: add subtotal / total rows
+      picture: true // Save as picture (PNG) entry in the export menu
     }
   };
 

@@ -36,6 +36,10 @@
   var renderToken = 0;
   var gradientSeq = 0;
   var ui = {};          // row, hint, tooltip, template
+  var snapBtn = null;   // ExtSnapshot.button for the whole row of cards (export.picture)
+  var tipFallback = false; // this Tableau has no hoverTupleAsync: own tooltip for the rest of the session
+  var tipOwner = null;  // card element whose summary-data row Tableau's tooltip is showing
+  var tipRow = null;    // that row's index in the summary data as sent
 
   var ARROWS = {
     up: '<svg viewBox="0 0 10 10"><path d="M2 8L8 2M3.2 2H8V6.8" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -334,6 +338,28 @@
       data.details = det;
       c.inst.update(KpiCardMultiConfig.cardConfig(store, c.key), data);
     });
+    syncSnapshot();
+  }
+
+  /**
+   * "Save as picture" (shared setting export.picture): one button for the whole row of cards, PNG only
+   * (the cards are HTML, not one SVG). Created once, destroyed when the setting is switched off.
+   */
+  function syncSnapshot () {
+    var on = !!(store && store.shared.export && store.shared.export.picture) && !!window.ExtSnapshot;
+    if (on && !snapBtn) {
+      try {
+        snapBtn = ExtSnapshot.button({
+          host: ui.row,
+          element: ui.row,
+          title: function () { return (worksheet && worksheet.name) || 'KPI Card Multi'; }
+        });
+      } catch (e) { console.error('Save as picture is not available', e); }
+    } else if (!on && snapBtn) {
+      snapBtn.destroy();
+      snapBtn = null;
+    }
+    if (snapBtn) snapBtn.refresh();
   }
 
   /**
@@ -771,6 +797,8 @@
     // merging them after the sort), so only one point per date gets sorted.
     var byDate = new Map();
     var pts = [];
+    // Position of each row in the summary data as Tableau sent it (Tableau's own tooltip needs it).
+    var origin = rows === table.data ? null : new Map(table.data.map(function (r, j) { return [r, j]; }));
     rows.forEach(function (r, i) {
       var cell = r[cValue.index];
       var v = toNumber(cell);
@@ -793,6 +821,7 @@
       }
       var pt = {
         i: i,
+        ri: origin ? origin.get(r) : i, // summary-data row index as sent (first row when several share a date)
         v: v,
         fv: cell.formattedValue,
         key: key,
@@ -821,7 +850,7 @@
     } else if (pts.length > 1) {
       // No date: collapse to one total.
       var total = pts.reduce(function (s, p) { return s + p.v; }, 0);
-      pts = [{ i: 0, v: total, fv: null, key: [], label: '' }];
+      pts = [{ i: 0, ri: pts[0].ri, v: total, fv: null, key: [], label: '' }];
     }
 
     var issue = '';
@@ -919,7 +948,7 @@
     var rowEnd = false;
 
     el.card.addEventListener('mousemove', onCardHover);
-    el.card.addEventListener('mouseleave', hideTooltip);
+    el.card.addEventListener('mouseleave', function () { hideTooltip(); clearTableauTip(); });
     el.card.addEventListener('click', onCardClick);
     // ---------------------------------------------------------------------------
     // Change logic (shared by the card and the tooltip)
@@ -1478,6 +1507,19 @@
      */
     function onCardHover (e) {
       if (!cfg || !lastData || !lastData.points.length || el.card.classList.contains('is-empty')) return;
+      if (tableauTipOn()) {
+        // Tableau's tooltip: the hovered trend-line point's date, elsewhere the latest date.
+        var hp = lastData.points[clickedIndex(e)];
+        var ri = hp && hp.ri != null ? hp.ri : null;
+        if (ri == null) { clearTableauTip(); return; }
+        if (tipOwner !== el.card || tipRow !== ri) {
+          if (!ExtCore.hoverTooltip(worksheet, ri, { x: e.clientX, y: e.clientY })) { tipFallback = true; clearTableauTip(); return onCardHover(e); }
+          tipOwner = el.card;
+          tipRow = ri;
+        }
+        hideTooltip();
+        return;
+      }
       var chartTip = cfg.bottom.showTooltip && cfg.bottom.mode === 'chart' && shown.length >= 2;
       if (chartTip && el.bottom.contains(e.target)) { onHover(e); return; }
       var all = lastData.points;
@@ -1501,6 +1543,18 @@
       if (top + th > vh - 4) top = e.clientY - th - 14;
       tt.style.left = Math.max(4, Math.min(left, vw - tw - 4)) + 'px';
       tt.style.top = Math.max(4, Math.min(top, vh - th - 4)) + 'px';
+    }
+
+    function tableauTipOn () {
+      return !!(cfg && cfg.interaction && cfg.interaction.tableauTooltip) && !tipFallback;
+    }
+
+    /** Hides Tableau's tooltip if this card is the one showing it. */
+    function clearTableauTip () {
+      if (tipOwner !== el.card) return;
+      tipOwner = null;
+      tipRow = null;
+      ExtCore.hoverTooltip(worksheet, null);
     }
 
     function hideTooltip () {
@@ -1603,7 +1657,7 @@
     }
 
     return {
-      update: function (c, data) { cfg = c; lastData = data; paint(); },
+      update: function (c, data) { cfg = c; lastData = data; if (!tableauTipOn()) clearTableauTip(); paint(); },
       layout: function () { layout(); },
       paintPicked: function () { paintPicked(); },
       setRowEnd: function (v) {

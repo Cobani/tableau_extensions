@@ -94,6 +94,15 @@ can upload any `.png` file from a Shapes folder.
 ## Click selects in Tableau
 Optional (Format → Card → Interaction → **Click selects in Tableau**, off by default). Click the card to select its latest date in Tableau, or click a point on the trend line to select that date, so dashboard filter, highlight and go-to-sheet actions fire. Click the same place again (or press Esc) to clear. It needs a field on the Date tile; without one a click does nothing. While on, the card shows a pointer cursor and a thin outline in the trend line colour once a date is selected.
 
+## Save as picture
+Optional (Format → Card → Export → **Save as picture button**, off by default). Shows a button in the top-right corner of the card (on hover) that saves it as a PNG picture. With a transparent card background the picture gets a white background.
+
+## Tableau's own tooltip
+Optional (Format → Card → Interaction → **Use Tableau's tooltip**, off by default). Shows the tooltip you design in Tableau (Worksheet → Tooltip), including viz in tooltip, instead of the card's own tooltip. Hovering the trend line shows the tooltip of the hovered date; hovering anywhere else on the card shows the tooltip of the latest date. Needs Tableau 2024.2 or newer; on older versions the card's own tooltip is used.
+
+## Brand theme
+Presets tab → **Brand theme**: apply a theme file (or one of the bundled themes) to this card, or save this card's look as a theme to reuse in the other extensions.
+
 ## Tooltip tile → tooltip
 
 Measures dropped on Tableau's own **Tooltip** tile (Marks card) are listed in the tooltip, in tile order:

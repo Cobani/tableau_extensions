@@ -3,6 +3,9 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `line-chart.trex`.
 
 ## 1.2.0 — 2026-11-10
+- Brand theme: apply or save a theme from the Presets tab.
+- Save as picture: the export menu now also saves the chart as a PNG (Format → Export → Save as picture button).
+- Tableau's own tooltip (optional): Format → Legend & tooltip → Use Tableau's tooltip shows the tooltip designed in Worksheet → Tooltip; the hover line stays.
 - Format dialog: Undo and Redo (buttons and Ctrl/Cmd+Z), and a search box that finds a setting on any tab.
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).
 - Optional: click a point to select it in Tableau, so dashboard filter and highlight actions fire (Format, Legend and tooltip, Click selects in Tableau).

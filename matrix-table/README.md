@@ -88,6 +88,15 @@ The button at the top right (on hover, always or never — Export tab) and the r
 | **CSV — data** | the same as a CSV (UTF-8) |
 | **CSV — crosstab** | the matrix as shown, one CSV cell per matrix cell |
 | **Copy table** | the matrix as a table on the clipboard; paste into Excel, Sheets or an email with colours |
+| **Picture (PNG)** | the whole matrix, including the part you would have to scroll to, saved as a picture. On by default; switch it off with *Save as picture button* on the Export tab |
+
+**Tableau's own tooltip.** Tooltip & actions tab → *Use Tableau's tooltip* (off by default) shows the tooltip you design
+in Tableau (Worksheet → Tooltip, including viz in tooltip) instead of this extension's own. It needs Tableau 2024.2 or
+newer. A cell uses the data row of its row × column members (and of its measure when several measures are shown);
+subtotal and total cells have no single row, so they show no Tableau tooltip.
+
+**Brand theme.** The Presets tab can apply a brand theme (colours and fonts) from a file or from *My themes*, and save
+this matrix's look as a theme for the other extensions.
 
 Tableau Desktop can block downloads from extensions. Then use **Copy table**. Tableau Server and Cloud in a browser
 download normally.

@@ -63,6 +63,12 @@ Viz extensions can't add their own entries to Tableau's right-click menu. There 
 - **Click a breakdown segment** (Format → Bars → All bars → *Click selects in Tableau*, off by default) to select that
   member in Tableau, so dashboard filter and highlight actions fire. Click it again, click an empty area or press
   Escape to clear. Bars without a Breakdown have nothing to select.
+- **Tableau's own tooltip** (Format → Bars → All bars → *Use Tableau's tooltip*, off by default) shows the tooltip you design in
+  Tableau (Worksheet → Tooltip), including viz in tooltip, instead of this extension's tooltip. Needs Tableau 2024.2 or newer; on
+  older versions the extension's own tooltip is used. Without a Breakdown every bar shows the data of the worksheet's first row;
+  with a Breakdown, a segment shows the row of its member (Others: its first member). A calculated End bar and group brackets show no tooltip.
+- **Save as picture** (Format → Card → Export → *Save as picture button*, off by default) adds a button in the top-right corner
+  (on hover) that saves the chart as a PNG picture.
 - **Right-click a bar** in the chart → *Format "Online Sales"…*, Groups…, Axes…, Lines…, Numbers…. **Double-click** a bar
   opens its settings directly.
 
@@ -92,6 +98,8 @@ the Figma design. Start and End bars are then cut short, so they get the clipped
 bars.
 
 ## Presets
+
+The tab also has **Brand theme**: apply a colour and font theme from a file, pasted text or My themes (shared by all extensions), or save this chart's look as a theme.
 
 The last tab of the Format window saves and loads every setting of the chart. **Export** a preset as "Look only" (leaves out per-bar settings, breakdown members and colours, custom groups, bar labels, title and explanation text, row limit) or "Everything"; download it as .json, copy it, or keep it under **My presets** on this computer. **Import** from a file or pasted text; "Keep this chart's…" keeps the sheet-specific settings. Presets store only values that differ from the defaults, and carry a version so older files keep working.
 

@@ -116,7 +116,11 @@
       showSign: true
     },
     interaction: {
-      selectInTableau: false // click selects the date in Tableau so dashboard actions fire (needs a Date tile)
+      selectInTableau: false, // click selects the date in Tableau so dashboard actions fire (needs a Date tile)
+      tableauTooltip: false // show the tooltip designed in Tableau instead of this extension's own
+    },
+    export: {
+      picture: false // button on the card that saves it as a PNG picture
     },
     // ---- Data ---------------------------------------------------------------
     data: {

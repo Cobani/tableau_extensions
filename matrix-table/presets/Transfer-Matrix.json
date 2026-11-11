@@ -355,14 +355,16 @@
       "dblclick": "format",
       "dialog": "onTop",
       "selectInTableau": false,
-      "headerSort": true
+      "headerSort": true,
+      "tableauTooltip": false
     },
     "export": {
       "button": "hover",
       "includeTitle": true,
       "excelSecondary": "rich",
       "dataPct": true,
-      "dataTotals": false
+      "dataTotals": false,
+      "picture": true
     }
   }
 }

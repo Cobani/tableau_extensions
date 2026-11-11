@@ -42,7 +42,7 @@
     ChartExport.attach(el.card, 'Line Chart');
 
     el.svg.addEventListener('mousemove', onHover);
-    el.svg.addEventListener('mouseleave', function () { hideTooltip(); clearCrosshair(); });
+    el.svg.addEventListener('mouseleave', function () { hideTooltip(); clearCrosshair(); tableauHover(null); });
     el.svg.addEventListener('contextmenu', onContextMenu);
     el.svg.addEventListener('click', onPlotClick);
     document.addEventListener('click', function (e) {
@@ -470,7 +470,8 @@
         var v = toNumber(cell);
         if (!isFinite(v)) return;
         var skey = member == null ? m.key : m.key + ' · ' + member;
-        var a = acc[skey] || (acc[skey] = { m: m, member: member, sums: {}, n: {}, fv: {} });
+        var a = acc[skey] || (acc[skey] = { m: m, member: member, sums: {}, n: {}, fv: {}, ri: {} });
+        if (!(label in a.ri)) a.ri[label] = rowI; // first summary-data row of this point, for Tableau's tooltip
         a.sums[label] = (a.sums[label] || 0) + v;
         a.n[label] = (a.n[label] || 0) + 1;
         a.fv[label] = a.n[label] === 1 ? cell.formattedValue : null;
@@ -492,13 +493,14 @@
           rawMember: member == null ? null : { fieldName: cColor.fieldName, value: memberRaw[member] },
           name: member == null ? m.name : (mReqs.length === 1 ? member : m.name + ' · ' + member),
           vals: xs.map(function (x) { return x.label in a.sums ? a.sums[x.label] : NaN; }),
-          fvs: xs.map(function (x) { return a.fv[x.label] != null ? a.fv[x.label] : null; })
+          fvs: xs.map(function (x) { return a.fv[x.label] != null ? a.fv[x.label] : null; }),
+          ris: xs.map(function (x) { return x.label in a.ri ? a.ri[x.label] : -1; }) // row index in the data as Tableau sent it
         });
       });
     });
 
     return {
-      xs: xs.map(function (x) { return { label: x.label, t: x.t, rawX: x.rawX }; }),
+      xs: xs.map(function (x) { return { label: x.label, t: x.t, rawX: x.rawX, i: x.i }; }),
       series: series,
       measures: mReqs.map(function (m) { return { key: m.key, name: m.name }; }),
       colorDim: cReqs[0] ? { key: cReqs[0].field.name, name: cleanName(cReqs[0].field.name) } : null,
@@ -579,6 +581,7 @@
         name: sc.label || s.name,
         vals: s.vals,
         fvs: s.fvs || [],
+        ris: s.ris || [],
         sc: sc,
         color: Lc.normalizeHex(sc.color) || Lc.paletteColor(cfg.chart.palette, i, cfg.chart.paletteEdits),
         i: i
@@ -1521,10 +1524,37 @@
   function onHover (e) {
     if (!view || !cfg || el.menu.style.display === 'block') return;
     var m = mousePos(e);
-    if (!inPlot(m)) { hideTooltip(); clearCrosshair(); return; }
+    if (!inPlot(m)) { hideTooltip(); clearCrosshair(); tableauHover(null); return; }
     var i = nearestIndex(m.x);
     drawCrosshair(i);
+    if (useTableauTooltip()) { hideTooltip(); tableauHoverAt(i, e); return; } // crosshair stays; only the extension's box is replaced
     if (cfg.chart.tooltip) showTooltip(i, e); else hideTooltip();
+  }
+
+  // Tableau's own tooltip (Format → Legend & tooltip → Use Tableau's tooltip). One x holds several rows (one per
+  // series); the row used is the first row of the series drawn nearest the pointer when that is distinguishable
+  // (Color dimension or several measures), else the first row of that x. Row index = position in the summary data
+  // as Tableau sent it. If this Tableau has no hoverTupleAsync, the extension's own tooltip is used from then on.
+  var tableauTipBroken = false;
+  var tableauRow = null; // last row sent (null = none shown)
+  function useTableauTooltip () {
+    return !!(cfg && cfg.interaction && cfg.interaction.tableauTooltip) && !tableauTipBroken;
+  }
+  function tableauHover (row, point) {
+    if (!worksheet) return;
+    if (row === tableauRow && row == null) return;
+    if (row != null && row === tableauRow) return; // same row: don't call again on every mousemove
+    if (ExtCore.hoverTooltip(worksheet, row, point) === false) { tableauTipBroken = true; tableauRow = null; return; }
+    tableauRow = row;
+  }
+  function tableauHoverAt (i, e) {
+    var s = (model.colorDim || model.series.length > 1) ? seriesFromEvent(e) : null;
+    var row = s && s.ris && s.ris[i] != null && s.ris[i] >= 0 ? s.ris[i] : -1;
+    if (row < 0) {
+      var vis = view.act.filter(function (a) { return a.s.ris && a.s.ris[i] != null && a.s.ris[i] >= 0; })[0];
+      row = vis ? vis.s.ris[i] : (model.xs[i] && model.xs[i].i != null ? model.xs[i].i : -1);
+    }
+    tableauHover(row >= 0 ? row : null, { x: e.clientX, y: e.clientY });
   }
 
   // ---------------------------------------------------------------------------

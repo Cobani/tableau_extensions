@@ -38,7 +38,7 @@
     });
 
     el.svg.addEventListener('mousemove', onHover);
-    el.svg.addEventListener('mouseleave', hideTooltip);
+    el.svg.addEventListener('mouseleave', onLeave);
     el.svg.addEventListener('contextmenu', onContextMenu);
     el.svg.addEventListener('click', onSegmentClick);
     document.addEventListener('click', function (e) {
@@ -325,7 +325,7 @@
     // Match every field to its column: first by id / name, then the leftovers by position.
     var bReqs = fields.breakdown.map(function (f) { return { field: f, dim: true, col: null }; });
     function measure (field, kind, key) {
-      return { field: field, col: null, kind: kind, key: key, name: cleanName(field.name), total: 0, n: 0, fv: null, per: {} };
+      return { field: field, col: null, kind: kind, key: key, name: cleanName(field.name), total: 0, n: 0, fv: null, per: {}, row: null, perRow: {} };
     }
     var ms = [];
     if (fields.start[0]) ms.push(measure(fields.start[0], 'start', '__start'));
@@ -354,10 +354,11 @@
     var comboRaw = []; // raw cell values of each combination, for selecting in Tableau
     var comboSeen = {};
 
-    rows.forEach(function (r) {
+    var comboRow = []; // index in the summary data (as sent) of the first row of each combination
+    rows.forEach(function (r, ri) {
       var vals = cBrk.map(function (c) { return String(r[c.index].formattedValue); });
       var ck = vals.join('\u0001');
-      if (cBrk.length && !comboSeen[ck]) { comboSeen[ck] = combos.length + 1; combos.push(vals); comboRaw.push(cBrk.map(function (c) { return r[c.index].value; })); }
+      if (cBrk.length && !comboSeen[ck]) { comboSeen[ck] = combos.length + 1; combos.push(vals); comboRaw.push(cBrk.map(function (c) { return r[c.index].value; })); comboRow.push(ri); }
       var mn = cMN ? norm(r[cMN.index].formattedValue || r[cMN.index].value) : null;
       ms.forEach(function (m) {
         var cell = null;
@@ -369,8 +370,8 @@
         m.total += v;
         m.n++;
         m.fv = m.n === 1 ? cell.formattedValue : null;
-        if (m.n === 1) m.fv1 = cell.formattedValue;
-        if (cBrk.length) m.per[ck] = (m.per[ck] || 0) + v;
+        if (m.n === 1) { m.fv1 = cell.formattedValue; m.row = ri; }
+        if (cBrk.length) { m.per[ck] = (m.per[ck] || 0) + v; if (m.perRow[ck] == null) m.perRow[ck] = ri; }
       });
     });
 
@@ -390,9 +391,9 @@
 
     function bar (m) {
       return {
-        key: m.key, kind: m.kind, name: m.name, raw: m.total, fv: m.fv, found: m.n > 0, once: once(m),
+        key: m.key, kind: m.kind, name: m.name, raw: m.total, fv: m.fv, found: m.n > 0, once: once(m), row: m.row,
         // one row per Breakdown combination: { c: combo index, raw }
-        rows: cBrk.length ? Object.keys(m.per).map(function (k) { return { c: comboSeen[k] - 1, raw: m.per[k] }; }) : []
+        rows: cBrk.length ? Object.keys(m.per).map(function (k) { return { c: comboSeen[k] - 1, raw: m.per[k], ri: m.perRow[k] }; }) : []
       };
     }
 
@@ -404,6 +405,7 @@
       dimKeys: fields.breakdown.map(function (f) { return f.name; }), // every Breakdown pill, matched or not
       combos: combos,
       comboRaw: comboRaw,
+      comboRow: comboRow,
       members: combos.map(function (c) { return c.join(' \u00b7 '); }),
       missing: ms.filter(function (m) { return !m.n; }).map(function (m) { return m.name; }),
       // Start / End column ids, for reading them without the Breakdown (fetchBalances)
@@ -564,6 +566,7 @@
       level = startBar.raw;
       var b1 = decorate(startBar, s, 0, startBar.raw, startBar.raw, s.color);
       b1.varies = startBar.varies;
+      b1.row = startBar.row;
       out.push(b1);
     }
     sortedSteps().forEach(function (it) {
@@ -576,6 +579,7 @@
       b.segs = stepSegs(st, sc);
       b.members = b.segs.map(function (sg) { return sg.member; });
       b.rows = st.rows;
+      b.row = st.row;
       level += v;
       out.push(b);
     });
@@ -589,6 +593,7 @@
       var b2 = decorate(endBar, cfg.end, 0, endBar.raw, endBar.raw, cfg.end.color);
       b2.calculated = calculated;
       b2.varies = endBar.varies;
+      b2.row = calculated ? null : endBar.row;
       b2.expected = level;
       out.push(b2);
     }
@@ -671,6 +676,26 @@
     paintCard();
     paintHeader(bars);
     drawChart(bars);
+    syncPictureButton();
+  }
+
+  // Save as picture (Format → Card → Export). The title and legend are HTML around the SVG, so PNG only.
+  var picBtn = null;
+  function syncPictureButton () {
+    var on = !!(cfg.export && cfg.export.picture) && window.ExtSnapshot;
+    if (!on) {
+      if (picBtn) { picBtn.destroy(); picBtn = null; }
+      return;
+    }
+    if (!picBtn) {
+      picBtn = ExtSnapshot.button({
+        host: el.card, element: el.card,
+        title: function () { return (el.title && el.title.textContent) || (worksheet && worksheet.name) || 'Waterfall'; },
+        onError: function (err) { console.error(err); }
+      });
+      if (picBtn && picBtn.el) picBtn.el.setAttribute('data-snapshot', 'skip');
+    }
+    picBtn.refresh();
   }
 
   function applyFont (node, f) {
@@ -1345,8 +1370,65 @@
     return d ? d.bar : null;
   }
 
+  // Tableau's own tooltip (Format → Bars → Use Tableau's tooltip).
+  // Mark → row: index in the summary data exactly as Tableau sent it (0-based).
+  //  - no Breakdown: every bar uses `row` (the first row holding that measure; normally 0)
+  //  - Breakdown, step bar: the segment under the pointer → first row of its member combination
+  //    (an "Others" segment → first row among the combined members); between segments → the bar's first row
+  //  - Start / End: the bar's first row. A calculated End bar and group brackets: null (no tooltip).
+  var hoverRow = -2;      // last row sent to Tableau (-2 = nothing sent yet)
+  var tableauTipBroken = false; // this Tableau has no hoverTupleAsync: use our own tooltip
+
+  function useTableauTip () {
+    return !!(cfg && cfg.interaction && cfg.interaction.tableauTooltip) && !tableauTipBroken;
+  }
+
+  function rowOfHover (b, e) {
+    if (!b || b.calculated) return null;
+    if (b.kind === 'step' && b.rows && b.rows.length && model.combos.length) {
+      var seg = segmentAt(b, e.clientY);
+      if (seg) {
+        var order = dimOrder(b.s.breakdown);
+        var sep = b.s.breakdown.sep;
+        var shown = {};
+        (b.segs || []).forEach(function (sg) { if (!sg.others) shown[sg.member] = true; });
+        for (var i = 0; i < b.rows.length; i++) {
+          var n = memberName(model.combos[b.rows[i].c], order, sep);
+          if (seg.others ? !shown[n] : n === seg.member) return b.rows[i].ri;
+        }
+      }
+      return b.rows[0].ri;
+    }
+    return b.row == null ? null : b.row;
+  }
+
+  function sendHoverRow (row, e) {
+    if (row === hoverRow) return;
+    hoverRow = row;
+    if (!ExtCore.hoverTooltip(worksheet, row, { x: e ? e.clientX : 0, y: e ? e.clientY : 0 })) {
+      tableauTipBroken = true;
+      hoverRow = -2;
+    }
+  }
+
+  function endTableauTip () {
+    if (hoverRow !== -2 && hoverRow !== null) ExtCore.hoverTooltip(worksheet, null);
+    hoverRow = -2;
+  }
+
+  function onLeave () {
+    hideTooltip();
+    if (useTableauTip()) endTableauTip();
+  }
+
   function onHover (e) {
-    if (!cfg || !cfg.bars.tooltip || el.menu.style.display === 'block') return;
+    if (!cfg || el.menu.style.display === 'block') return;
+    if (useTableauTip()) {
+      hideTooltip();
+      sendHoverRow(rowOfHover(barFromEvent(e), e), e);
+      if (useTableauTip()) return; // else: this Tableau cannot do it, fall through to our tooltip
+    }
+    if (!cfg.bars.tooltip) return;
     var b = barFromEvent(e);
     if (!b) { hideTooltip(); return; }
     var f = fmtOf(b.s.total.fmt);

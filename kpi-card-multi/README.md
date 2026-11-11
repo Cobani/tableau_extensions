@@ -82,6 +82,15 @@ settings. Settings are one JSON string under the key `kpiCardMulti1` in the work
 ## Click selects in Tableau
 Optional (Format → Card → Interaction → **Click selects in Tableau**, off by default, shared by all cards). Click a card to select its latest date in Tableau, or click a point on its trend line to select that date, so dashboard filter, highlight and go-to-sheet actions fire. Only the date is selected (a measure cannot be selected), so every card shows the outline while a date is selected. Click the same place again (or press Esc) to clear. It needs a field on the Date tile; without one a click does nothing.
 
+## Tableau's own tooltip
+Optional (Format → Card → Interaction → **Use Tableau's tooltip**, off by default, shared by all cards). Shows the tooltip you design in Tableau (Worksheet → Tooltip), including viz in tooltip, instead of this extension's own tooltip. Tableau keeps one summary-data row per date with every measure, so hovering a card's trend line shows the tooltip of the hovered date, and hovering anywhere else on a card shows the latest date's. Needs Tableau 2024.2 or newer; on an older Tableau the extension's own tooltip is used.
+
+## Save as picture
+Optional (Format → Card → Export → **Save as picture button**, off by default, shared by all cards). One button for the whole zone appears in the top-right corner on hover and saves the whole row of cards as a PNG picture (not one picture per card). No vector SVG: the cards are HTML.
+
+## Brand themes
+Format → Presets → bottom of the tab: apply a brand theme (file, pasted text, My themes, bundled themes) or save this look as a theme. A theme sets the shared look of the row. A card that has its own per-card value for a setting (for example its own number format or icon) keeps it.
+
 ## Tooltip tile → tooltip
 
 Measures dropped on Tableau's own **Tooltip** tile (Marks card) are listed in the tooltip, in tile order:

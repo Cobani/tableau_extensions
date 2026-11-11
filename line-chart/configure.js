@@ -566,6 +566,8 @@
     var g3 = group(p, 'Interaction');
     g3.appendChild(checkboxRow('Fade other series on legend hover', 'chart.hoverDim'));
     g3.appendChild(checkboxRow('Right-click menu', 'chart.rightClickMenu'));
+    g3.appendChild(checkboxRow('Use Tableau’s tooltip', 'interaction.tableauTooltip'));
+    g3.appendChild(help('Shows the tooltip you design in Tableau (Worksheet → Tooltip), including viz in tooltip, instead of this extension’s own tooltip. Needs Tableau 2024.2 or newer. The hover line stays.'));
     g3.appendChild(checkboxRow('Click selects in Tableau', 'interaction.selectInTableau'));
     g3.appendChild(help('Click a point (line chart) / a breakdown segment (waterfall) to select it in Tableau, so dashboard filter and highlight actions fire. Click it again or an empty area to clear.'));
   }
@@ -590,6 +592,8 @@
     var g1 = group(p, 'Export button');
     g1.appendChild(segRow('Show', 'export.button', [['hover', 'On hover'], ['always', 'Always'], ['never', 'Never']]));
     g1.appendChild(help('The button at the top right downloads the chart’s data as Excel or CSV, or copies it to paste into Excel.'));
+    g1.appendChild(checkboxRow('Save as picture button', 'export.picture'));
+    g1.appendChild(help('Adds “Save as picture” to the export menu (the button at the top right, shown on hover) to save the chart as a PNG picture.'));
     var g2 = group(p, 'Files');
     g2.appendChild(textRow('File name', 'export.fileName', 'Empty = the title'));
     g2.appendChild(help('Today’s date is added, e.g. “Transfers 2026-10-20.xlsx”. Tableau Desktop can block downloads from extensions; then use Copy data. Tableau Server and Cloud in a browser download normally.'));
@@ -855,6 +859,16 @@
         r.append(t, h('div', { className: 'inline' }, [apply, dl, del]));
         g3.appendChild(r);
       });
+    }
+
+    if (window.ExtTheme && ExtTheme.section) {
+      p.appendChild(ExtTheme.section({
+        h: h,
+        name: 'Line Chart',
+        themeMap: Lc.THEME_MAP,
+        getSettings: function () { return cfg; },
+        applySettings: function (next) { cfg = next; changed(); rebuild(); }
+      }));
     }
   }
   function buildIconTab (p) {

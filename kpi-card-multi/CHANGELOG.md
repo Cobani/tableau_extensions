@@ -3,6 +3,9 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `kpiCardMulti.trex`.
 
 ## 1.2.0 — 2026-11-10
+- Presets tab: apply a brand theme or save this look as a theme.
+- New option Format → Card → Interaction → Use Tableau's tooltip (off by default, shared by all cards): shows the tooltip designed in Tableau for the hovered date (latest date when hovering elsewhere on a card).
+- New option Format → Card → Export → Save as picture button (off by default): one button saves the whole row of cards as a PNG.
 - Format dialog: Undo and Redo (buttons and Ctrl/Cmd+Z), and a search box that finds a setting on any tab.
 - New Presets tab: save a look and reuse it in other worksheets or workbooks (export / import as a file or via the clipboard, My presets in this browser).
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).

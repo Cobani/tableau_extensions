@@ -34,6 +34,8 @@
   var state = {
     folded: {}, // 'r:<path>' / 'c:<path>' → true
     hover: null, // { ri, ci }
+    ttRow: null, // summary-data row index Tableau's own tooltip is showing for
+    ttOff: false, // this Tableau has no hoverTupleAsync: use our own tooltip
     sig: null
   };
 
@@ -398,10 +400,10 @@
     // Measure Names / Measure Values rows: one row per measure, merge them back by dimension values.
     var byKey = cMN ? {} : null;
     var out = [];
-    rows.forEach(function (row) {
+    rows.forEach(function (row, idx) {
       var mn = cMN ? norm(row[cMN.index].formattedValue || row[cMN.index].value) : null;
       var rd = []; var cd = [];
-      var o = { r: dimVals(row, rq, rd), c: dimVals(row, cq, cd), rd: rd, cd: cd, v: {}, fv: {}, k: null, x: {} };
+      var o = { r: dimVals(row, rq, rd), c: dimVals(row, cq, cd), rd: rd, cd: cd, v: {}, fv: {}, k: null, x: {}, ri: idx, rim: {} };
       if (byKey) {
         var dk = o.r.join(SEP) + '\u0002' + o.c.join(SEP) + '\u0002' + details.map(function (r) { return cellText(r.col ? row[r.col.index] : null); }).join(SEP);
         if (byKey[dk]) o = byKey[dk]; else { byKey[dk] = o; out.push(o); }
@@ -414,6 +416,7 @@
         var n = toNumber(cell);
         if (!isFinite(n)) return;
         o.v[r.key] = n; o.fv[r.key] = cell.formattedValue;
+        if (o.rim[r.key] == null) o.rim[r.key] = idx; // 0-based position in table.data (for Tableau's tooltip)
       });
       color.forEach(function (r) { var n = toNumber(cellOf(row, r, mn)); if (isFinite(n)) o.k = n; });
       extras.forEach(function (r) { var n = toNumber(cellOf(row, r, mn)); if (isFinite(n)) o.x[r.key] = n; });
@@ -462,7 +465,7 @@
     return a === 'auto' ? measureOf(k).agg : a;
   }
 
-  function newAcc () { return { v: {}, k: null, x: {} }; }
+  function newAcc () { return { v: {}, k: null, x: {}, ri: null, rim: {} }; }
 
   function addNum (store, key, x, fv) {
     var a = store[key];
@@ -500,7 +503,11 @@
           var acc = store.get(key);
           if (!acc) { acc = newAcc(); store.set(key, acc); }
           var m;
-          for (m in o.v) addNum(acc.v, m, o.v[m], o.fv[m]);
+          if (acc.ri == null) acc.ri = o.ri; // first row of this cell, in the order Tableau sent it
+          for (m in o.v) {
+            addNum(acc.v, m, o.v[m], o.fv[m]);
+            if (acc.rim[m] == null) acc.rim[m] = o.rim[m];
+          }
           if (o.k != null) { if (!acc.k) acc.k = { s: 0, n: 0, mn: Infinity, mx: -Infinity }; acc.k.s += o.k; acc.k.n++; acc.k.mn = Math.min(acc.k.mn, o.k); acc.k.mx = Math.max(acc.k.mx, o.k); }
           for (m in o.x) addNum(acc.x, m, o.x[m], null);
         }
@@ -1442,8 +1449,32 @@
     var d = cellFromEvent(e);
     if (!d) { hideTooltip(); setHover(null); return; }
     setHover({ ri: d.ri, ci: d.ci });
+    if (cfg.interaction.tableauTooltip && !state.ttOff) {
+      // Tableau's own tooltip: only for a cell that is exactly one data row's value (not subtotals / totals)
+      el.tooltip.style.display = 'none';
+      var ix = tupleRow(d.c);
+      if (ix == null) { tableauTipOff(); return; }
+      if (ix !== state.ttRow) {
+        if (ExtCore.hoverTooltip(worksheet, ix, { x: e.clientX, y: e.clientY })) { state.ttRow = ix; return; }
+        state.ttOff = true; // this Tableau has no such call: our own tooltip for the rest of the session
+      } else return;
+    }
     if (!cfg.tooltip.show) return;
     showTooltip(d.c, e.clientX, e.clientY);
+  }
+
+  /** 0-based row of table.data behind a cell (the row of its measure when several are pivoted), or null. */
+  function tupleRow (c) {
+    if (!c || c.empty || c.total || c.agg || !c.acc) return null;
+    var i = c.acc.rim[c.m];
+    if (i == null) i = c.acc.ri;
+    return i == null ? null : i;
+  }
+
+  function tableauTipOff () {
+    if (state.ttRow == null) return;
+    state.ttRow = null;
+    ExtCore.hoverTooltip(worksheet, null);
   }
 
   function pathText (axis, it) {
@@ -1530,7 +1561,10 @@
     return '<div class="tt-row"><span class="nm">' + esc(name) + '</span><span class="vl">' + esc(val) + '</span></div>';
   }
 
-  function hideTooltip () { if (el.tooltip) el.tooltip.style.display = 'none'; }
+  function hideTooltip () {
+    if (el.tooltip) el.tooltip.style.display = 'none';
+    tableauTipOff();
+  }
 
   // ---------------------------------------------------------------------------
   // Clicks
@@ -1618,7 +1652,21 @@
       ['CSV — crosstab as shown (.csv)', function () { exportCsv('crosstab'); }],
       null,
       ['Copy table (paste into Excel)', copyTable]
-    ];
+    ].concat(pictureItems());
+  }
+
+  /** "Save as picture" entries (PNG only: the table is HTML). full: the whole scrollable table, not just what is visible. */
+  function pictureItems () {
+    if (!cfg.export.picture || !window.ExtSnapshot) return [];
+    var out = [null];
+    ExtSnapshot.menuItems({ element: el.card, title: function () { return cfg.export.fileName || cfg.title.text || defaultTitle(); }, full: true }).forEach(function (it) {
+      out.push([it.label, function () {
+        var p;
+        try { p = it.run(); } catch (e) { p = Promise.reject(e); }
+        if (p && p.catch) p.catch(function (err) { console.error(err); toast('Couldn’t save the picture. ' + (err && err.message ? err.message : ''), true); });
+      }]);
+    });
+    return out;
   }
 
   function check (on, text) { return (on ? '✓ ' : '  ') + text; }

@@ -89,6 +89,7 @@
 
   var worksheet = {
     name: 'KPI Row (mock)',
+    hoverTupleAsync: function (id, ctx) { console.log('mock hoverTupleAsync', id, JSON.stringify(ctx || null)); return Promise.resolve(); },
     selectMarksByValueAsync: function () { console.log('mock selectMarksByValueAsync', JSON.stringify(arguments[0])); return Promise.resolve(); },
     clearSelectedMarksAsync: function () { console.log('mock clearSelectedMarksAsync'); return Promise.resolve(); },
     getSummaryDataAsync: function () {

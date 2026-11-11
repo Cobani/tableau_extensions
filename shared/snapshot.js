@@ -90,7 +90,8 @@
 
   /** A title made safe for a file name: no path / reserved characters, no leading dots, at most 80 characters; '' gives 'chart'. */
   function cleanFileName (title) {
-    let s = String(title == null ? '' : title).replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+    // Arrows and other symbols make some browsers drop the whole name: '→' becomes 'to'.
+    let s = String(title == null ? '' : title).replace(/\s*[\u2190-\u21ff\u27f0-\u27ff]\s*/g, ' to ').replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
     s = s.replace(/^[.\s]+/, '');
     if (s.length > MAX_NAME) s = s.slice(0, MAX_NAME).replace(/[\ud800-\udbff]$/, '');
     s = s.replace(/[.\s]+$/, '');

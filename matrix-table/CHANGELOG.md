@@ -3,6 +3,9 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `matrix-table.trex`.
 
 ## 1.1.0 — 2026-11-10
+- Presets tab: apply a brand theme or save this look as a theme.
+- Option to show Tableau's own tooltip on cells (Tooltip & actions: Use Tableau's tooltip, off by default).
+- Save as picture: PNG of the whole matrix in the export menu (Export tab: Save as picture button, on by default).
 - Format dialog: Undo and Redo (buttons and Ctrl/Cmd+Z), and a search box that finds a setting on any tab.
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).
 - New setting Format → Card → Maximum rows: the extension reads at most this many rows from the worksheet (default 1,000; 0 = all) and shows a note in the corner when rows were left out.

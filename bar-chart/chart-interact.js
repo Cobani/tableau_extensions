@@ -150,19 +150,66 @@
     clearTimeout(S.hoverClear); S.hoverClear = null;
     var seg = e.target.getAttribute && e.target.getAttribute('data-seg');
     if (S.lastHover && S.lastHover.d === d && S.lastHover.seg === seg) {
-      if (S.cfg.tooltip.show) placeTooltip(e.clientX, e.clientY);
+      if (S.cfg.tooltip.show && !(S.cfg.interaction.tableauTooltip && !S.noTableauTip)) placeTooltip(e.clientX, e.clientY);
       return;
     }
     S.lastHover = { d: d, seg: seg };
+    var tableauTip = S.cfg.interaction.tableauTooltip && !S.noTableauTip;
     if (S.cfg.hover.dimOthers) {
       if (d.kind === 'line') setHover('l:' + d.line.key);
       else if (d.b) setHover('c:' + rootLabel(d.node) + (S.view.visSeries.length > 1 ? '|s:' + d.b.s.key : ''));
+    }
+    if (tableauTip) {
+      // Tableau's own tooltip: only when the hovered mark changed (this branch is past the same-mark check above)
+      var ri = summaryRowOf(d, seg != null ? Number(seg) : null);
+      if (ri == null) { clearTableauTip(); return; } // a mark with no row of its own shows no tooltip
+      if (ExtCore.hoverTooltip(S.worksheet, ri, { x: e.clientX, y: e.clientY }) !== false) { S.tipRi = ri; hideOwnTooltip(); return; }
+      S.noTableauTip = true; // this Tableau has no hoverTupleAsync: own tooltip for the rest of the session
     }
     if (!S.cfg.tooltip.show) return;
     showTooltip(d, e.clientX, e.clientY, false, seg != null ? Number(seg) : null);
   }
 
+  /**
+   * Position in the summary data (as Tableau sent it) of the row behind a hovered mark.
+   * A stacked segment: the first row of that segment's breakdown member. A bar without segments:
+   * the first row of that bar's series. A line point: the first row of its category.
+   * "Others" buckets and other aggregates use their first source row. null = no row.
+   */
+  function summaryRowOf (d, segIdx) {
+    var n = d.node;
+    var pick = null;
+    if (d.kind === 'line') pick = n.ris && n.ris.length ? n.ris[0] : null;
+    else if (d.kind === 'bar' && d.b) {
+      var items = n.items.filter(function (it) { return it.s === d.b.s.key; });
+      if (segIdx != null) {
+        var spec = B.segSpec(n);
+        var segs = spec ? B.segmentsOf(n, d.b.s.key, spec) : [];
+        if (segs[segIdx]) {
+          var idx = spec.idx;
+          var sep = S.cfg.breakdown.sep == null ? ' \u00b7 ' : S.cfg.breakdown.sep;
+          var hit = items.find(function (it) { return idx.map(function (i) { return it.b[i]; }).join(sep) === segs[segIdx].member; });
+          if (hit) items = [hit];
+        }
+      }
+      pick = items.length ? items[0].ri : (n.ris && n.ris.length ? n.ris[0] : null);
+    }
+    var row = pick != null ? S.raw.rows[pick] : null;
+    return row && row.sri != null ? row.sri : null;
+  }
+
+  function clearTableauTip () {
+    if (S.tipRi == null) return;
+    S.tipRi = null;
+    ExtCore.hoverTooltip(S.worksheet, null);
+  }
+
+  function hideOwnTooltip () {
+    if (S.el.tooltip) { S.el.tooltip.style.display = 'none'; S.el.tooltip.classList.remove('is-pinned'); }
+  }
+
   function showTooltip (d, x, y, pinned, segIdx) {
+    clearTableauTip();
     var tt = S.el.tooltip;
     tt.innerHTML = tooltipHtml(d, pinned, segIdx);
     tt.style.fontFamily = Bc.fontStack(S.cfg.numbers.font);
@@ -362,7 +409,8 @@
   }
 
   function hideTooltip () {
-    if (S.el.tooltip) { S.el.tooltip.style.display = 'none'; S.el.tooltip.classList.remove('is-pinned'); }
+    clearTableauTip();
+    hideOwnTooltip();
   }
 
   function hideTooltipIfStale () {

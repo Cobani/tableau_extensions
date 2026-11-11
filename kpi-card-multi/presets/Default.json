@@ -78,7 +78,11 @@
       "showSign": true
     },
     "interaction": {
-      "selectInTableau": false
+      "selectInTableau": false,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": false
     },
     "data": {},
     "card": {

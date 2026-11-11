@@ -116,7 +116,11 @@
       showSign: true
     },
     interaction: {
-      selectInTableau: false // click selects the date in Tableau so dashboard actions fire (shared by all cards)
+      selectInTableau: false, // click selects the date in Tableau so dashboard actions fire (shared by all cards)
+      tableauTooltip: false // show the tooltip designed in Tableau instead of this extension's own (shared by all cards)
+    },
+    export: {
+      picture: false // "Save as picture" button for the whole row of cards (PNG)
     },
     // ---- Data ---------------------------------------------------------------
     data: {

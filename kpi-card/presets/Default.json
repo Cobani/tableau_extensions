@@ -78,7 +78,8 @@
       "showSign": true
     },
     "interaction": {
-      "selectInTableau": false
+      "selectInTableau": false,
+      "tableauTooltip": false
     },
     "data": {},
     "card": {
@@ -111,6 +112,9 @@
         "weight": 700,
         "italic": false
       }
+    },
+    "export": {
+      "picture": false
     }
   }
 }

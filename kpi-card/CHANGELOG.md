@@ -3,6 +3,9 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `kpiCard.trex`.
 
 ## 2.3.0 — 2026-11-10
+- New: brand theme section in the Presets tab.
+- New: use Tableau's own tooltip (Format → Card → Interaction), trend-line hover = that date's row, elsewhere = latest date.
+- New: Save as picture button (Format → Card → Export), saves the card as a PNG.
 - Format dialog: Undo and Redo (buttons and Ctrl/Cmd+Z), and a search box that finds a setting on any tab.
 - New Presets tab: save a look and reuse it in other worksheets or workbooks (export / import as a file or via the clipboard, My presets in this browser).
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).

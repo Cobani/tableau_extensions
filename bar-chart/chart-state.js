@@ -83,6 +83,8 @@
       // Mouse moves are handled once per frame; moving within the same bar only moves the tooltip,
       // and crossing the gap between two bars doesn't un-fade and re-fade the whole chart.
       lastHover: null,
+      tipRi: null, // summary-data row of the mark Tableau's own tooltip is showing (interaction.tableauTooltip)
+      noTableauTip: false, // set when hoverTupleAsync is missing
       hoverClear: null,
       hoverEvt: null,
       ttSize: { w: 0, h: 0 },

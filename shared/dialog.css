@@ -347,3 +347,15 @@ input[type="range"] { flex: 1; accent-color: var(--accent); }
   0%, 55% { background: #fff1ee; box-shadow: 0 0 0 4px #fff1ee; }
   100% { background: transparent; box-shadow: 0 0 0 4px transparent; }
 }
+
+/* ---- Brand theme section (ExtTheme.section, Presets tab) ---------------------- */
+.ext-theme-sub { margin: 12px 0 4px; font-weight: 700; }
+.ext-theme-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.ext-theme-json { display: block; width: 100%; box-sizing: border-box; height: 90px; margin: 4px 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; white-space: pre; }
+.ext-theme-name-input { display: block; width: 100%; box-sizing: border-box; margin: 4px 0; }
+.ext-theme-msg { margin: 8px 0; padding: 8px 10px; border-radius: 4px; background: #EAF5EE; color: #1E6B3C; font-size: 12px; }
+.ext-theme-msg.is-error { background: #FDECEA; color: #A1281C; }
+.ext-theme-msg[hidden] { display: none; }
+.ext-theme-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.ext-theme-item .ext-theme-btns { margin: 0; flex: none; }
+.ext-theme-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

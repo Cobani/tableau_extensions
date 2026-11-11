@@ -3,6 +3,9 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `data-lineage.trex`.
 
 ## 1.3.0 — 2026-11-10
+- New: apply or save a brand theme in the Presets tab.
+- New: option to show Tableau's own tooltip when hovering a node (Search & actions → Tooltip), off by default.
+- New: Save as picture button (PNG of the whole lineage), off by default (Card → Export).
 - Format dialog: Undo and Redo (buttons and Ctrl/Cmd+Z), and a search box that finds a setting on any tab.
 - The extension now has its own icon in Tableau (remove and re-add the extension to see it).
 - New setting Format → Card → Maximum rows: the extension reads at most this many rows from the worksheet (default 1,000; 0 = all) and shows a note in the corner when rows were left out.

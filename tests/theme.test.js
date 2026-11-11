@@ -183,3 +183,141 @@ test('save / list / remove use one shared storage key and survive a broken store
   assert.equal(none.ExtTheme.save(MIDNIGHT).ok, false); // no storage: reported, not thrown
   assert.deepEqual(plain(none.ExtTheme.list()), []);
 });
+
+// ---------------------------------------------------------------------------
+// ExtTheme.section: the Format dialog's "Brand theme" block
+// ---------------------------------------------------------------------------
+/** Just enough DOM for section(): elements with children, attributes, events. */
+function fakeEl (tag) {
+  const listeners = {};
+  const attrs = {};
+  const n = {
+    tagName: String(tag).toUpperCase(), children: [], style: {}, hidden: false, className: '', textContent: '', value: '',
+    appendChild: function (c) { if (c.parent) c.parent.children.splice(c.parent.children.indexOf(c), 1); c.parent = n; n.children.push(c); return c; },
+    replaceChild: function (next, old) { const i = n.children.indexOf(old); n.children.splice(i, 1, next); next.parent = n; old.parent = null; return old; },
+    setAttribute: function (k, v) { attrs[k] = String(v); },
+    getAttribute: function (k) { return k in attrs ? attrs[k] : null; },
+    addEventListener: function (t, fn) { (listeners[t] = listeners[t] || []).push(fn); },
+    click: function () { (listeners.click || []).forEach(function (fn) { fn({ type: 'click', target: n }); }); },
+    focus: function () {}, select: function () {}
+  };
+  return n;
+}
+function fh (tag, props, children) {
+  const n = fakeEl(tag);
+  Object.keys(props || {}).forEach(function (k) { if (k === 'role') n.setAttribute('role', props[k]); else n[k] = props[k]; });
+  (children || []).forEach(function (c) { n.appendChild(c); });
+  return n;
+}
+function all (node, fn, out) {
+  out = out || [];
+  node.children.forEach(function (c) { if (fn(c)) out.push(c); all(c, fn, out); });
+  return out;
+}
+function text (node) { return [node.textContent].concat(node.children.map(text)).join(' '); }
+function btn (node, label) {
+  const b = all(node, function (c) { return c.tagName === 'BUTTON' && c.textContent === label; });
+  assert.ok(b.length >= 1, 'no button ' + label);
+  return b[0];
+}
+function msgOf (node) { return all(node, function (c) { return /ext-theme-msg/.test(c.className); })[0]; }
+
+/** theme.js in a sandbox with an in-memory localStorage; bar-chart's real THEME_MAP and DEFAULTS. */
+function setupSection (themeMapOverride) {
+  const vm = require('node:vm');
+  const mem = {};
+  const ctx = vm.createContext({
+    ExtCore: core, console: console, setTimeout: setTimeout, JSON: JSON,
+    localStorage: { getItem: function (k) { return k in mem ? mem[k] : null; }, setItem: function (k, v) { mem[k] = String(v); }, removeItem: function (k) { delete mem[k]; } }
+  });
+  ctx.window = ctx;
+  vm.runInContext(h.read('shared/theme.js'), ctx);
+  const bar = load('bar-chart');
+  let cfg = bar.D;
+  const calls = [];
+  const el = ctx.ExtTheme.section({
+    h: fh, name: 'Bar Chart',
+    themeMap: themeMapOverride === undefined ? bar.map : themeMapOverride,
+    getSettings: function () { return cfg; },
+    applySettings: function (next) { calls.push(next); cfg = next; }
+  });
+  return { T: ctx.ExtTheme, el: el, bar: bar, calls: calls };
+}
+
+test('section returns an element with the title and the intro text', function () {
+  const s = setupSection();
+  assert.equal(s.el.tagName, 'DIV');
+  assert.match(text(s.el), /Brand theme/);
+  assert.match(text(s.el), /works in every extension/);
+  assert.match(text(s.el), /No saved themes yet\./);
+});
+
+test('clicking Midnight applies it once and reports the number of changed settings', function () {
+  const s = setupSection();
+  btn(s.el, 'Midnight').click();
+  assert.equal(s.calls.length, 1);
+  assert.equal(plain(s.calls[0]).card.bgColor.toUpperCase(), MIDNIGHT.colors.background);
+  assert.match(msgOf(s.el).textContent, /^Applied “Midnight”\. \d+ settings changed\.$/);
+  assert.equal(msgOf(s.el).hidden, false);
+});
+
+test('applying Default on defaults reports no change and does not throw', function () {
+  const s = setupSection();
+  btn(s.el, 'Default').click();
+  assert.match(msgOf(s.el).textContent, /This chart already matches the theme\./);
+  assert.equal(msgOf(s.el).className.indexOf('is-error'), -1);
+});
+
+test('pasted invalid JSON shows an error and applies nothing', function () {
+  const s = setupSection();
+  all(s.el, function (c) { return c.tagName === 'TEXTAREA'; })[0].value = '{nope';
+  btn(s.el, 'Apply pasted').click();
+  assert.equal(s.calls.length, 0);
+  assert.match(msgOf(s.el).className, /is-error/);
+  assert.match(msgOf(s.el).textContent, /not valid JSON/);
+});
+
+test('pasted valid theme is applied; ignored values are counted', function () {
+  const s = setupSection();
+  const t = JSON.stringify(Object.assign({}, MIDNIGHT, { name: 'Pasted', fonts: { titleSize: 9999 } }));
+  all(s.el, function (c) { return c.tagName === 'TEXTAREA'; })[0].value = t;
+  btn(s.el, 'Apply pasted').click();
+  assert.equal(s.calls.length, 1);
+  assert.match(msgOf(s.el).textContent, /Applied “Pasted”\..*1 value was ignored\./);
+});
+
+test('Save to My themes stores a theme that list() returns, shows it, and Delete removes it', function () {
+  const s = setupSection();
+  btn(s.el, 'Save to My themes').click();
+  const saved = plain(s.T.list());
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].name, 'Bar Chart theme');
+  assert.match(text(s.el), /Bar Chart theme/);
+  assert.doesNotMatch(text(s.el), /No saved themes yet/);
+  btn(s.el, 'Delete').click();
+  assert.deepEqual(plain(s.T.list()), []);
+  assert.match(text(s.el), /No saved themes yet/);
+});
+
+test('a throwing applySettings ends as a message, not an exception', function () {
+  const s = setupSection();
+  const el = s.T.section({ h: fh, name: 'X', themeMap: s.bar.map, getSettings: function () { return s.bar.D; }, applySettings: function () { throw new Error('boom'); } });
+  const log = console.error;
+  console.error = function () {};
+  try { btn(el, 'Midnight').click(); } finally { console.error = log; }
+  assert.match(msgOf(el).textContent, /boom/);
+});
+
+test('the embedded bundled themes equal the JSON files', function () {
+  const T = setupSection().T;
+  assert.deepEqual(plain(T.BUNDLED.Default), DEFAULT);
+  assert.deepEqual(plain(T.BUNDLED.Midnight), MIDNIGHT);
+});
+
+test('a missing or empty themeMap gives the "not available" block', function () {
+  [undefined, null, {}].forEach(function (m) {
+    const s = setupSection(m === undefined ? null : m);
+    assert.match(text(s.el), /Themes are not available for this extension yet\./);
+    assert.equal(all(s.el, function (c) { return c.tagName === 'BUTTON'; }).length, 0);
+  });
+});

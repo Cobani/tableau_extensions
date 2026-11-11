@@ -49,7 +49,7 @@
     { id: 'number', label: 'Big number', build: buildNumberTab, keys: ['number'] },
     { id: 'change', label: '% Change', build: buildChangeTab, keys: ['change'] },
     { id: 'bottom', label: 'Bottom', build: buildBottomTab, keys: ['bottom'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data', 'interaction'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data', 'interaction', 'export'] },
     { id: 'layout', label: 'Layout', build: buildLayoutTab, keys: ['layout'] },
     { id: 'details', label: 'Tooltip', build: buildDetailsTab, keys: ['details'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
@@ -516,6 +516,11 @@
     var gInt = group(p, 'Interaction');
     gInt.appendChild(checkboxRow('Click selects in Tableau', 'interaction.selectInTableau'));
     gInt.appendChild(h('div', { className: 'help', textContent: 'Click a card to select its latest date in Tableau, or a point on the trend line to select that date, so dashboard filter, highlight and go-to-sheet actions fire. Click again to clear. Needs a field on the Date tile.' }));
+    gInt.appendChild(checkboxRow('Use Tableau\u2019s tooltip', 'interaction.tableauTooltip'));
+    gInt.appendChild(h('div', { className: 'help', textContent: 'Shows the tooltip you design in Tableau (Worksheet \u2192 Tooltip), including viz in tooltip, instead of this extension\u2019s own tooltip. Hover the trend line for that date, anywhere else on a card for the latest date. Needs Tableau 2024.2 or newer.' }));
+    var gExp = group(p, 'Export');
+    gExp.appendChild(checkboxRow('Save as picture button', 'export.picture'));
+    gExp.appendChild(h('div', { className: 'help', textContent: 'Shows a button in the top-right corner (on hover) that saves the whole row of cards as a PNG picture.' }));
 
   }
 
@@ -936,6 +941,26 @@
         r.append(t, h('div', { className: 'inline' }, [apply, dl, del]));
         g3.appendChild(r);
       });
+    }
+
+    // ---- Brand theme (shared look of all cards; cards with their own per-card values keep them)
+    if (window.ExtTheme && ExtTheme.section) {
+      p.appendChild(ExtTheme.section({
+        h: h,
+        name: 'KPI Card Multi',
+        themeMap: KpiCardMultiConfig.THEME_MAP,
+        getSettings: function () {
+          KpiCardMultiConfig.splitInto(store, currentKey, cfg); // bring the shared settings up to date first
+          return store.shared;
+        },
+        applySettings: function (next) {
+          KpiCardMultiConfig.splitInto(store, currentKey, cfg);
+          store.shared = next;
+          cfg = KpiCardMultiConfig.cardConfig(store, currentKey);
+          changed();
+          rebuild();
+        }
+      }));
     }
   }
 

@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Data Lineage</title>
     <!-- Start-up, reload recovery and error reporting (shared/boot.js). -->
-    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=9e84dd7850" data-name="Data Lineage" data-ext-version="1.3.0"></script>
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=03536817f4" data-name="Data Lineage" data-ext-version="1.3.0"></script>
     <!-- Start downloading the shared Tableau API library early; the same URL is cached for every extension. -->
     <link rel="preload" as="script" href="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" />
     <link rel="stylesheet" href="../shared/fonts/fonts.css?v=22ceb76171" />
     <link rel="stylesheet" href="./chart.css?v=4e45e46243" />
     <script src="../shared/timing.js?v=666dc99b7c"></script>
     <script src="../shared/core.js?v=2cdac465b4"></script>
+    <script src="../shared/snapshot.js?v=b026331aa7"></script>
     <script src="./icons.js?v=58c76ce58f"></script>
-    <script src="./config.js?v=e9ab74b93b"></script>
-    <script src="./chart.js?v=5e167ad07f"></script>
+    <script src="./config.js?v=fc3e777135"></script>
+    <script src="./chart.js?v=ba9350f7d4"></script>
   </head>
 
   <body>
@@ -27,7 +28,7 @@
         </div>
         <div id="tools" class="tools">
           <div id="legend" class="legend"></div>
-          <div id="searchbox" class="searchbox">
+          <div id="searchbox" class="searchbox" data-snapshot="skip">
             <input id="search" type="search" autocomplete="off" spellcheck="false" aria-label="Search nodes" />
           </div>
         </div>

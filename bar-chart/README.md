@@ -91,6 +91,12 @@ card too; every field there becomes a `name: value` tooltip row.
   highlight actions) and fades the other bars. Click it again, or on empty space, to undo; click another one to select
   that instead. Optionally (Tooltip & actions, off by default) the click also pins the tooltip, which lists every row
   and sorts by *Name* or *Value*.
+- **Tableau's own tooltip** (Tooltip & Actions, off by default): hovering shows the tooltip you designed in Tableau
+  (Worksheet → Tooltip, including viz in tooltip) instead of this one. Needs Tableau 2024.2 or newer; older versions
+  keep the extension's tooltip. A stacked segment shows the tooltip of its row; a bar total, an *Others* bar or a line
+  point shows the first row behind it.
+- **Save as picture**: the export button's menu also has *Picture (PNG)*, which saves the whole card (title, legend and
+  chart). Switch it off on the Export tab (*Save as picture button*).
 - **Double-click** a bar: drill down into the next Dimension field. Three modes (Breakdown & drill tab):
   *expand that bar and keep the others*, *show only that bar's detail*, or *expand every bar*. A Back / Reset bar
   appears above the chart.
@@ -124,10 +130,10 @@ defaults.
 | Sort & Top N | sort · Top N of any Dimension field, within each parent or overall, by any measure, with Others |
 | Legend | position, order, markers, totals, included items, Top N naming, item names, title, text, interaction, box |
 | Line Chart | **show / hide the lines** · per Line measure: name, colour, shape, markers, values · shared or own number format for line values + line axis · line axis |
-| Tooltip & Actions | tooltip parts, sorting, rows, pin on click · **own number format** (else the chart's) · right-click menu · double-click · click selects in Tableau |
+| Tooltip & Actions | **use Tableau's tooltip** · tooltip parts, sorting, rows, pin on click · **own number format** (else the chart's) · right-click menu · double-click · click selects in Tableau |
 | Comments | show, marker or callout, style, author · edit, recolour, delete, add |
 | Card | padding, space above the chart (default 0), background and chart-area background |
-| Presets | export, import and save chart settings |
+| Presets | export, import and save chart settings · apply or save a brand theme (colours and fonts, shared by every extension) |
 
 ### Quick looks
 

@@ -50,7 +50,8 @@
 
     el.nodes.addEventListener('mousemove', onHover);
     el.plot.addEventListener('mouseleave', function () { setHover(null); hideTooltip(); });
-    el.plot.addEventListener('scroll', function () { hideTooltip(); hideMenu(); });
+    el.plot.addEventListener('mouseleave', function () { hoverTableau(null); });
+    el.plot.addEventListener('scroll', function () { hideTooltip(); hideMenu(); hoverTableau(null); });
     el.plot.addEventListener('click', onClick);
     el.plot.addEventListener('dblclick', onDblClick);
     el.plot.addEventListener('contextmenu', onContextMenu);
@@ -399,11 +400,11 @@
     if (guessed.length) console.info('Data Lineage: matched renamed fields by position:', guessed);
 
     var out = [];
-    rows.forEach(function (row) {
+    rows.forEach(function (row, ri) {
       var p = levels.map(function (l) { return l.col ? cellText(row[l.col.index]) : null; });
       if (p.every(function (v) { return v == null; })) return;
       var x = extras.map(function (e) { return e.col ? cellText(row[e.col.index]) : null; });
-      out.push([p, x]);
+      out.push([p, x, ri]); // ri: this row's position in the summary data as Tableau sent it (for Tableau's tooltip)
     });
     return {
       levels: levels.map(function (l) { return { key: l.key, name: l.name }; }),
@@ -553,7 +554,7 @@
         ids.push(id);
       }
       if (!ids.length) return;
-      rows.push({ ids: ids, x: row[1] });
+      rows.push({ ids: ids, x: row[1], ri: row[2] });
       paths[ids.join(SEP + SEP)] = 1;
     });
 
@@ -589,7 +590,7 @@
     rows = fullRows.map(function (r) {
       if (q && r.ids.some(function (id) { return matches[id]; })) return r;
       for (var k = 0; k < r.ids.length - 1; k++) {
-        if (byId[r.ids[k]].collapsed) return { ids: r.ids.slice(0, k + 1), x: r.x, cut: true };
+        if (byId[r.ids[k]].collapsed) return { ids: r.ids.slice(0, k + 1), x: r.x, ri: r.ri, cut: true };
       }
       return r;
     });
@@ -696,6 +697,7 @@
     el.card.classList.remove('is-empty');
     el.hint.innerHTML = '';
     hideTooltip();
+    hoverTableau(null);
 
     if (state.startCollapsed !== cfg.collapse.startCollapsed) { state.exp = {}; state.startCollapsed = cfg.collapse.startCollapsed; }
     graph = buildGraph();
@@ -708,6 +710,26 @@
     paintTools();
     layoutAndDraw();
     applyHighlight();
+    paintPictureButton();
+  }
+
+  // "Save as picture": PNG of the whole card, including the part scrolled out of view (full: true).
+  var pictureBtn = null;
+  function paintPictureButton () {
+    if (cfg.export && cfg.export.picture) {
+      if (!pictureBtn) {
+        pictureBtn = ExtSnapshot.button({
+          host: el.card,
+          element: el.card,
+          full: true,
+          title: function () { return (el.title && el.title.textContent) || (worksheet && worksheet.name) || 'Data Lineage'; }
+        });
+      }
+      pictureBtn.refresh();
+    } else if (pictureBtn) {
+      pictureBtn.destroy();
+      pictureBtn = null;
+    }
   }
 
   function applyFont (node, f) {
@@ -1219,7 +1241,27 @@
   function onHover (e) {
     var n = nodeFromEvent(e);
     setHover(n ? n.id : null);
+    if (n && cfg.interaction.tableauTooltip && !tableauTooltipFailed) {
+      hideTooltip();
+      hoverTableau(n, e.clientX, e.clientY);
+      return;
+    }
+    hoverTableau(null);
     if (n && cfg.tooltip.show) showTooltip(n, e.clientX, e.clientY); else hideTooltip();
+  }
+
+  // Tableau's own tooltip. A node is built from many rows (every path through it): it uses the first one,
+  // graph.fullRows[n.fullRows[0]].ri = that row's 0-based position in the summary data as sent.
+  var tableauTooltipRow = null;
+  var tableauTooltipFailed = false;
+  function hoverTableau (n, x, y) {
+    var ri = null;
+    if (n && n.fullRows && n.fullRows.length) { var r = graph.fullRows[n.fullRows[0]]; if (r && r.ri != null) ri = r.ri; }
+    if (ri === tableauTooltipRow) return; // only when the hovered row changes
+    if (ri == null && tableauTooltipRow == null) return;
+    tableauTooltipRow = ri;
+    if (!cfg || tableauTooltipFailed || (ri != null && !cfg.interaction.tableauTooltip)) return;
+    if (ExtCore.hoverTooltip(worksheet, ri, { x: x, y: y }) === false) { tableauTooltipFailed = true; tableauTooltipRow = null; }
   }
 
   function onClick (e) {

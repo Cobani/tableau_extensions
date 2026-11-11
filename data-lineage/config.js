@@ -205,7 +205,11 @@
       rightClickMenu: true,
       dblclick: 'format', // format | none
       dialog: 'onTop', // onTop (modal: stays in front of Tableau) | floating (modeless)
-      selectInTableau: true // click a node: its value is selected in Tableau (dashboard actions)
+      selectInTableau: true, // click a node: its value is selected in Tableau (dashboard actions)
+      tableauTooltip: false // true: hovering a node shows the tooltip designed in Tableau instead of this extension's own
+    },
+    export: {
+      picture: false // a "Save as picture" button (PNG) in the top-right corner, shown on hover
     }
   };
 

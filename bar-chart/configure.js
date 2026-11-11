@@ -62,7 +62,7 @@
     { id: 'sort', label: 'Sort & Top N', build: tabSort, keys: ['topN', 'axisC.sort', 'axisC.sortBy'] },
     { id: 'legend', label: 'Legend', build: buildLegendTab, keys: ['legend'] },
     { id: 'line', label: 'Line Chart', build: buildLineTab, keys: ['chart.showLines', 'lineDefaults', 'lineSeries', 'lineAxis'] },
-    { id: 'tooltip', label: 'Tooltip & Actions', build: buildTooltipTab, keys: ['tooltip', 'interaction.rightClickMenu', 'interaction.dblclick', 'interaction.selectInTableau', 'interaction.dialog'] },
+    { id: 'tooltip', label: 'Tooltip & Actions', build: buildTooltipTab, keys: ['tooltip', 'interaction.rightClickMenu', 'interaction.dblclick', 'interaction.selectInTableau', 'interaction.tableauTooltip', 'interaction.dialog'] },
     { id: 'comments', label: 'Comments', build: buildCommentsTab, keys: ['comments.show', 'comments.display', 'comments.marker', 'comments.color', 'comments.size', 'comments.maxWidth', 'comments.author'] },
     { id: 'export', label: 'Export', build: buildExportTab, keys: ['export'] },
     { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data'] },
@@ -1542,6 +1542,8 @@
     var T = cfg.tooltip;
     var g1 = group(p, 'Tooltip');
     g1.appendChild(checkboxRow('Tooltip on hover', 'tooltip.show', rebuild));
+    g1.appendChild(checkboxRow('Use Tableau’s tooltip', 'interaction.tableauTooltip'));
+    g1.appendChild(help('Shows the tooltip you design in Tableau (Worksheet → Tooltip), including viz in tooltip, instead of this extension’s own tooltip. Needs Tableau 2024.2 or newer.'));
     if (T.show) {
       g1.appendChild(checkboxRow('Full numbers (no K / M / B)', 'tooltip.fullNumbers'));
       g1.appendChild(checkboxRow('% of total, of the category and vs previous', 'tooltip.showPct'));
@@ -1640,6 +1642,8 @@
     var g1 = group(p, 'Export button');
     g1.appendChild(segRow('Show', 'export.button', [['hover', 'On hover'], ['always', 'Always'], ['never', 'Never']]));
     g1.appendChild(help('The button at the top right downloads the chart’s data as Excel or CSV, or copies it to paste into Excel.'));
+    g1.appendChild(checkboxRow('Save as picture button', 'export.picture'));
+    g1.appendChild(help('Shows a button in the top-right corner (on hover) that saves the chart as a PNG picture. It is an extra entry in the export button’s menu.'));
     var g2 = group(p, 'Files');
     g2.appendChild(textRow('File name', 'export.fileName', 'Empty = the title'));
     g2.appendChild(help('Today’s date is added, e.g. “Transfers 2026-10-20.xlsx”. Tableau Desktop can block downloads from extensions; then use Copy data. Tableau Server and Cloud in a browser download normally.'));
@@ -1939,6 +1943,17 @@
         r.append(t, h('div', { className: 'inline' }, [apply, dl, del]));
         g3.appendChild(r);
       });
+    }
+
+    // ---- Brand theme (shared by every extension)
+    if (window.ExtTheme && ExtTheme.section) {
+      p.appendChild(ExtTheme.section({
+        h: h,
+        name: 'Bar Chart',
+        themeMap: Bc.THEME_MAP,
+        getSettings: function () { return cfg; },
+        applySettings: function (next) { cfg = next; changed(); rebuild(); }
+      }));
     }
   }
 

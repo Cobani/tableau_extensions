@@ -51,7 +51,8 @@
  *   Default values: shared/themes/Default.json names only keys whose default is the same in every
  *   extension that maps it, so applying it to a fresh config changes nothing.
  *
- *   API: validate, parse, apply, fromSettings, list, save, remove, STORE_KEY, CURRENT_VERSION, MIGRATIONS
+ *   API: validate, parse, parseFull, apply, fromSettings, list, save, remove, section (the Format dialog's
+ *        "Brand theme" block for the Presets tab), BUNDLED, STORE_KEY, CURRENT_VERSION, MIGRATIONS
  *   Tests: tests/theme.test.js
  */
 (function (root) {
@@ -151,7 +152,10 @@
   }
 
   /** Text of a theme file → cleaned theme. Throws Error with a plain-English message. */
-  function parse (text) {
+  function parse (text) { return parseFull(text).theme; }
+
+  /** Like parse, but returns the whole validate() result ({ theme, dropped, unknown }). Throws like parse. */
+  function parseFull (text) {
     let obj;
     try { obj = JSON.parse(text); } catch (e) { throw new Error('This file is not valid JSON. Choose a theme file you exported.'); }
     if (!isObj(obj) || obj.type !== TYPE) throw new Error('This file is not a Tableau extensions theme.');
@@ -160,7 +164,7 @@
     for (; typeof v === 'number' && v < CURRENT_VERSION; v++) if (MIGRATIONS[v]) obj = MIGRATIONS[v](obj) || obj;
     const r = validate(obj);
     if (!r.ok) throw new Error(r.error);
-    return r.theme;
+    return r;
   }
 
   function entryOf (e) { return typeof e === 'string' ? { path: e } : e; }
@@ -262,9 +266,231 @@
     } catch (e) { return false; }
   }
 
+  // ---------------------------------------------------------------------------
+  // Bundled themes. Copies of shared/themes/Default.json and Midnight.json (a test keeps them identical):
+  // the Format dialog cannot fetch files, so the two themes it offers live here.
+  // ---------------------------------------------------------------------------
+  const BUNDLED = {
+    Default: {
+      type: TYPE, version: 1, name: 'Default',
+      fonts: { family: 'Lato', titleSize: 16, titleWeight: 500, textSize: 12, numberWeight: 700 },
+      colors: {
+        text: '#17202B', title: '#68707D', muted: '#68707D', number: '#263244',
+        axisText: '#55606E', axisLine: '#C9CDD4', accent: '#EB644C', accent2: '#2F4B7C',
+        positive: '#0E7C66', negative: '#B4431E', changeUp: '#2E9E6A', changeDown: '#E35263',
+        neutral: '#68707D', background: '#FFFFFF', backgroundOpacity: 0,
+        grid: '#ECEEF1', divider: '#E2E4E8'
+      },
+      card: { padding: 15 },
+      numbers: { scale: 'dynamic', decimals: 1, negative: 'minus' }
+    },
+    Midnight: {
+      type: TYPE, version: 1, name: 'Midnight',
+      fonts: { family: 'Lato', titleSize: 16, titleWeight: 600, textSize: 12, numberWeight: 700 },
+      colors: {
+        text: '#E6EAF0', title: '#E6EAF0', muted: '#9AA4B2', number: '#FFFFFF',
+        axisText: '#9AA4B2', axisLine: '#3A4656', accent: '#F58A72', accent2: '#7FA3E0',
+        positive: '#3FD0A4', negative: '#FF8A65', changeUp: '#3FD0A4', changeDown: '#FF7A8A',
+        neutral: '#9AA4B2', background: '#101826', backgroundOpacity: 100,
+        grid: '#243043', divider: '#2E3A4D',
+        series: ['#7FA3E0', '#F58A72', '#3FD0A4', '#F2C14E', '#B79CF0', '#5CC8E0']
+      },
+      card: { padding: 15 }
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Format dialog section (called from every extension's Presets tab)
+  // ---------------------------------------------------------------------------
+  /** Number of settings that differ between two settings objects (an array or value counts once). */
+  function countChanges (a, b) {
+    if (isObj(a) && isObj(b)) {
+      const keys = {};
+      Object.keys(a).concat(Object.keys(b)).forEach(function (k) { keys[k] = 1; });
+      return Object.keys(keys).reduce(function (n, k) { return n + countChanges(a[k], b[k]); }, 0);
+    }
+    return JSON.stringify(a) === JSON.stringify(b) ? 0 : 1;
+  }
+
+  function plural (n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+  function fileSlug (name) {
+    return (String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'theme') + '.json';
+  }
+
+  /**
+   * The "Brand theme" block for a Presets tab. opts: { h, name, themeMap, getSettings, applySettings }.
+   * Never throws: every handler ends in a message line inside the block (and console.error).
+   */
+  function section (opts) {
+    const h = opts.h;
+    const extName = opts.name || 'this extension';
+    const block = h('div', { className: 'group ext-theme' });
+    block.appendChild(h('h3', { className: 'group-title', textContent: 'Brand theme' }));
+    if (!isObj(opts.themeMap) || !Object.keys(opts.themeMap).length) {
+      block.appendChild(h('div', { className: 'help', textContent: 'Themes are not available for this extension yet.' }));
+      return block;
+    }
+
+    const msg = h('div', { className: 'ext-theme-msg', hidden: true });
+    msg.setAttribute('role', 'status');
+    function say (text, isError) {
+      msg.textContent = text;
+      msg.className = 'ext-theme-msg' + (isError ? ' is-error' : '');
+      msg.hidden = false;
+    }
+    /** Wraps a handler so that nothing escapes it. */
+    function safe (fn) {
+      return function () {
+        try { fn.apply(null, arguments); } catch (e) {
+          try { console.error(e); } catch (e2) { /* nothing left to do */ }
+          say('Something went wrong: ' + (e && e.message ? e.message : 'unknown error') + '.', true);
+        }
+      };
+    }
+    function button (text, onClick, label) {
+      const b = h('button', { type: 'button', className: 'btn btn--small', textContent: text });
+      if (label) b.setAttribute('aria-label', label);
+      b.addEventListener('click', safe(onClick));
+      return b;
+    }
+
+    /** `res` is a validate() result. Applies it to the dialog's settings and reports what happened. */
+    function applyResult (res) {
+      if (!res.ok) { say(res.error, true); return; }
+      const cur = opts.getSettings();
+      const next = apply(cur, res.theme, opts.themeMap);
+      const n = countChanges(cur, next);
+      let text = 'Applied “' + res.theme.name + '”. ';
+      if (n) opts.applySettings(next);
+      text += n ? plural(n, 'setting changed', 'settings changed') + '.' : 'This chart already matches the theme.';
+      const d = (res.dropped || []).length;
+      if (d) text += ' ' + plural(d, 'value was', 'values were') + ' ignored.';
+      say(text, false);
+    }
+    function applyText (text) {
+      let res;
+      try { res = parseFull(text); } catch (e) { say(e.message, true); return; }
+      applyResult(res);
+    }
+
+    block.appendChild(h('div', { className: 'help', textContent: 'A theme sets colours, fonts and card style in one go, and works in every extension. Your data, titles and per-measure settings are kept.' }));
+    block.appendChild(msg);
+
+    // ---- Apply a theme
+    block.appendChild(h('div', { className: 'ext-theme-sub', textContent: 'Apply a theme' }));
+    const bundledRow = h('div', { className: 'ext-theme-btns' });
+    ['Default', 'Midnight'].forEach(function (nm) {
+      bundledRow.appendChild(button(nm, function () { applyResult(validate(BUNDLED[nm])); }, 'Apply the ' + nm + ' theme'));
+    });
+    block.appendChild(bundledRow);
+
+    block.appendChild(h('div', { className: 'ext-theme-sub', textContent: 'My themes' }));
+    const mine = h('div', { className: 'ext-theme-list' });
+    let inner = h('div');
+    mine.appendChild(inner);
+    function renderMine () {
+      const next = h('div');
+      const themes = list();
+      if (!themes.length) next.appendChild(h('div', { className: 'help', textContent: 'No saved themes yet.' }));
+      themes.forEach(function (t) {
+        const item = h('div', { className: 'ext-theme-item' });
+        item.appendChild(h('span', { className: 'ext-theme-name', textContent: t.name, title: t.name }));
+        const btns = h('div', { className: 'ext-theme-btns' });
+        btns.appendChild(button('Apply', function () { applyResult(validate(t)); }, 'Apply ' + t.name));
+        btns.appendChild(button('Delete', function () {
+          const ok = remove(t.name);
+          renderMine();
+          say(ok ? 'Deleted “' + t.name + '”.' : 'Couldn’t delete “' + t.name + '”.', !ok);
+        }, 'Delete ' + t.name));
+        item.appendChild(btns);
+        next.appendChild(item);
+      });
+      mine.replaceChild(next, inner);
+      inner = next;
+    }
+    renderMine();
+    block.appendChild(mine);
+
+    const file = h('input', { type: 'file', accept: '.json,application/json' });
+    file.style.display = 'none';
+    file.setAttribute('aria-label', 'Theme file');
+    file.addEventListener('change', safe(function () {
+      const f = file.files && file.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = safe(function () { applyText(String(rd.result)); });
+      rd.onerror = safe(function () { say('Couldn’t read the file.', true); });
+      rd.readAsText(f);
+    }));
+    const paste = h('textarea', { className: 'ext-theme-json', spellcheck: false, placeholder: 'Or paste a theme here' });
+    paste.setAttribute('aria-label', 'Pasted theme');
+    const importRow = h('div', { className: 'ext-theme-btns' });
+    importRow.appendChild(button('Choose file…', function () { file.value = ''; file.click(); }));
+    importRow.appendChild(file);
+    block.appendChild(importRow);
+    block.appendChild(paste);
+    const pasteRow = h('div', { className: 'ext-theme-btns' });
+    pasteRow.appendChild(button('Apply pasted', function () {
+      if (!String(paste.value).trim()) { say('Paste a theme into the box first.', true); return; }
+      applyText(paste.value);
+    }));
+    block.appendChild(pasteRow);
+
+    // ---- Save this chart's look
+    block.appendChild(h('div', { className: 'ext-theme-sub', textContent: 'Save this chart’s look as a theme' }));
+    const nameIn = h('input', { type: 'text', className: 'ext-theme-name-input', value: extName + ' theme' });
+    nameIn.setAttribute('aria-label', 'Theme name');
+    block.appendChild(nameIn);
+    function current () {
+      const nm = String(nameIn.value).trim() || extName + ' theme';
+      return fromSettings(opts.getSettings(), opts.themeMap, nm.slice(0, 60));
+    }
+    const saveRow = h('div', { className: 'ext-theme-btns' });
+    saveRow.appendChild(button('Save to My themes', function () {
+      const t = current();
+      const r = save(t);
+      if (!r.ok) { say(r.error || 'Couldn’t save this theme.', true); return; }
+      renderMine();
+      say('Saved “' + t.name + '” to My themes.', false);
+    }));
+    saveRow.appendChild(button('Download .json', function () {
+      const t = current();
+      const text = JSON.stringify(t, null, 2);
+      const fn = fileSlug(t.name);
+      let ok;
+      if (root.ExtSnapshot && root.ExtSnapshot.download) ok = root.ExtSnapshot.download(text, fn, 'application/json;charset=utf-8');
+      else {
+        const url = URL.createObjectURL(new Blob([text], { type: 'application/json;charset=utf-8' }));
+        const a = document.createElement('a');
+        a.href = url; a.download = fn; a.rel = 'noopener'; a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 4000);
+        ok = true;
+      }
+      say(ok ? 'Downloaded ' + fn + '. If nothing appeared, use Copy and paste it into a text file.' : 'Couldn’t download. Use Copy instead.', !ok);
+    }));
+    saveRow.appendChild(button('Copy', function () {
+      const text = JSON.stringify(current(), null, 2);
+      const fallback = function () {
+        paste.value = text;
+        paste.focus();
+        if (paste.select) paste.select();
+        say('Couldn’t copy automatically. The theme is in the box above: select it and copy it yourself.', true);
+      };
+      const nav = root.navigator;
+      if (nav && nav.clipboard && nav.clipboard.writeText) {
+        nav.clipboard.writeText(text).then(function () { say('Copied. Paste it into a .json or text file, an email or chat.', false); }, safe(fallback));
+      } else fallback();
+    }));
+    block.appendChild(saveRow);
+    return block;
+  }
+
   const api = {
     TYPE: TYPE, CURRENT_VERSION: CURRENT_VERSION, MIGRATIONS: MIGRATIONS, STORE_KEY: STORE_KEY, KEYS: KEYS,
-    validate: validate, parse: parse, apply: apply, fromSettings: fromSettings, list: list, save: save, remove: remove
+    validate: validate, parse: parse, parseFull: parseFull, section: section, BUNDLED: BUNDLED, apply: apply, fromSettings: fromSettings, list: list, save: save, remove: remove
   };
 
   root.ExtTheme = api;

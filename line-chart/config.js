@@ -173,6 +173,7 @@
     },
     export: {
       button: 'hover', // hover | always | never
+      picture: true, // Save as picture (PNG / SVG) entries in the export menu
       fileName: '' // empty → the title
     },
     // ---- Data ---------------------------------------------------------------
@@ -209,7 +210,8 @@
       rightClickMenu: true
     },
     interaction: {
-      selectInTableau: false // click a point to select it in Tableau (dashboard actions)
+      selectInTableau: false, // click a point to select it in Tableau (dashboard actions)
+      tableauTooltip: false // hover shows Tableau's own tooltip (Worksheet → Tooltip) instead of this extension's box
     },
     areas: {
       mode: 'overlay', // overlay | stack | percent

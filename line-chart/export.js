@@ -485,13 +485,30 @@
   }
 
   function items () {
-    return [
+    var list = [
       { head: 'Export data' },
       ['Excel (.xlsx)', exportXlsx],
       ['CSV (.csv)', exportCsv],
       null,
       ['Copy data (paste into Excel)', copyData]
     ];
+    var c = state.cfg;
+    if (window.ExtSnapshot && !(c && c.export && c.export.picture === false)) {
+      var pics = ExtSnapshot.menuItems({
+        element: function () { return state.card; },
+        title: function () { return String((c && c.title && c.title.text) || state.name); },
+        // no vector: the title and legend are HTML outside the plot's SVG
+        onError: function (err) { toast('Picture failed: ' + (err && err.message), true); }
+      });
+      list.push(null, { head: 'Save as picture' });
+      pics.forEach(function (it) {
+        list.push([it.label, function () {
+          try { Promise.resolve(it.run()).then(function (ok) { if (ok === false) toast('Couldn’t save here. Tableau Desktop can block downloads from extensions.', true); }, function (err) { toast('Picture failed: ' + (err && err.message), true); }); }
+          catch (err) { toast('Picture failed: ' + (err && err.message), true); }
+        }]);
+      });
+    }
+    return list;
   }
 
   // ---------------------------------------------------------------------------
@@ -510,6 +527,7 @@
     if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
     var tools = document.createElement('div');
     tools.className = 'xp-tools';
+    tools.setAttribute('data-snapshot', 'skip');
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'xp-btn';
@@ -520,6 +538,7 @@
     card.appendChild(tools);
     var menu = document.createElement('div');
     menu.className = 'xp-menu';
+    menu.setAttribute('data-snapshot', 'skip');
     menu.setAttribute('role', 'menu');
     var tst = document.createElement('div');
     tst.className = 'xp-toast';

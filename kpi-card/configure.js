@@ -39,7 +39,7 @@
     { id: 'number', label: 'Big number', build: buildNumberTab, keys: ['number'] },
     { id: 'change', label: '% Change', build: buildChangeTab, keys: ['change'] },
     { id: 'bottom', label: 'Bottom', build: buildBottomTab, keys: ['bottom'] },
-    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data', 'interaction'] },
+    { id: 'card', label: 'Card', build: buildCardTab, keys: ['card', 'data', 'interaction', 'export'] },
     { id: 'details', label: 'Tooltip', build: buildDetailsTab, keys: ['details'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
   ];
@@ -421,6 +421,11 @@
     var gInt = group(p, 'Interaction');
     gInt.appendChild(checkboxRow('Click selects in Tableau', 'interaction.selectInTableau'));
     gInt.appendChild(h('div', { className: 'help', textContent: 'Click a card to select its latest date in Tableau, or a point on the trend line to select that date, so dashboard filter, highlight and go-to-sheet actions fire. Click again to clear. Needs a field on the Date tile.' }));
+    gInt.appendChild(checkboxRow('Use Tableau’s tooltip', 'interaction.tableauTooltip'));
+    gInt.appendChild(h('div', { className: 'help', textContent: 'Shows the tooltip you design in Tableau (Worksheet → Tooltip), including viz in tooltip, instead of this extension’s own tooltip. Needs Tableau 2024.2 or newer.' }));
+    var gExp = group(p, 'Export');
+    gExp.appendChild(checkboxRow('Save as picture button', 'export.picture'));
+    gExp.appendChild(h('div', { className: 'help', textContent: 'Shows a button in the top-right corner (on hover) that saves the chart as a PNG picture.' }));
 
   }
 
@@ -805,6 +810,15 @@
         r.append(t, h('div', { className: 'inline' }, [apply, dl, del]));
         g3.appendChild(r);
       });
+    }
+    if (window.ExtTheme && ExtTheme.section) {
+      p.appendChild(ExtTheme.section({
+        h: h,
+        name: 'KPI Card',
+        themeMap: KpiCardConfig.THEME_MAP,
+        getSettings: function () { return cfg; },
+        applySettings: function (next) { cfg = next; changed(); rebuild(); }
+      }));
     }
   }
 

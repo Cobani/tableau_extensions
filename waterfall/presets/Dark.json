@@ -65,7 +65,8 @@
       "rightClickMenu": true
     },
     "interaction": {
-      "selectInTableau": false
+      "selectInTableau": false,
+      "tableauTooltip": false
     },
     "start": {
       "color": "#8FA1B8",
@@ -268,6 +269,9 @@
         "width": 1,
         "style": "solid"
       }
+    },
+    "export": {
+      "picture": false
     }
   }
 }
