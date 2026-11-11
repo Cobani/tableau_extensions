@@ -2,7 +2,7 @@
 
 # Tableau Viz Extensions
 
-**Seven custom chart types for Tableau, built on the Tableau Viz Extensions API.**<br>
+**Fifteen viz extensions for Tableau, built on the Tableau Viz Extensions API.**<br>
 Drop fields on the Marks card, style everything from a Format dialog, no code in the workbook.
 
 ![Tableau Extensions API 1.17](https://img.shields.io/badge/Tableau%20Extensions%20API-1.17-1f77b4)
@@ -44,6 +44,8 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 | | [**Cohort Grid**](cohort-grid/README.md) | Retention triangle: cohorts by periods since start, shaded by value | Cohort · Period · Value · Cohort size | [`cohort-grid.trex`](cohort-grid/cohort-grid.trex) |
 | | [**Treemap & Donut**](treemap-donut/README.md) | Composition of a whole as a treemap, donut or pie, with drill-down | Category · Size · Colour | [`treemap-donut.trex`](treemap-donut/treemap-donut.trex) |
 | | [**Maturity Ladder**](maturity-ladder/README.md) | Amounts falling due per time bucket, stacked by group, with a running total | Maturity date · Amount · Group · Item | [`maturity-ladder.trex`](maturity-ladder/maturity-ladder.trex) |
+| | [**Parameter Switcher**](parameter-switcher/README.md) | Tabs, buttons, pills, a toggle or a stepper that set a Tableau parameter | Options (optional) | [`parameter-switcher.trex`](parameter-switcher/parameter-switcher.trex) |
+| | [**Narrative Card**](narrative-card/README.md) | Sentences you write, with live numbers, changes and conditions inside | Measures · Date | [`narrative-card.trex`](narrative-card/narrative-card.trex) |
 
 ## What every extension can do
 
@@ -56,6 +58,10 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 - **A row limit you control.** Each extension reads at most **1,000 rows** from the worksheet by default. *Format → Card → Maximum rows* changes it (0 = all rows). When rows are left out, a small note in the corner of the chart says so.
 - **Nothing kept in the browser.** Chart data is never stored between visits; only your own Format-dialog presets are.
 - **Presets everywhere.** Every Format dialog has a Presets tab: save a look and reuse it in another worksheet or workbook, as a file, via the clipboard or from *My presets*.
+- **Brand themes.** The Presets tab of every extension can apply one theme file (colours, fonts, card style, number format), so a dashboard built from several extensions looks like one product. Two themes are bundled (Default, Midnight); you can save your own and they are offered in every extension.
+- **Save as picture.** Every extension can save itself as a PNG: from the export menu where there is one, otherwise from a button that appears on hover (switch it on under *Format → Card → Export*).
+- **Tableau's own tooltip, if you prefer it.** *Use Tableau's tooltip* (off by default) shows the tooltip you design in Tableau, including viz in tooltip, instead of the extension's.
+- **Undo, redo and search in the Format dialog.** Ctrl/Cmd+Z works on every change, and the search box finds a setting on any tab.
 - **Errors you can report.** If something goes wrong, a small **!** mark appears in the corner; click it for details (extension version, API version, the error) that you can copy to whoever supports the dashboard.
 - **Self-contained.** No CDNs or external services: the Tableau Extensions API library and the Lato fonts are bundled.
 
@@ -241,9 +247,10 @@ tableau_extensions/
 │   ├── core.js              helpers used by every extension (formatting, settings, data, selection)
 │   ├── boot.js              start-up, automatic reload, error mark
 │   ├── dialog.js / .css     Format dialog controls and base styles
-│   ├── snapshot.js          picture export (PNG / SVG) helper
+│   ├── snapshot.js          picture export (PNG / SVG)
+│   ├── theme.js, themes/    brand themes shared by all extensions
 │   └── timing.js            load timings (?debug)
-├── kpi-card/                one folder per extension:
+├── kpi-card/                one folder per extension (15 in all; the first seven are shown):
 ├── kpi-card-multi/            <name>.trex      manifest (Marks card tiles)
 ├── waterfall/                 index.html       the viz
 ├── line-chart/                chart.js / .css  data reading and drawing (KPI cards: card.js)
@@ -287,6 +294,8 @@ Then open a browser preview with sample data, no Tableau needed (add `?debug` fo
 | Cohort Grid | http://localhost:8766/cohort-grid/dev/preview.html |
 | Treemap & Donut | http://localhost:8766/treemap-donut/dev/preview.html |
 | Maturity Ladder | http://localhost:8766/maturity-ladder/dev/preview.html |
+| Parameter Switcher | http://localhost:8766/parameter-switcher/dev/preview.html |
+| Narrative Card | http://localhost:8766/narrative-card/dev/preview.html |
 
 The local server also lists your Tableau shape palettes (from *My Tableau Repository* and the Tableau Desktop install) for the icon pickers. Python 3 standard library only.
 

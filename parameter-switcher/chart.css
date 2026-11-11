@@ -1,0 +1,265 @@
+/* Parameter Switcher. Fonts, colours and sizes come from the saved settings as CSS variables
+   (--ps-*), set on .card by chart.js; this file is the layout and the look of each style. */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: transparent;
+  border-right: 1px dashed transparent;
+  line-height: normal;
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+  overflow: hidden;
+}
+
+/* ---- Optional header: icon | title / explanation ------------------------ */
+.head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  min-width: 0;
+  flex: none;
+  margin-bottom: 8px;
+  user-select: none;
+}
+
+.icon {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.icon svg,
+.icon img {
+  display: block;
+}
+
+.title,
+.explanation {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.title { grid-column: 2; grid-row: 1; }
+.explanation { grid-column: 2; grid-row: 2; }
+
+.card.no-icon .head { grid-template-columns: minmax(0, 1fr); }
+.card.no-icon .title,
+.card.no-icon .explanation { grid-column: 1; }
+
+/* ---- The control --------------------------------------------------------- */
+.control {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--ps-font, "Lato", sans-serif);
+  font-size: var(--ps-fs, 14px);
+  font-style: var(--ps-italic, normal);
+  font-weight: var(--ps-w, 500);
+}
+
+.control.v-top { justify-content: flex-start; }
+.control.v-middle { justify-content: center; }
+.control.v-bottom { justify-content: flex-end; }
+
+.ctl {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  gap: var(--ps-gap, 6px);
+}
+
+/* Alignment: the group sits left / centre / right, or fills the width. */
+.ctl { align-self: flex-start; }
+.ctl.al-center { align-self: center; }
+.ctl.al-right { align-self: flex-end; }
+.ctl.al-stretch { align-self: stretch; }
+
+.ctl.lay-horizontal { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.ctl.lay-wrap { flex-direction: row; flex-wrap: wrap; }
+.ctl.lay-vertical { flex-direction: column; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+
+.ctl.al-stretch.lay-horizontal > .opt,
+.ctl.al-stretch.lay-wrap > .opt { flex: 1 1 0; }
+
+.ctl.lay-vertical > .opt { text-align: left; }
+.ctl.lay-vertical.al-center > .opt { text-align: center; }
+.ctl.lay-vertical.al-right > .opt { text-align: right; }
+
+/* ---- Choice buttons (shared) ------------------------------------------------ */
+.opt {
+  flex: none;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--ps-h, 32px);
+  padding: var(--ps-py, 6px) var(--ps-px, 14px);
+  font: inherit;
+  font-weight: var(--ps-w, 500);
+  color: var(--ps-n-text, #68707d);
+  background: transparent;
+  border: 0;
+  border-radius: var(--ps-radius, 6px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: color 0.12s, background-color 0.12s, border-color 0.12s;
+}
+
+.opt:hover { color: var(--ps-h-text, #263244); }
+.opt.is-selected { color: var(--ps-s-text, #eb644c); font-weight: var(--ps-ws, 700); }
+.opt:focus-visible,
+.step:focus-visible,
+.sel:focus-visible { outline: 2px solid var(--ps-s-acc, #eb644c); outline-offset: 1px; }
+
+/* ---- Tabs: an underline under the selected choice ---------------------------- */
+.ctl--tabs { gap: 0; }
+.ctl--tabs.lay-horizontal { box-shadow: inset 0 calc(-1 * var(--ps-bw, 1px)) 0 var(--ps-bc, #d5d9df); }
+.ctl--tabs .opt {
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: 0;
+}
+.ctl--tabs .opt:hover { background: var(--ps-h-bg, #f1f3f5); }
+.ctl--tabs .opt.is-selected { border-bottom-color: var(--ps-s-acc, #eb644c); }
+.ctl--tabs.lay-wrap { gap: 0 var(--ps-gap, 6px); }
+.ctl--tabs.lay-vertical { gap: 0; border-left: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df); }
+.ctl--tabs.lay-vertical .opt { border-bottom: 0; border-left: 2px solid transparent; margin-left: -2px; }
+.ctl--tabs.lay-vertical .opt.is-selected { border-left-color: var(--ps-s-acc, #eb644c); }
+
+/* ---- Segmented: joined buttons in one bordered group -------------------------- */
+.ctl--segmented { gap: 0; border: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df); border-radius: var(--ps-radius, 6px); background: var(--ps-n-bg, #fff); }
+.ctl--segmented .opt { border-radius: 0; background: var(--ps-n-bg, #fff); }
+.ctl--segmented .opt + .opt { border-left: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df); }
+.ctl--segmented.lay-vertical .opt + .opt { border-left: 0; border-top: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df); }
+.ctl--segmented .opt:first-child { border-top-left-radius: calc(var(--ps-radius, 6px) - 1px); }
+.ctl--segmented .opt:last-child { border-bottom-right-radius: calc(var(--ps-radius, 6px) - 1px); }
+.ctl--segmented.lay-horizontal .opt:first-child { border-bottom-left-radius: calc(var(--ps-radius, 6px) - 1px); }
+.ctl--segmented.lay-horizontal .opt:last-child { border-top-right-radius: calc(var(--ps-radius, 6px) - 1px); }
+.ctl--segmented.lay-vertical .opt:first-child { border-top-right-radius: calc(var(--ps-radius, 6px) - 1px); }
+.ctl--segmented.lay-vertical .opt:last-child { border-bottom-left-radius: calc(var(--ps-radius, 6px) - 1px); }
+.ctl--segmented .opt:hover { background: var(--ps-h-bg, #f1f3f5); }
+.ctl--segmented .opt.is-selected { background: var(--ps-s-bg, #fdedea); }
+/* Wrapped segments can't share one border: each gets its own. */
+.ctl--segmented.lay-wrap { gap: var(--ps-gap, 6px); border: 0; background: transparent; }
+.ctl--segmented.lay-wrap .opt { border: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df); border-radius: var(--ps-radius, 6px); }
+
+/* ---- Pills: separate, fully rounded ---------------------------------------- */
+.ctl--pills .opt {
+  min-height: calc(var(--ps-h, 32px) - 4px);
+  border: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df);
+  border-radius: 999px;
+  background: var(--ps-n-bg, #fff);
+}
+.ctl--pills .opt:hover { background: var(--ps-h-bg, #f1f3f5); }
+.ctl--pills .opt.is-selected { background: var(--ps-s-bg, #fdedea); border-color: var(--ps-s-acc, #eb644c); }
+
+/* ---- Toggle: two choices on one rounded track ----------------------------- */
+.ctl--toggle { gap: 2px; padding: 3px; border: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df); border-radius: 999px; background: var(--ps-n-bg, #fff); }
+.ctl--toggle .opt { border-radius: 999px; min-height: calc(var(--ps-h, 32px) - 8px); }
+.ctl--toggle .opt:hover { background: var(--ps-h-bg, #f1f3f5); }
+.ctl--toggle .opt.is-selected { background: var(--ps-s-bg, #fdedea); box-shadow: inset 0 0 0 1px var(--ps-s-acc, #eb644c); }
+.ctl--toggle.lay-vertical { border-radius: calc(var(--ps-h, 32px) / 2); }
+
+/* ---- Dropdown ------------------------------------------------------------------ */
+.ctl--dropdown { flex-direction: row; overflow: visible; }
+.ctl--dropdown.al-stretch .sel { width: 100%; }
+.sel {
+  min-width: 120px;
+  max-width: 100%;
+  min-height: var(--ps-h, 32px);
+  margin: 0;
+  padding: var(--ps-py, 6px) calc(var(--ps-px, 14px) + 10px) var(--ps-py, 6px) var(--ps-px, 14px);
+  font: inherit;
+  color: var(--ps-s-text, #eb644c);
+  font-weight: var(--ps-ws, 700);
+  background-color: var(--ps-n-bg, #fff);
+  border: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df);
+  border-radius: var(--ps-radius, 6px);
+  cursor: pointer;
+}
+.sel:hover { background-color: var(--ps-h-bg, #f1f3f5); }
+
+/* ---- Stepper: previous / value / next --------------------------------------------- */
+.ctl--stepper { align-items: stretch; gap: 0; border: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df); border-radius: var(--ps-radius, 6px); background: var(--ps-n-bg, #fff); overflow: hidden; flex-direction: row !important; }
+.ctl--stepper.al-stretch { width: 100%; }
+.step {
+  flex: none;
+  min-width: var(--ps-h, 32px);
+  margin: 0;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.8em;
+  color: var(--ps-n-text, #68707d);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.step:hover:not(:disabled) { color: var(--ps-h-text, #263244); background: var(--ps-h-bg, #f1f3f5); }
+.step:disabled { opacity: 0.35; cursor: default; }
+.step-value {
+  flex: 1 1 auto;
+  min-width: 80px;
+  padding: var(--ps-py, 6px) var(--ps-px, 14px);
+  text-align: center;
+  color: var(--ps-s-text, #eb644c);
+  font-weight: var(--ps-ws, 700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-left: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df);
+  border-right: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df);
+}
+
+/* ---- Message when Tableau rejects a value ------------------------------------------- */
+.msg {
+  flex: none;
+  margin-top: 6px;
+  font: 12px/1.35 "Lato", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #b4233a;
+}
+
+/* ---- Empty state ---------------------------------------------------------------------- */
+.hint {
+  display: none;
+  margin: auto;
+  max-width: 90%;
+  font: 12px/1.4 "Lato", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #68707d;
+  text-align: center;
+}
+
+.card.is-empty > :not(.hint) { display: none; }
+.card.is-empty .hint { display: block; }

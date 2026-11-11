@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Narrative Card</title>
+    <!-- Start-up, reload recovery and error reporting (shared/boot.js). -->
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=c53383ba94" data-name="Narrative Card" data-ext-version="1.0.0"></script>
+    <!-- Start the biggest download (the API library, loaded at the end of body) right away. -->
+    <link rel="preload" as="script" href="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" />
+    <link rel="stylesheet" href="../shared/fonts/fonts.css?v=22ceb76171" />
+    <link rel="stylesheet" href="./chart.css?v=c4117c07ed" />
+    <script src="../shared/timing.js?v=666dc99b7c"></script>
+    <script src="../shared/core.js?v=2cdac465b4"></script>
+    <script src="../shared/snapshot.js?v=b026331aa7"></script>
+    <script src="./icons.js?v=6a0dce9bfa"></script>
+    <script src="./config.js?v=ba2d9c81f8"></script>
+    <script src="./chart.js?v=181859babc"></script>
+  </head>
+
+  <body>
+    <div id="card" class="card is-empty">
+      <div class="head">
+        <div id="icon" class="icon" aria-hidden="true"></div>
+        <div id="title" class="title"></div>
+        <div id="explanation" class="explanation"></div>
+      </div>
+
+      <div id="body" class="body v-top">
+        <div id="text" class="text"></div>
+      </div>
+
+      <div id="hint" class="hint"></div>
+    </div>
+
+    <div id="tooltip" class="tooltip" role="tooltip"></div>
+
+    <script>
+      // boot.js loads the Tableau API library (and the dev mock with ?mock), then starts the extension.
+      if (window.ExtBoot) {
+        ExtBoot.start(function () { if (!window.NarrativeCard) return false; window.NarrativeCard.init(); return true; });
+      } else {
+        // boot.js itself did not arrive: reload this frame, up to 3 times.
+        (function () {
+          var n = +((/extRetry=(\d+)/.exec(location.hash) || [0, 0])[1]);
+          if (n < 3) { location.hash = 'extRetry=' + (n + 1); location.reload(); }
+          else document.getElementById('hint').textContent = 'Could not load the Narrative Card files. Refresh the page to try again.';
+        })();
+      }
+    </script>
+  </body>
+</html>

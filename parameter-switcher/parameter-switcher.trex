@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.parameterswitcher" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Parameter Switcher: shows the values of one Tableau parameter as tabs, buttons, pills, a dropdown, a toggle or a stepper, and sets the parameter when one is clicked.</description>
+    <author name="ilyas coban" email="ilyas.cbn@gmail.com" organization="ilyas coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/parameter-switcher/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="options">
+      <display-name resource-id="options-name">Options</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="options-tooltip">Optional. A dimension whose values become the choices (for parameters that allow all values). Leave empty to use the parameter&apos;s own list of values.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Parameter Switcher</text></resource>
+    <resource id="options-name"><text locale="en_US">Options</text></resource>
+    <resource id="options-tooltip"><text locale="en_US">Optional. A dimension whose values become the choices (for parameters that allow all values). Leave empty to use the parameter&apos;s own list of values.</text></resource>
+  </resources>
+</manifest>

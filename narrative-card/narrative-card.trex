@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.narrativecard" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Narrative card: sentences you write with live numbers inside, e.g. {Revenue} this month, {Revenue.change} vs last month..</description>
+    <author name="ilyas coban" email="ilyas.cbn@gmail.com" organization="ilyas coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/narrative-card/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="measures">
+      <display-name resource-id="measures-name">Measures</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="12"/>
+      <encoding-icon token="metric"/>
+      <tooltip resource-id="measures-tooltip">The numbers used in the text, 1 to 12. Drop each measure separately; write {Measure name} in the template to show its latest value.</tooltip>
+    </encoding>
+
+    <encoding id="date">
+      <display-name resource-id="date-name">Date</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="4"/>
+      <tooltip resource-id="date-tooltip">Optional. Any date level: year, quarter, month, week, day or exact date (add several, e.g. YEAR + MONTH, to combine). Needed for {Measure.change}, .previous and .date.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Narrative Card</text></resource>
+    <resource id="measures-name"><text locale="en_US">Measures</text></resource>
+    <resource id="measures-tooltip"><text locale="en_US">The numbers used in the text, 1 to 12. Drop each measure separately; write {Measure name} in the template to show its latest value.</text></resource>
+    <resource id="date-name"><text locale="en_US">Date</text></resource>
+    <resource id="date-tooltip"><text locale="en_US">Optional. Any date level: year, quarter, month, week, day or exact date (add several, e.g. YEAR + MONTH, to combine). Needed for {Measure.change}, .previous and .date.</text></resource>
+  </resources>
+</manifest>

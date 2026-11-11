@@ -1,0 +1,184 @@
+/* Narrative Card. Fonts, colours and sizes are set inline by chart.js from the saved settings;
+   the values below are only the layout skeleton. */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: transparent;
+  border-right: 1px dashed transparent;
+  line-height: normal;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+  overflow: hidden;
+}
+
+/* ---- Title with icon -------------------------------------------------- */
+.head {
+  /* icon | title
+     icon | explanation   ← the icon spans both rows once it's taller than the title */
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  min-width: 0;
+  flex: none;
+}
+
+.icon {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.head.icon-span .icon {
+  grid-row: 1 / span 2;
+}
+
+.icon svg,
+.icon img {
+  display: block;
+}
+
+.title {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Optional explanation (lines up with the title text) ------------- */
+.explanation {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card.no-icon .head {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.card.no-icon .title,
+.card.no-icon .explanation {
+  grid-column: 1;
+}
+
+/* ---- The text ----------------------------------------------------------
+   Fonts, colours and sizes are set inline by chart.js from the saved settings. The body scrolls
+   when the text is taller than the zone; v-middle / v-bottom align it without clipping the top. */
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.text {
+  flex: none;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.body.v-top .text { margin-bottom: auto; }
+.body.v-middle .text { margin-top: auto; margin-bottom: auto; }
+.body.v-bottom .text { margin-top: auto; }
+
+.nc-p { margin: 0; }
+.nc-p + .nc-p,
+.nc-p + .nc-ul,
+.nc-ul + .nc-p { margin-top: var(--gap, 8px); }
+.nc-ul { margin: 0; padding-left: 1.3em; }
+.nc-ul li + li { margin-top: var(--gap, 8px); }
+
+/* Numbers: weight and colour come from Format → Style (inline). */
+.nc-num { font-variant-numeric: lining-nums; white-space: nowrap; }
+.nc-num[data-f]:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+
+/* A {Name} that matches no field stays visible so the typo can be fixed. */
+.nc-unknown {
+  color: var(--unknown, #c0392b);
+  background: rgba(192, 57, 43, 0.08);
+  border-radius: 3px;
+  padding: 0 2px;
+  font-style: normal;
+  font-weight: 400;
+}
+
+/* ---- Hover tooltip on a number ----------------------------------------- */
+.tooltip {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  pointer-events: none;
+  min-width: 120px;
+  max-width: 320px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid #e2e4e8;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(38, 50, 68, 0.12);
+  font-size: 12px;
+  line-height: 1.4;
+  color: #263244;
+  white-space: nowrap;
+}
+
+.tt-date { color: #68707d; margin-bottom: 2px; }
+.tt-value { font-weight: 700; font-size: 14px; }
+.tt-change { margin-top: 3px; }
+.tt-note { color: #68707d; font-size: 11px; }
+
+/* ---- Empty state ------------------------------------------------------ */
+.hint {
+  display: none;
+  margin: auto;
+  max-width: 90%;
+  font: 12px/1.4 "Lato", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #68707d;
+  text-align: center;
+}
+
+.card.is-empty > :not(.hint) {
+  display: none;
+}
+
+.card.is-empty .hint {
+  display: block;
+}
+
+/* ---- Click selects in Tableau: selected state --------------------------- */
+.card.is-picked {
+  outline: 1px solid var(--picked-color, #ED8095);
+  outline-offset: -1px;
+}

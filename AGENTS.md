@@ -1,6 +1,6 @@
 # AGENTS.md — how to work on this repo (for any AI model or person)
 
-Tableau **viz (worksheet) extensions**, hosted on GitHub Pages. Seven extensions, one folder each, no
+Tableau **viz (worksheet) extensions**, hosted on GitHub Pages. Fifteen extensions, one folder each, no
 dependencies, no build step. Read this file before touching anything; it replaces exploring the tree.
 `BACKLOG.md` lists the work that is planned next, each item written as a ready-to-run task.
 
@@ -47,7 +47,7 @@ elegance.
 | No outside hosts, CDNs, analytics, or new runtime dependencies | The hosting network blocks them; one safe-list entry must cover everything |
 | Example, mock and screenshot data is made up: generic retail names, invented place names (Harbor St, Northland), no real companies, banks, products, systems, countries or cities | The repo is public |
 | Secrets never go in tracked files, remote URLs, logs or chat | — |
-| `shared/` changes need a test and a check of every extension | One file, seven charts |
+| `shared/` changes need a test and a check of every extension | One file, fifteen extensions |
 | Bundled presets hold **every** setting of their chart (field-specific paths excepted) | `tests/presets.test.js` enforces it |
 | Do not edit `shared/lib/`, `**/icons.js` by hand, or anything third-party | Generated / vendored |
 | The licence situation, the author's contact details in `.trex`, and the push-token setup stay as they are | Owner's decisions |
@@ -59,7 +59,8 @@ shared/        core.js    ExtCore   escaping, colours, settings merge, number fo
                                     summary data with row limit, selection, Tableau tooltip   (tests/core.test.js)
                boot.js    ExtBoot   loads the API library + dev mock, reload recovery, error mark with details
                dialog.js  ExtDialog Format dialog control builders (+ dialog.css base styles) (tests/dialog.test.js)
-               snapshot.js ExtSnapshot  PNG / SVG of a drawn chart (not wired into the charts yet)
+               snapshot.js ExtSnapshot  PNG / SVG of a drawn chart, Save-as-picture button and menu items
+               theme.js   ExtTheme  brand themes: apply / save, the Presets-tab section, themes/*.json  (tests/theme.test.js)
                timing.js  ExtTiming load timings (?debug)
                lib/, fonts/         Tableau Extensions API 1.17, Lato
 <slug>/        <name>.trex          manifest: Marks card tiles, version, hosted URL, icon
@@ -91,6 +92,8 @@ tools/make_icons.py manifest icons
 | cohort-grid | chart.js | CohortGrid / Cg / CohortGridConfigure | cohortGrid1 | cohort-grid.trex |
 | treemap-donut | chart.js | TreemapDonut / Td / TreemapDonutConfigure | treemapDonut1 | treemap-donut.trex |
 | maturity-ladder | chart.js | MaturityLadder / Ml / MaturityLadderConfigure | maturityLadder1 | maturity-ladder.trex |
+| parameter-switcher | chart.js | ParameterSwitcher / Ps / ParameterSwitcherConfigure | parameterSwitcher1 | parameter-switcher.trex |
+| narrative-card | chart.js | NarrativeCard / Nc / NarrativeCardConfigure | narrativeCard1 | narrative-card.trex |
 
 Versions: `python3 release.py versions`. Manifest id: `com.ilyascoban.vizext.<slug without dashes>`;
 hosted at `https://cobani.github.io/tableau_extensions/<slug>/`.

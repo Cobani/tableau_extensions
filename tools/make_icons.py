@@ -196,6 +196,10 @@ def main():
             continue
         if not (ROOT / trex).exists():
             continue
+        if not (ROOT / trex).exists():
+            continue
+        if not (ROOT / trex).exists():
+            continue
         img = render(glyph)
         out = ROOT / slug / "icons" / "trex-icon.png"
         out.parent.mkdir(parents=True, exist_ok=True)

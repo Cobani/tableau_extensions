@@ -1,0 +1,85 @@
+{
+  "type": "tableau-parameter-switcher-preset",
+  "version": 1,
+  "name": "Dark pills",
+  "scope": "look",
+  "exported": "2026-11-11T00:00:00.000Z",
+  "settings": {
+    "parameter": {},
+    "control": {
+      "style": "pills",
+      "layout": "horizontal",
+      "align": "left",
+      "vAlign": "top",
+      "equalWidth": false,
+      "gap": 8,
+      "size": "L",
+      "radius": 10,
+      "borderWidth": 1,
+      "borderColor": "#3A4659",
+      "font": "Lato",
+      "weight": 400,
+      "selectedWeight": 700,
+      "italic": false,
+      "autoDropdown": true,
+      "autoDropdownAbove": 12
+    },
+    "colors": {
+      "normal": {
+        "text": "#B7C0CE",
+        "bg": "#263244"
+      },
+      "hover": {
+        "text": "#FFFFFF",
+        "bg": "#35445B"
+      },
+      "selected": {
+        "text": "#FFFFFF",
+        "bg": "#EB644C",
+        "accent": "#EB644C"
+      }
+    },
+    "icon": {
+      "show": false,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "show": false,
+      "align": "left",
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#B7C0CE",
+      "italic": false
+    },
+    "explanation": {
+      "show": false,
+      "reserveSpace": false,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#8D98A9",
+      "italic": true
+    },
+    "interaction": {
+      "selectInTableau": false,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": false
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#1B2433",
+      "bgOpacity": 100,
+      "divider": false,
+      "dividerColor": "#E2E4E8"
+    }
+  }
+}

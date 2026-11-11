@@ -1,0 +1,89 @@
+{
+  "type": "tableau-narrative-card-preset",
+  "version": 1,
+  "name": "Default",
+  "scope": "look",
+  "exported": "2026-11-11T00:00:00.000Z",
+  "settings": {
+    "icon": {
+      "show": false,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "show": false,
+      "align": "left",
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#68707D",
+      "italic": false
+    },
+    "explanation": {
+      "show": false,
+      "reserveSpace": false,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": true
+    },
+    "template": {},
+    "text": {
+      "font": "Lato",
+      "size": 16,
+      "weight": 400,
+      "color": "#263244",
+      "italic": false,
+      "lineHeight": 1.5,
+      "align": "left",
+      "vAlign": "top",
+      "paragraphGap": 8,
+      "unknownColor": "#C0392B"
+    },
+    "highlight": {
+      "weight": 700,
+      "color": "#263244",
+      "changeColors": true,
+      "goodColor": "#2E9E6A",
+      "badColor": "#E35263",
+      "neutralColor": "#68707D",
+      "arrows": true,
+      "wordUp": "rose",
+      "wordDown": "fell",
+      "wordFlat": "was flat"
+    },
+    "number": {
+      "period": "day",
+      "mtdAgg": "sum"
+    },
+    "measures": {},
+    "change": {
+      "compareTo": "previous",
+      "period": "day",
+      "mtdAgg": "sum",
+      "type": "percent",
+      "decimals": 1,
+      "periodWord": "period"
+    },
+    "interaction": {
+      "selectInTableau": true,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": true
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "divider": false,
+      "dividerColor": "#E2E4E8"
+    }
+  }
+}
