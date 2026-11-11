@@ -38,6 +38,9 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 | <img src="bar-chart/examples/example-1.png" width="120"> | [**Bar Chart**](#bar-chart) | Every common bar design, with drill-down | Dimension · Measure · Line · Target | [`bar-chart.trex`](bar-chart/bar-chart.trex) |
 | <img src="matrix-table/examples/example-1.png" width="120"> | [**Matrix**](#matrix) | Crosstab with heat map, totals and Excel export | Rows · Columns · Measure · Color | [`matrix-table.trex`](matrix-table/matrix-table.trex) |
 | <img src="data-lineage/examples/example-1.png" width="120"> | [**Data Lineage**](#data-lineage) | Sankey-style lineage flow with search | Levels · Details | [`data-lineage.trex`](data-lineage/data-lineage.trex) |
+| | [**Sankey**](sankey/README.md) | Flow between levels, link thickness by a measure | Levels · Value | [`sankey.trex`](sankey/sankey.trex) |
+| | [**Funnel**](funnel/README.md) | Stages of a process with conversion and drop-off | Stages (measures) or Stage · Value | [`funnel.trex`](funnel/funnel.trex) |
+| | [**Bullet & Gauge**](bullet-gauge/README.md) | Actual against target with ranges, as bullets, gauges or progress bars | Category · Actual · Target · Ranges · Comparison | [`bullet-gauge.trex`](bullet-gauge/bullet-gauge.trex) |
 
 ## What every extension can do
 
@@ -275,6 +278,9 @@ Then open a browser preview with sample data, no Tableau needed (add `?debug` fo
 | Bar Chart | http://localhost:8766/bar-chart/dev/preview.html |
 | Matrix | http://localhost:8766/matrix-table/dev/preview.html |
 | Data Lineage | http://localhost:8766/data-lineage/dev/preview.html |
+| Sankey | http://localhost:8766/sankey/dev/preview.html |
+| Funnel | http://localhost:8766/funnel/dev/preview.html |
+| Bullet & Gauge | http://localhost:8766/bullet-gauge/dev/preview.html |
 
 The local server also lists your Tableau shape palettes (from *My Tableau Repository* and the Tableau Desktop install) for the icon pickers. Python 3 standard library only.
 

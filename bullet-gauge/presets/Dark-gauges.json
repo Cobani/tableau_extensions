@@ -1,0 +1,141 @@
+{
+  "type": "tableau-bullet-gauge-preset",
+  "version": 1,
+  "name": "Dark gauges",
+  "scope": "look",
+  "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#4FD1C5",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#E6EBF2",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#9AA7B8",
+      "italic": true
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#17202B",
+      "bgOpacity": 100,
+      "divider": false,
+      "dividerColor": "#2A3646",
+      "gap": 10
+    },
+    "numbers": {
+      "mode": "all",
+      "font": "Lato"
+    },
+    "format": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "pctFromRatio": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "plusSign": true,
+      "negStyle": "minus"
+    },
+    "pctFormat": {
+      "scale": "none",
+      "decimals": 0,
+      "pctFromRatio": true,
+      "unit": "%",
+      "unitPosition": "suffix",
+      "plusSign": false,
+      "negStyle": "minus"
+    },
+    "chart": {
+      "mode": "gauge",
+      "rowHeight": 34,
+      "gaugeSize": 170,
+      "gap": 8,
+      "sort": "none",
+      "topN": 0,
+      "tooltip": true,
+      "rightClickMenu": true
+    },
+    "scale": {
+      "shared": false,
+      "maxMode": "auto",
+      "max": 100
+    },
+    "ranges": {
+      "source": "auto",
+      "thresholds": [
+        60,
+        85,
+        100
+      ],
+      "style": "three",
+      "color": "#8FA3BF",
+      "poorColor": "#5A2F2B",
+      "okColor": "#5A4B25",
+      "goodColor": "#24493A",
+      "reverse": false,
+      "track": "#222D3B"
+    },
+    "actual": {
+      "colorMode": "status",
+      "color": "#4FD1C5",
+      "belowColor": "#FF7A66",
+      "nearColor": "#F2C14E",
+      "atColor": "#4FD1C5",
+      "nearPct": 85,
+      "atPct": 100,
+      "thickness": 45,
+      "radius": 2
+    },
+    "target": {
+      "show": true,
+      "color": "#FFFFFF",
+      "thickness": 3
+    },
+    "compare": {
+      "show": true,
+      "color": "#F2C14E",
+      "thickness": 2
+    },
+    "labels": {
+      "showCategory": true,
+      "category": {
+        "font": "Lato",
+        "size": 12,
+        "weight": 500,
+        "color": "#E6EBF2",
+        "italic": false
+      },
+      "value": {
+        "font": "Lato",
+        "size": 12,
+        "weight": 700,
+        "color": "#FFFFFF",
+        "italic": false
+      },
+      "showPct": true,
+      "pctColor": "#9AA7B8",
+      "labelWidth": 30
+    },
+    "interaction": {
+      "selectInTableau": true,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": true
+    }
+  }
+}

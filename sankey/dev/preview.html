@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sankey — dev preview</title>
+<style>
+  body { margin: 0; font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #263244; background: #eef0f2; }
+  .bar { display: flex; gap: 14px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e2e4e8; flex-wrap: wrap; }
+  .bar b { font-size: 14px; }
+  .wrap { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  .zone { resize: both; overflow: hidden; width: 960px; height: 640px; background: #fff; border: 1px solid #d5d9df; }
+  .zone iframe, .dlg iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .dlg { width: 620px; height: 780px; background: #fff; border: 1px solid #d5d9df; box-shadow: 0 6px 24px rgba(0,0,0,.12); display: none; }
+  button, select { font: inherit; padding: 4px 10px; }
+  .note { color: #68707d; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <b>Sankey — dev preview</b>
+    <label>Sample data
+      <select id="ds">
+        <option value="default">Channel › Category › Region (3 levels)</option>
+        <option value="two">Source › Target (8 rows)</option>
+        <option value="deep">5 levels</option>
+        <option value="big">Stress test: 4 levels, 1,500 rows</option>
+        <option value="nulls">Nulls, zeros and a negative</option>
+        <option value="renamed">Renamed pills</option>
+      </select>
+    </label>
+    <button id="fmt" type="button">Format Extension</button>
+    <button id="reset" type="button">Reset settings</button>
+    <span class="note">Hover a node or link to highlight the flow, click to select in Tableau, right-click for the menu. Drag the zone's corner to resize.</span>
+  </div>
+  <div class="wrap">
+    <div class="zone"><iframe id="card" title="chart"></iframe></div>
+    <div class="dlg" id="dlg"><iframe id="dialog" title="Format dialog"></iframe></div>
+  </div>
+<script>
+  var ds = document.getElementById('ds');
+  ds.value = localStorage.getItem('skMockData') || 'default';
+  function load () {
+    var n = /[?&]n=(\d+)/.exec(location.search);
+    document.getElementById('card').src = '../index.html?mock&data=' + ds.value  + (n ? '&n=' + n[1] : '') + (/debug/.test(location.search) ? '&debug' : '');
+  }
+  ds.addEventListener('change', function () { localStorage.setItem('skMockData', ds.value); closeDlg(); load(); });
+  document.getElementById('reset').addEventListener('click', function () { localStorage.removeItem('skMockSettings'); closeDlg(); load(); });
+  document.getElementById('fmt').addEventListener('click', function () {
+    document.getElementById('card').contentWindow.postMessage({ type: 'sk-configure' }, '*');
+  });
+  function closeDlg () {
+    document.getElementById('dlg').style.display = 'none';
+    document.getElementById('dialog').src = 'about:blank';
+    var c = document.getElementById('card').contentWindow;
+    if (c) c.postMessage({ type: 'sk-dialog-closed' }, '*');
+  }
+  window.addEventListener('message', function (e) {
+    if (!e.data) return;
+    if (e.data.type === 'sk-open-dialog') {
+      document.getElementById('dlg').style.display = 'block';
+      document.getElementById('dialog').src = e.data.url;
+    }
+    if (e.data.type === 'sk-close-dialog') closeDlg();
+  });
+  load();
+</script>
+</body>
+</html>

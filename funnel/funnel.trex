@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.funnel" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Funnel chart: the stages of a process, each narrower than the one before, with the conversion and drop-off between them. One measure per stage, or a Stage dimension with a Value measure.</description>
+    <author name="Ilyas Coban" email="ilyas.cbn@gmail.com" organization="Ilyas Coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/funnel/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="steps">
+      <display-name resource-id="steps-name">Stages (measures)</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="12"/>
+      <tooltip resource-id="steps-tooltip">Optional. One measure per stage (2 to 12), in the order of this tile. Use this OR Stage + Value.</tooltip>
+    </encoding>
+
+    <encoding id="stage">
+      <display-name resource-id="stage-name">Stage</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="stage-tooltip">Optional. One dimension whose members are the stages (use with Value). Order: Format &#8594; Chart &#8594; Order.</tooltip>
+    </encoding>
+
+    <encoding id="value">
+      <display-name resource-id="value-name">Value</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <encoding-icon token="metric"/>
+      <tooltip resource-id="value-tooltip">Used with Stage: the measure that sizes each stage.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Funnel</text></resource>
+    <resource id="steps-name"><text locale="en_US">Stages (measures)</text></resource>
+    <resource id="steps-tooltip"><text locale="en_US">Optional. One measure per stage (2 to 12), in the order of this tile. Use this OR Stage + Value.</text></resource>
+    <resource id="stage-name"><text locale="en_US">Stage</text></resource>
+    <resource id="stage-tooltip"><text locale="en_US">Optional. One dimension whose members are the stages (use with Value). Order: Format &#8594; Chart &#8594; Order.</text></resource>
+    <resource id="value-name"><text locale="en_US">Value</text></resource>
+    <resource id="value-tooltip"><text locale="en_US">Used with Stage: the measure that sizes each stage.</text></resource>
+  </resources>
+</manifest>

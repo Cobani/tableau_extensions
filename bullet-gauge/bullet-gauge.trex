@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.bulletgauge" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Actual against target with qualitative ranges: bullet rows, semi-circular gauges or progress bars, one per category; optional comparison tick, % of target and status colors.</description>
+    <author name="Ilyas Coban" email="ilyas.cbn@gmail.com" organization="Ilyas Coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/bullet-gauge/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="category">
+      <display-name resource-id="category-name">Category</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="2"/>
+      <tooltip resource-id="category-tooltip">Optional: up to two dimensions, one row or gauge per member (e.g. store, region). Leave empty for a single mark for the whole worksheet.</tooltip>
+    </encoding>
+
+    <encoding id="actual">
+      <display-name resource-id="actual-name">Actual</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <encoding-icon token="metric"/>
+      <tooltip resource-id="actual-tooltip">Required: the measured value (the bar or arc).</tooltip>
+    </encoding>
+
+    <encoding id="target">
+      <display-name resource-id="target-name">Target</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="target-tooltip">Optional: the goal, drawn as a tick. Also gives the % of target.</tooltip>
+    </encoding>
+
+    <encoding id="ranges">
+      <display-name resource-id="ranges-name">Ranges</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="3"/>
+      <tooltip resource-id="ranges-tooltip">Optional: up to three measures, the upper limits of the bands (e.g. Poor / OK / Good). Drop each one separately. Without them, bands are percentages of the target.</tooltip>
+    </encoding>
+
+    <encoding id="compare">
+      <display-name resource-id="compare-name">Comparison</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="compare-tooltip">Optional: a second value to compare with, e.g. last year, drawn as a thin tick.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Bullet &amp; Gauge</text></resource>
+    <resource id="category-name"><text locale="en_US">Category</text></resource>
+    <resource id="category-tooltip"><text locale="en_US">Optional: up to two dimensions, one row or gauge per member (e.g. store, region). Leave empty for a single mark for the whole worksheet.</text></resource>
+    <resource id="actual-name"><text locale="en_US">Actual</text></resource>
+    <resource id="actual-tooltip"><text locale="en_US">Required: the measured value (the bar or arc).</text></resource>
+    <resource id="target-name"><text locale="en_US">Target</text></resource>
+    <resource id="target-tooltip"><text locale="en_US">Optional: the goal, drawn as a tick. Also gives the % of target.</text></resource>
+    <resource id="ranges-name"><text locale="en_US">Ranges</text></resource>
+    <resource id="ranges-tooltip"><text locale="en_US">Optional: up to three measures, the upper limits of the bands (e.g. Poor / OK / Good). Drop each one separately. Without them, bands are percentages of the target.</text></resource>
+    <resource id="compare-name"><text locale="en_US">Comparison</text></resource>
+    <resource id="compare-tooltip"><text locale="en_US">Optional: a second value to compare with, e.g. last year, drawn as a thin tick.</text></resource>
+  </resources>
+</manifest>

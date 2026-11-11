@@ -1,0 +1,123 @@
+{
+  "type": "tableau-funnel-preset",
+  "version": 1,
+  "name": "Default",
+  "scope": "look",
+  "exported": "2026-11-11T00:00:00.000Z",
+  "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#68707D",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": true
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "divider": false,
+      "dividerColor": "#E2E4E8",
+      "gap": 10
+    },
+    "numbers": {
+      "mode": "all",
+      "font": "Lato"
+    },
+    "format": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "pctFromRatio": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "plusSign": false,
+      "negStyle": "minus"
+    },
+    "chart": {
+      "shape": "funnel",
+      "gap": 6,
+      "radius": 3,
+      "minWidth": 3,
+      "order": "data",
+      "tooltip": true,
+      "rightClickMenu": true
+    },
+    "colors": {
+      "mode": "single",
+      "color": "#2F4B7C",
+      "tint": 55,
+      "statusBase": "previous",
+      "good": "#0E7C66",
+      "warn": "#D98A1B",
+      "bad": "#B4431E",
+      "goodMin": 60,
+      "warnMin": 30,
+      "neutral": "#68707D",
+      "lossColor": "#E3E6EB"
+    },
+    "conversion": {
+      "highlightBiggest": true,
+      "highlightColor": "#C2410C",
+      "overall": true
+    },
+    "labels": {
+      "showName": true,
+      "showValue": true,
+      "showPctFirst": true,
+      "showPctPrev": true,
+      "showDrop": true,
+      "pctDecimals": 1,
+      "place": "auto",
+      "name": {
+        "size": 12,
+        "weight": 600,
+        "color": "#17202B"
+      },
+      "value": {
+        "size": 14,
+        "weight": 700,
+        "color": "#263244"
+      },
+      "note": {
+        "size": 11,
+        "weight": 400,
+        "color": "#68707D"
+      },
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "interaction": {
+      "selectInTableau": true,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": true
+    },
+    "layout": {}
+  }
+}

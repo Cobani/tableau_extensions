@@ -8,6 +8,9 @@ const ext = {};
 ['KpiCard', 'KpiCardConfig', 'KpiCardConfigure', 'KpiCardMulti', 'KpiCardMultiConfig', 'KpiCardMultiConfigure',
   'Waterfall', 'Wf', 'WaterfallConfigure', 'LineChart', 'Lc', 'LineChartConfigure', 'BarChart', 'Bc', 'BarChartConfigure',
   'MatrixTable', 'Mx', 'MatrixTableConfigure', 'DataLineage', 'Dl', 'DataLineageConfigure',
+  'Sankey', 'Sk', 'SankeyConfigure',
+  'Funnel', 'Fn', 'FunnelConfigure',
+  'BulletGauge', 'Bg', 'BulletGaugeConfigure',
   'ChartExport', 'MxExport', 'KPI_ICONS', 'EXT_ICONS'].forEach(function (n) { ext[n] = 'writable'; });
 
 module.exports = [

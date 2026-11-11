@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.sankey" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Sankey flow diagram: each dimension on Levels is a column of nodes, and the links between neighbouring columns are as thick as the summed Value. Hover to highlight a flow, click a node or link to select it in Tableau.</description>
+    <author name="Ilyas Coban" email="ilyas.cbn@gmail.com" organization="Ilyas Coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/sankey/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="levels">
+      <display-name resource-id="levels-name">Levels</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="6"/>
+      <tooltip resource-id="levels-tooltip">Required, 2 to 6 dimensions. Drop each dimension separately, outermost (left) first. Each one becomes a column of nodes; the order on this tile is the order of the columns.</tooltip>
+    </encoding>
+
+    <encoding id="value">
+      <display-name resource-id="value-name">Value</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <encoding-icon token="metric"/>
+      <tooltip resource-id="value-tooltip">Required. One continuous measure (e.g. SUM(Sales)). It sets how thick each link is and how tall each node is. Zero, negative and empty values are not drawn.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Sankey</text></resource>
+    <resource id="levels-name"><text locale="en_US">Levels</text></resource>
+    <resource id="levels-tooltip"><text locale="en_US">Required, 2 to 6 dimensions. Drop each dimension separately, outermost (left) first. Each one becomes a column of nodes; the order on this tile is the order of the columns.</text></resource>
+    <resource id="value-name"><text locale="en_US">Value</text></resource>
+    <resource id="value-tooltip"><text locale="en_US">Required. One continuous measure (e.g. SUM(Sales)). It sets how thick each link is and how tall each node is. Zero, negative and empty values are not drawn.</text></resource>
+  </resources>
+</manifest>

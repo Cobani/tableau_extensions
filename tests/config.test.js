@@ -58,7 +58,7 @@ h.extensions().forEach(function (slug) {
 });
 
 // The settings key is what ties a workbook to its saved formatting: it must never change.
-const KEYS = { 'kpi-card': 'kpiCard', waterfall: 'waterfall1', 'line-chart': 'linechart1', 'bar-chart': 'barChart1', 'matrix-table': 'matrixTable1', 'data-lineage': 'dataLineage1', 'kpi-card-multi': 'kpiCardMulti1' };
+const KEYS = { 'kpi-card': 'kpiCard', waterfall: 'waterfall1', 'line-chart': 'linechart1', 'bar-chart': 'barChart1', 'matrix-table': 'matrixTable1', 'data-lineage': 'dataLineage1', 'kpi-card-multi': 'kpiCardMulti1', 'sankey': 'sankey1', 'funnel': 'funnel1', 'bullet-gauge': 'bulletGauge1' };
 Object.keys(KEYS).forEach(function (slug) {
   test(slug + ': settings key is still "' + KEYS[slug] + '"', function () {
     assert.equal(h.configApi(h.sandbox(h.configScripts(slug))).STORAGE_KEY, KEYS[slug]);

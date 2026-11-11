@@ -45,7 +45,7 @@ elegance.
 | The Format dialog opens **on top of Tableau** (`DialogStyle.Modal`) | Owner's standing rule |
 | No `.trex` that points at localhost, ever | Owner's standing rule |
 | No outside hosts, CDNs, analytics, or new runtime dependencies | The hosting network blocks them; one safe-list entry must cover everything |
-| Example, mock and screenshot data is made up (generic retail names) | The repo is public |
+| Example, mock and screenshot data is made up: generic retail names, invented place names (Harbor St, Northland), no real companies, banks, products, systems, countries or cities | The repo is public |
 | Secrets never go in tracked files, remote URLs, logs or chat | — |
 | `shared/` changes need a test and a check of every extension | One file, seven charts |
 | Bundled presets hold **every** setting of their chart (field-specific paths excepted) | `tests/presets.test.js` enforces it |
@@ -85,6 +85,9 @@ tools/make_icons.py manifest icons
 | bar-chart | chart.js | BarChart / Bc / BarChartConfigure | barChart1 | bar-chart.trex |
 | matrix-table | chart.js (+ export.js) | MatrixTable / Mx / MatrixTableConfigure | matrixTable1 | matrix-table.trex |
 | data-lineage | chart.js | DataLineage / Dl / DataLineageConfigure | dataLineage1 | data-lineage.trex |
+| sankey | chart.js | Sankey / Sk / SankeyConfigure | sankey1 | sankey.trex |
+| funnel | chart.js | Funnel / Fn / FunnelConfigure | funnel1 | funnel.trex |
+| bullet-gauge | chart.js | BulletGauge / Bg / BulletGaugeConfigure | bulletGauge1 | bullet-gauge.trex |
 
 Versions: `python3 release.py versions`. Manifest id: `com.ilyascoban.vizext.<slug without dashes>`;
 hosted at `https://cobani.github.io/tableau_extensions/<slug>/`.

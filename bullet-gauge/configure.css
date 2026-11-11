@@ -1,0 +1,69 @@
+/* Base Format dialog styles (tabs, rows, inputs, icon picker, footer) are in ../shared/dialog.css. */
+
+/* ---- tabs -------------------------------------------------------------- */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 10px 12px 0;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+  overflow-x: auto;
+}
+
+/* ---- Bullet & Gauge additions --------------------------------------------- */
+.tabs { flex-wrap: wrap; }
+.sample {
+  grid-column: 2;
+  margin: 2px 0 8px 142px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+.subcard {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px 8px;
+  margin-bottom: 10px;
+  background: var(--soft);
+}
+.btn--small { height: 24px; min-width: 0; padding: 0 10px; font-size: 12px; }
+.group .inline .btn { flex: none; }
+.note a { color: var(--accent); }
+.dimlist { display: flex; flex-direction: column; gap: 4px; }
+.dimitem {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 6px 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: #fff;
+}
+.dimitem.is-off .dimname { color: var(--muted); }
+.dimname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini {
+  width: 24px; height: 22px; padding: 0; border: 1px solid var(--line); border-radius: 3px;
+  background: #fff; color: var(--text); font-size: 9px; cursor: pointer;
+}
+.mini:disabled { opacity: 0.3; cursor: default; }
+
+/* ---- Unit currency signs ---------------------------------------------------- */
+.unit-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.unit-signs { display: flex; flex-wrap: wrap; gap: 4px; }
+.unit-sign {
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  font: 13px/1 var(--font);
+  color: var(--text);
+  cursor: pointer;
+}
+.unit-sign:hover { background: var(--soft); border-color: var(--muted); }
+
+/* ---- presets tab ------------------------------------------------------- */
+.preset-btns { flex-wrap: wrap; margin: 4px 0 8px; }
+.preset-json { height: 120px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; white-space: pre; }
+.preset-msg { margin: 0 0 14px; padding: 8px 10px; border-radius: 4px; background: #EAF5EE; color: #1E6B3C; font-size: 12px; }
+.preset-msg.is-error { background: #FDECEA; color: #A1281C; }
+.preset-inline-help { margin: 0; }
+.preset-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.preset-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

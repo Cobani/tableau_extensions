@@ -1,0 +1,161 @@
+{
+  "type": "tableau-sankey-preset",
+  "version": 1,
+  "name": "Default",
+  "scope": "look",
+  "exported": "2026-11-11T09:00:00.000Z",
+  "settings": {
+    "icon": {
+      "show": false,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": "",
+      "mask": false,
+      "w": 0,
+      "h": 0
+    },
+    "title": {
+      "show": true,
+      "align": "left",
+      "font": "Lato",
+      "size": 16,
+      "weight": 700,
+      "color": "#17202B",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "reserveSpace": false,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": false
+    },
+    "card": {
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "gap": 12,
+      "plotBg": "#FFFFFF",
+      "plotBgOpacity": 0
+    },
+    "levels": [
+      {
+        "color": "#4A5468"
+      },
+      {
+        "color": "#0F7C7C"
+      },
+      {
+        "color": "#7B4FD1"
+      },
+      {
+        "color": "#C2426B"
+      },
+      {
+        "color": "#E08A2E"
+      },
+      {
+        "color": "#2F7FC1"
+      }
+    ],
+    "data": {
+      "maxRows": 1000,
+      "nulls": "skip",
+      "sort": "flow",
+      "topN": 0
+    },
+    "numbers": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "unit": "",
+      "unitPosition": "suffix",
+      "font": "Lato"
+    },
+    "headers": {
+      "show": true,
+      "totals": false,
+      "font": "Lato",
+      "size": 11,
+      "weight": 700,
+      "color": "#68707D",
+      "uppercase": true,
+      "spacing": 0.06
+    },
+    "nodes": {
+      "width": 14,
+      "radius": 2,
+      "gap": 10,
+      "colorBy": "level",
+      "color": "#4A5468",
+      "palette": [
+        "#2F4B7C",
+        "#EB644C",
+        "#0F7C7C",
+        "#E0A030",
+        "#7B4FD1",
+        "#2F7FC1",
+        "#C2426B",
+        "#6E9B3C"
+      ]
+    },
+    "labels": {
+      "show": true,
+      "side": "auto",
+      "showValue": true,
+      "showPercent": false,
+      "maxWidth": 170,
+      "halo": true,
+      "haloColor": "#FFFFFF",
+      "font": "Lato",
+      "size": 12,
+      "weight": 600,
+      "color": "#17202B",
+      "valueWeight": 400,
+      "valueColor": "#68707D"
+    },
+    "links": {
+      "color": "source",
+      "singleColor": "#C9CDD4",
+      "opacity": 40
+    },
+    "highlight": {
+      "hover": true,
+      "linkOpacity": 75,
+      "dimOpacity": 10,
+      "matchColor": "#EB644C"
+    },
+    "legend": {
+      "show": false,
+      "position": "header",
+      "useHeaders": false,
+      "font": "Lato",
+      "size": 12,
+      "color": "#3D4552"
+    },
+    "search": {
+      "show": true,
+      "placeholder": "Search nodes…",
+      "mode": "highlight",
+      "width": 180
+    },
+    "tooltip": {
+      "show": true,
+      "showDetails": true
+    },
+    "interaction": {
+      "rightClickMenu": true,
+      "dblclick": "format",
+      "dialog": "onTop",
+      "selectInTableau": true,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": true
+    }
+  }
+}

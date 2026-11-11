@@ -1,0 +1,123 @@
+{
+  "type": "tableau-funnel-preset",
+  "version": 1,
+  "name": "Dark",
+  "scope": "look",
+  "exported": "2026-11-11T00:00:00.000Z",
+  "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#E8EBF0",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#A5AFBD",
+      "italic": true
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#17202B",
+      "bgOpacity": 100,
+      "divider": false,
+      "dividerColor": "#E2E4E8",
+      "gap": 10
+    },
+    "numbers": {
+      "mode": "all",
+      "font": "Lato"
+    },
+    "format": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "pctFromRatio": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "plusSign": false,
+      "negStyle": "minus"
+    },
+    "chart": {
+      "shape": "bars",
+      "gap": 6,
+      "radius": 4,
+      "minWidth": 3,
+      "order": "data",
+      "tooltip": true,
+      "rightClickMenu": true
+    },
+    "colors": {
+      "mode": "status",
+      "color": "#2F4B7C",
+      "tint": 55,
+      "statusBase": "previous",
+      "good": "#3FBF9F",
+      "warn": "#F0B34A",
+      "bad": "#F0765A",
+      "goodMin": 60,
+      "warnMin": 30,
+      "neutral": "#6B7788",
+      "lossColor": "#2B3646"
+    },
+    "conversion": {
+      "highlightBiggest": true,
+      "highlightColor": "#FF9F6B",
+      "overall": true
+    },
+    "labels": {
+      "showName": true,
+      "showValue": true,
+      "showPctFirst": true,
+      "showPctPrev": true,
+      "showDrop": true,
+      "pctDecimals": 1,
+      "place": "auto",
+      "name": {
+        "size": 12,
+        "weight": 600,
+        "color": "#E8EBF0"
+      },
+      "value": {
+        "size": 14,
+        "weight": 700,
+        "color": "#FFFFFF"
+      },
+      "note": {
+        "size": 11,
+        "weight": 400,
+        "color": "#A5AFBD"
+      },
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "interaction": {
+      "selectInTableau": true,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": true
+    },
+    "layout": {}
+  }
+}
