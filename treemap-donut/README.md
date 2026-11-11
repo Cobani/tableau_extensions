@@ -4,6 +4,13 @@ The composition of a whole, with drill-down through a hierarchy (department › 
 click a tile or slice to look inside it, and a path above the chart ("All › Apparel › Shoes") to go back.
 Part of the `tableau_extensions` repo (shared files in `../shared/`).
 
+<p>
+  <img src="examples/example-1.png" alt="Treemap & Donut example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Treemap & Donut example 2" width="100%">
+</p>
+
 ## Run it
 
 ```bash

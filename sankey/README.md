@@ -6,6 +6,13 @@ rows that pass through both. Hover a node and everything flowing through it ligh
 it in Tableau for dashboard actions. The icon, title and explanation are the same as **KPI Card**; the card options and
 presets are the same as **Bar Chart**.
 
+<p>
+  <img src="examples/example-1.png" alt="Sankey example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Sankey example 2" width="100%">
+</p>
+
 ```
 sankey.trex        manifest: Marks card tiles + "Format Extension" button
 index.html         chart page

@@ -9,6 +9,11 @@ Every measure is read like the KPI Card reads its measure: latest value or month
 same day last month, as a % or pp change, with an "increase is good" colour per measure. Part of the `tableau_extensions` repo
 (shared files in `../shared/`).
 
+<p>
+  <img src="examples/example-1.png" alt="Narrative Card example 1" width="340">
+  <img src="examples/example-2.png" alt="Narrative Card example 2" width="340">
+</p>
+
 ## Run it
 
 ```bash

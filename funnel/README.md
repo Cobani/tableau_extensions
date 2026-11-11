@@ -4,6 +4,13 @@ The stages of a process, each narrower than the one before, with the conversion 
 (visits → product views → basket → checkout → orders). Three shapes, a colour per stage or by conversion, and labels that
 never overlap. Part of the `tableau_extensions` repo (shared files in `../shared/`).
 
+<p>
+  <img src="examples/example-1.png" alt="Funnel example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Funnel example 2" width="100%">
+</p>
+
 ## Run it
 
 ```bash

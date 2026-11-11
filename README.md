@@ -10,7 +10,8 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 ![No dependencies](https://img.shields.io/badge/dependencies-none-2ea44f)
 ![Hosted on GitHub Pages](https://img.shields.io/badge/hosted%20on-GitHub%20Pages-222)
 
-[KPI Card](#kpi-card) · [KPI Card Multi](#kpi-card-multi) · [Waterfall](#waterfall) · [Line Chart](#line-chart) · [Bar Chart](#bar-chart) · [Matrix](#matrix) · [Data Lineage](#data-lineage)
+[KPI Card](#kpi-card) · [KPI Card Multi](#kpi-card-multi) · [Waterfall](#waterfall) · [Line Chart](#line-chart) · [Bar Chart](#bar-chart) · [Matrix](#matrix) · [Data Lineage](#data-lineage)<br>
+[Sankey](#sankey) · [Funnel](#funnel) · [Bullet & Gauge](#bullet--gauge) · [Cohort Grid](#cohort-grid) · [Treemap & Donut](#treemap--donut) · [Maturity Ladder](#maturity-ladder) · [Parameter Switcher](#parameter-switcher) · [Narrative Card](#narrative-card)
 
 </div>
 
@@ -38,14 +39,14 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 | <img src="bar-chart/examples/example-1.png" width="120"> | [**Bar Chart**](#bar-chart) | Every common bar design, with drill-down | Dimension · Measure · Line · Target | [`bar-chart.trex`](bar-chart/bar-chart.trex) |
 | <img src="matrix-table/examples/example-1.png" width="120"> | [**Matrix**](#matrix) | Crosstab with heat map, totals and Excel export | Rows · Columns · Measure · Color | [`matrix-table.trex`](matrix-table/matrix-table.trex) |
 | <img src="data-lineage/examples/example-1.png" width="120"> | [**Data Lineage**](#data-lineage) | Sankey-style lineage flow with search | Levels · Details | [`data-lineage.trex`](data-lineage/data-lineage.trex) |
-| | [**Sankey**](sankey/README.md) | Flow between levels, link thickness by a measure | Levels · Value | [`sankey.trex`](sankey/sankey.trex) |
-| | [**Funnel**](funnel/README.md) | Stages of a process with conversion and drop-off | Stages (measures) or Stage · Value | [`funnel.trex`](funnel/funnel.trex) |
-| | [**Bullet & Gauge**](bullet-gauge/README.md) | Actual against target with ranges, as bullets, gauges or progress bars | Category · Actual · Target · Ranges · Comparison | [`bullet-gauge.trex`](bullet-gauge/bullet-gauge.trex) |
-| | [**Cohort Grid**](cohort-grid/README.md) | Retention triangle: cohorts by periods since start, shaded by value | Cohort · Period · Value · Cohort size | [`cohort-grid.trex`](cohort-grid/cohort-grid.trex) |
-| | [**Treemap & Donut**](treemap-donut/README.md) | Composition of a whole as a treemap, donut or pie, with drill-down | Category · Size · Colour | [`treemap-donut.trex`](treemap-donut/treemap-donut.trex) |
-| | [**Maturity Ladder**](maturity-ladder/README.md) | Amounts falling due per time bucket, stacked by group, with a running total | Maturity date · Amount · Group · Item | [`maturity-ladder.trex`](maturity-ladder/maturity-ladder.trex) |
-| | [**Parameter Switcher**](parameter-switcher/README.md) | Tabs, buttons, pills, a toggle or a stepper that set a Tableau parameter | Options (optional) | [`parameter-switcher.trex`](parameter-switcher/parameter-switcher.trex) |
-| | [**Narrative Card**](narrative-card/README.md) | Sentences you write, with live numbers, changes and conditions inside | Measures · Date | [`narrative-card.trex`](narrative-card/narrative-card.trex) |
+| <img src="sankey/examples/example-1.png" width="120"> | [**Sankey**](#sankey) | Flow between levels, link thickness by a measure | Levels · Value | [`sankey.trex`](sankey/sankey.trex) |
+| <img src="funnel/examples/example-1.png" width="120"> | [**Funnel**](#funnel) | Stages of a process with conversion and drop-off | Stages (measures) or Stage · Value | [`funnel.trex`](funnel/funnel.trex) |
+| <img src="bullet-gauge/examples/example-1.png" width="120"> | [**Bullet & Gauge**](#bullet--gauge) | Actual against target with ranges, as bullets, gauges or progress bars | Category · Actual · Target · Ranges · Comparison | [`bullet-gauge.trex`](bullet-gauge/bullet-gauge.trex) |
+| <img src="cohort-grid/examples/example-1.png" width="120"> | [**Cohort Grid**](#cohort-grid) | Retention triangle: cohorts by periods since start, shaded by value | Cohort · Period · Value · Cohort size | [`cohort-grid.trex`](cohort-grid/cohort-grid.trex) |
+| <img src="treemap-donut/examples/example-1.png" width="120"> | [**Treemap & Donut**](#treemap--donut) | Composition of a whole as a treemap, donut or pie, with drill-down | Category · Size · Colour | [`treemap-donut.trex`](treemap-donut/treemap-donut.trex) |
+| <img src="maturity-ladder/examples/example-1.png" width="120"> | [**Maturity Ladder**](#maturity-ladder) | Amounts falling due per time bucket, stacked by group, with a running total | Maturity date · Amount · Group · Item | [`maturity-ladder.trex`](maturity-ladder/maturity-ladder.trex) |
+| <img src="parameter-switcher/examples/example-1.png" width="120"> | [**Parameter Switcher**](#parameter-switcher) | Tabs, buttons, pills, a toggle or a stepper that set a Tableau parameter | Options (optional) | [`parameter-switcher.trex`](parameter-switcher/parameter-switcher.trex) |
+| <img src="narrative-card/examples/example-1.png" width="120"> | [**Narrative Card**](#narrative-card) | Sentences you write, with live numbers, changes and conditions inside | Measures · Date | [`narrative-card.trex`](narrative-card/narrative-card.trex) |
 
 ## What every extension can do
 
@@ -224,6 +225,171 @@ A lineage flow: every row is one path, such as *table → data source → workbo
 - **Presets** for the look.
 
 [Full documentation →](data-lineage/README.md)
+
+## Sankey
+
+<p>
+  <img src="sankey/examples/example-1.png" alt="Sankey example 1" width="100%">
+</p>
+<p>
+  <img src="sankey/examples/example-2.png" alt="Sankey example 2" width="100%">
+</p>
+
+A flow diagram where **link thickness is a measure**: each dimension on Levels is a column of nodes, and a link is as thick as the summed Value of the rows that pass through both ends.
+
+**Tiles:** `Levels` (2–6 dimensions, one column each, outermost first) · `Value` (1 measure) · Tableau's `Tooltip` (optional measures).
+
+- **Hover** a node or link and everything flowing through it lights up; **click** to select it in Tableau.
+- **Search** finds nodes by name in any column and highlights their flow (or shows only it).
+- Labels with value and share of the column; labels that would overlap are left out.
+- **Top N per level** with an "Others" node; rows with an empty level skip that column or show a "Null" node.
+- Links coloured by source, target, a gradient or one colour; nodes by level, first-level member or one colour.
+- **Presets** for the look.
+
+[Full documentation →](sankey/README.md)
+
+## Funnel
+
+<p>
+  <img src="funnel/examples/example-1.png" alt="Funnel example 1" width="100%">
+</p>
+<p>
+  <img src="funnel/examples/example-2.png" alt="Funnel example 2" width="100%">
+</p>
+
+The stages of a process, each narrower than the one before, with the conversion and the drop-off between them.
+
+**Tiles:** `Stages` (2–12 measures, one per stage) — or `Stage` (1 dimension) with `Value` (1 measure).
+
+- Three shapes: **funnel** (trapezoids), **bars with drop-off** and **steps**.
+- Labels: stage name, value, % of the first stage, % of the previous stage and the drop-off; they never overlap.
+- Colours: one colour getting lighter, one per stage, or by conversion thresholds.
+- The stage after the **biggest drop-off** is outlined; **overall conversion** under the chart.
+- Click a stage to select it in Tableau (stages from a dimension); per-stage label, colour and hide.
+
+[Full documentation →](funnel/README.md)
+
+## Bullet & Gauge
+
+<p>
+  <img src="bullet-gauge/examples/example-1.png" alt="Bullet & Gauge example 1" width="100%">
+</p>
+<p>
+  <img src="bullet-gauge/examples/example-2.png" alt="Bullet & Gauge example 2" width="100%">
+</p>
+
+Actual against target, with qualitative ranges (poor / OK / good), drawn as **bullet rows**, **gauges** or **progress bars**.
+
+**Tiles:** `Category` (0–2 dimensions, optional) · `Actual` (1 measure) · `Target` (1, optional) · `Ranges` (up to 3, optional) · `Comparison` (1, optional).
+
+- Bands from your Ranges measures, or at percentages of the target when there are none.
+- Target tick, comparison tick (e.g. last year) and the value with its **% of target**.
+- **Status colours**: the actual bar turns red / amber / green by % of target.
+- **Lower is better** reverses band and status colours (costs, errors, wait times).
+- Sort, **Top N**, one shared scale or each row its own.
+
+[Full documentation →](bullet-gauge/README.md)
+
+## Cohort Grid
+
+<p>
+  <img src="cohort-grid/examples/example-1.png" alt="Cohort Grid example 1" width="100%">
+</p>
+<p>
+  <img src="cohort-grid/examples/example-2.png" alt="Cohort Grid example 2" width="100%">
+</p>
+
+A retention (cohort) triangle: one row per cohort, one column per period since the cohort started, every cell shaded by its value.
+
+**Tiles:** `Cohort` (1 dimension) · `Period` (1 dimension: a number or a date) · `Value` (1 measure) · `Cohort size` (1 measure, optional).
+
+- Cells show **% of cohort size** (retention), the value, or % of the previous period.
+- **Heat map**: light-to-dark ramp, automatic or fixed limits, one scale for the grid or each cohort.
+- Optional **Average** row, frozen headers, period headers from a template (`M{n}`, `Month {n}`).
+- Sort cohorts, last N cohorts, first N periods; click a cell to select its cohort and period in Tableau.
+- **Export** to Excel and CSV (grid as shown or the data), copy, and save as picture.
+
+[Full documentation →](cohort-grid/README.md)
+
+## Treemap & Donut
+
+<p>
+  <img src="treemap-donut/examples/example-1.png" alt="Treemap & Donut example 1" width="100%">
+</p>
+<p>
+  <img src="treemap-donut/examples/example-2.png" alt="Treemap & Donut example 2" width="100%">
+</p>
+
+The composition of a whole, with drill-down through a hierarchy: a **treemap**, a **donut** or a **pie**.
+
+**Tiles:** `Category` (1–4 dimensions, outermost first) · `Size` (1 measure) · `Colour` (1 measure, optional).
+
+- **Drill**: click a tile or slice to look inside it; the path above the chart ("All › Apparel › Shoes") goes back.
+- Treemap with one or two levels shown at once; donut with the total (or the hovered slice) in the centre.
+- Small slices grouped into "Others"; donut labels with leader lines that never overlap.
+- Colours by first-level member, tints of the parent, or by the Colour measure.
+- Selecting sends every level's value to Tableau, so dashboard actions can filter by it.
+
+[Full documentation →](treemap-donut/README.md)
+
+## Maturity Ladder
+
+<p>
+  <img src="maturity-ladder/examples/example-1.png" alt="Maturity Ladder example 1" width="100%">
+</p>
+<p>
+  <img src="maturity-ladder/examples/example-2.png" alt="Maturity Ladder example 2" width="100%">
+</p>
+
+Amounts that fall due over time (contracts, leases and agreements by end date): one bar per week, month, quarter or year.
+
+**Tiles:** `Maturity date` (1–3 date fields) · `Amount` (1 measure) · `Group` (1 dimension, optional) · `Item` (1 dimension, optional).
+
+- Buckets by week, month, quarter or year (*Auto* picks the unit); optional **Overdue** and **Later** bars.
+- Bars stacked by group; colours: one colour, one per group, or by **distance from today**.
+- **Today** marker (or a fixed date), with the next N buckets shaded if you like.
+- Optional **running total** line on a right axis.
+- Click a bar or segment to select its dates (and group) in Tableau; the tooltip lists the top 5 items.
+
+[Full documentation →](maturity-ladder/README.md)
+
+## Parameter Switcher
+
+<p>
+  <img src="parameter-switcher/examples/example-1.png" alt="Parameter Switcher example 1" width="340">
+  <img src="parameter-switcher/examples/example-2.png" alt="Parameter Switcher example 2" width="340">
+</p>
+
+A control, not a chart: the allowed values of **one Tableau parameter** as tabs, buttons, pills, a dropdown, a toggle or a stepper, setting the parameter when one is clicked.
+
+**Tiles:** `Options` (1 dimension, optional — the choices for a parameter that allows all values).
+
+- Styles: **tabs**, **segmented** buttons, **pills**, **dropdown**, **toggle** (two choices), **stepper** (◀ value ▶).
+- Always in step with Tableau: mirrors the parameter's current value, also when it changes elsewhere.
+- Many choices switch to the dropdown automatically; tabs and pills otherwise scroll or wrap.
+- Rename or hide a choice; colours for normal, hover and selected.
+- Keyboard: arrow keys, Home / End, Enter or Space.
+
+[Full documentation →](parameter-switcher/README.md)
+
+## Narrative Card
+
+<p>
+  <img src="narrative-card/examples/example-1.png" alt="Narrative Card example 1" width="340">
+  <img src="narrative-card/examples/example-2.png" alt="Narrative Card example 2" width="340">
+</p>
+
+Sentences written by the dashboard builder, with live numbers inside: `{Revenue} this month, {Revenue.change} vs last month.`
+
+**Tiles:** `Measures` (1–12) · `Date` (0–4 date fields, optional).
+
+- Each measure is read like the **KPI Card**: latest value or month to date, compared with the previous date or the same day last month.
+- Tokens for the value, change, difference, previous value, date and direction ("rose" / "fell"), with per-token overrides.
+- **Conditions** (`{if Revenue.change > 0}…{else}…{end}`), bullets, bold and italic.
+- Per-measure format, "increase is good" colours and arrows.
+- Template tab lists the fields as buttons; a name that matches no measure shows in red.
+
+[Full documentation →](narrative-card/README.md)
 
 ---
 

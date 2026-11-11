@@ -11,32 +11,29 @@ actions (date pills especially), *Use Tableau's tooltip* shows the right mark's 
 Save as picture downloads inside the Tableau frame, the Format dialog stays on top, Parameter Switcher
 changes int / float / date parameters. Fix what fails, one extension per session.
 
-## 2. Screenshots for the eight new extensions
-`examples/example-1.png` and `example-2.png` for sankey, funnel, bullet-gauge, cohort-grid, treemap-donut,
-maturity-ladder, parameter-switcher and narrative-card (made-up data, from the dev preview), then add them to
-each README and to the table in the root README.
-
-## 3. Midnight theme gaps
+## 2. Midnight theme gaps
 Applying the bundled Midnight theme leaves some elements light or dark-on-dark because their defaults differ
 between extensions and are therefore not in `THEME_MAP`: waterfall grid lines and Start / End bars, data-lineage
 legend text, matrix-table header colours. Add theme keys for them (new keys, so Default.json stays a no-op).
 
-## 4. Line Chart presets folder
+## 3. Line Chart presets folder
 Line Chart has the Presets tab but no bundled `presets/*.json`; add `Default.json` and one alternative.
 
-## 5. Vector SVG export
+## 4. Vector SVG export
 Save as picture offers PNG everywhere. A true vector SVG needs title and legend drawn inside the chart's
 `<svg>` (they are HTML today); do it for bar-chart and line-chart first.
 
-## 6. Gradual modernisation
+## 5. Gradual modernisation
 ESLint runs on every push with `no-undef`, `no-redeclare`, `no-unused-vars`. Remaining warnings:
 `npm run lint`. When a function is touched for another reason, move its `var` to `const` / `let`.
 
-## 7. Small fixes noticed in review
+## 6. Small fixes noticed in review
 - funnel: with more than 12 stages a stray "s." shows next to the row note.
 - bullet-gauge: the "showing the first 500" note uses the browser's default font; the `negative` data set
   draws full-width bars when the target is zero.
 - bar-chart: an event line crosses the value label of the bar it sits on.
+- maturity-ladder: the Today line and the running-total line are drawn through bar total labels; in "by distance
+  from today" colouring the legend still shows the group shades, which do not match the bars.
 
 ## Not planned (owner's decision)
 Arabic / locale support · a licence file · changing the author details in the manifests · calendar

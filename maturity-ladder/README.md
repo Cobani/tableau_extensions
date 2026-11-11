@@ -4,6 +4,13 @@ Amounts that fall due over time (contracts, leases and agreements by end date): 
 optional group, with a Today marker, an optional running total and optional Overdue / Later bars. Part of the `tableau_extensions` repo
 (shared files in `../shared/`).
 
+<p>
+  <img src="examples/example-1.png" alt="Maturity Ladder example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Maturity Ladder example 2" width="100%">
+</p>
+
 ## Run it
 
 ```bash

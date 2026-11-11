@@ -4,6 +4,13 @@ Actual against target, with qualitative ranges (poor / OK / good). One mark per 
 (default), **gauges** or **progress bars**. The icon, title, explanation and card options are the same as in the other
 extensions, and so is the number formatting.
 
+<p>
+  <img src="examples/example-1.png" alt="Bullet & Gauge example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Bullet & Gauge example 2" width="100%">
+</p>
+
 ```
 bullet-gauge.trex   manifest: Marks card tiles + "Format Extension" button
 index.html          chart page

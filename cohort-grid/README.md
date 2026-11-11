@@ -4,6 +4,13 @@ A retention (cohort) triangle: one row per cohort (first-order month, sign-up we
 started (0, 1, 2 …), every cell shaded by its value, as a number or as a percentage of the cohort size. Part of the
 `tableau_extensions` repo (shared files in `../shared/`).
 
+<p>
+  <img src="examples/example-1.png" alt="Cohort Grid example 1" width="100%">
+</p>
+<p>
+  <img src="examples/example-2.png" alt="Cohort Grid example 2" width="100%">
+</p>
+
 ## Run it
 
 ```bash

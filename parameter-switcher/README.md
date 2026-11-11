@@ -4,6 +4,11 @@ A control, not a chart. It shows the allowed values of **one Tableau parameter**
 stepper, and sets the parameter when one is clicked, so a dashboard gets good-looking switches (metric picker, period picker, view
 toggle) in the same style as the other extensions. Part of the `tableau_extensions` repo (shared files in `../shared/`).
 
+<p>
+  <img src="examples/example-1.png" alt="Parameter Switcher example 1" width="340">
+  <img src="examples/example-2.png" alt="Parameter Switcher example 2" width="340">
+</p>
+
 ## Run it
 
 ```bash
