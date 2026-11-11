@@ -1,0 +1,161 @@
+{
+  "type": "tableau-maturity-ladder-preset",
+  "version": 1,
+  "name": "Dark",
+  "scope": "look",
+  "exported": "2026-11-11T00:00:00.000Z",
+  "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-bar-chart-solid",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#E8EBF0",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#A5AFBD",
+      "italic": true
+    },
+    "data": {},
+    "card": {
+      "padding": 15,
+      "bgColor": "#17202B",
+      "bgOpacity": 100,
+      "divider": false,
+      "dividerColor": "#E2E4E8",
+      "gap": 10
+    },
+    "numbers": {
+      "mode": "all",
+      "font": "Lato"
+    },
+    "format": {
+      "scale": "dynamic",
+      "decimals": 1,
+      "pctFromRatio": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "plusSign": false,
+      "negStyle": "minus"
+    },
+    "buckets": {
+      "unit": "auto",
+      "overdue": false,
+      "overdueLabel": "Overdue",
+      "later": 0,
+      "laterLabel": "Later"
+    },
+    "bars": {
+      "width": 70,
+      "radius": 2,
+      "colorMode": "distance",
+      "color": "#2F4B7C",
+      "palette": [
+        "#2F4B7C",
+        "#EB644C",
+        "#0E7C66",
+        "#D98A1B",
+        "#7A5195",
+        "#3C9BC4",
+        "#B4431E",
+        "#68707D",
+        "#9AA9C4",
+        "#C4A484"
+      ],
+      "otherColor": "#B8BFCA",
+      "near": 3,
+      "mid": 12,
+      "far": 36,
+      "overdueColor": "#B4431E",
+      "distColors": [
+        "#D98A1B",
+        "#3C9BC4",
+        "#2F4B7C",
+        "#9AA9C4"
+      ],
+      "gap": 1
+    },
+    "today": {
+      "show": true,
+      "label": "Today",
+      "color": "#C2410C",
+      "lineStyle": "dashed",
+      "lineWidth": 1.5,
+      "highlightNext": 0,
+      "highlightColor": "#F2C94C"
+    },
+    "cumulative": {
+      "show": true,
+      "color": "#F0B34A",
+      "width": 2,
+      "points": true,
+      "title": "Running total"
+    },
+    "labels": {
+      "showTotals": true,
+      "showCounts": false,
+      "total": {
+        "size": 11,
+        "weight": 700,
+        "color": "#E8EBF0"
+      },
+      "count": {
+        "size": 10,
+        "weight": 400,
+        "color": "#68707D"
+      },
+      "axis": {
+        "size": 11,
+        "weight": 400,
+        "color": "#A5AFBD"
+      },
+      "fmt": {
+        "scale": "dynamic",
+        "decimals": 1,
+        "pctFromRatio": true,
+        "unit": "",
+        "unitPosition": "suffix",
+        "plusSign": false,
+        "negStyle": "minus"
+      }
+    },
+    "axes": {
+      "grid": true,
+      "gridColor": "#2B3646",
+      "lineColor": "#B8BFCA",
+      "yTitle": "",
+      "xTitle": ""
+    },
+    "legend": {
+      "show": true,
+      "position": "top",
+      "size": 11,
+      "color": "#E8EBF0"
+    },
+    "chart": {
+      "topItems": 5,
+      "tooltip": true,
+      "rightClickMenu": true
+    },
+    "interaction": {
+      "selectInTableau": true,
+      "tableauTooltip": false
+    },
+    "export": {
+      "picture": true
+    }
+  }
+}

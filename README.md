@@ -41,6 +41,9 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 | | [**Sankey**](sankey/README.md) | Flow between levels, link thickness by a measure | Levels · Value | [`sankey.trex`](sankey/sankey.trex) |
 | | [**Funnel**](funnel/README.md) | Stages of a process with conversion and drop-off | Stages (measures) or Stage · Value | [`funnel.trex`](funnel/funnel.trex) |
 | | [**Bullet & Gauge**](bullet-gauge/README.md) | Actual against target with ranges, as bullets, gauges or progress bars | Category · Actual · Target · Ranges · Comparison | [`bullet-gauge.trex`](bullet-gauge/bullet-gauge.trex) |
+| | [**Cohort Grid**](cohort-grid/README.md) | Retention triangle: cohorts by periods since start, shaded by value | Cohort · Period · Value · Cohort size | [`cohort-grid.trex`](cohort-grid/cohort-grid.trex) |
+| | [**Treemap & Donut**](treemap-donut/README.md) | Composition of a whole as a treemap, donut or pie, with drill-down | Category · Size · Colour | [`treemap-donut.trex`](treemap-donut/treemap-donut.trex) |
+| | [**Maturity Ladder**](maturity-ladder/README.md) | Amounts falling due per time bucket, stacked by group, with a running total | Maturity date · Amount · Group · Item | [`maturity-ladder.trex`](maturity-ladder/maturity-ladder.trex) |
 
 ## What every extension can do
 
@@ -281,6 +284,9 @@ Then open a browser preview with sample data, no Tableau needed (add `?debug` fo
 | Sankey | http://localhost:8766/sankey/dev/preview.html |
 | Funnel | http://localhost:8766/funnel/dev/preview.html |
 | Bullet & Gauge | http://localhost:8766/bullet-gauge/dev/preview.html |
+| Cohort Grid | http://localhost:8766/cohort-grid/dev/preview.html |
+| Treemap & Donut | http://localhost:8766/treemap-donut/dev/preview.html |
+| Maturity Ladder | http://localhost:8766/maturity-ladder/dev/preview.html |
 
 The local server also lists your Tableau shape palettes (from *My Tableau Repository* and the Tableau Desktop install) for the icon pickers. Python 3 standard library only.
 

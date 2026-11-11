@@ -1,0 +1,172 @@
+{
+  "type": "tableau-cohort-grid-preset",
+  "version": 1,
+  "name": "Default",
+  "scope": "look",
+  "exported": "2026-11-11T00:00:00.000Z",
+  "settings": {
+    "icon": {
+      "show": true,
+      "source": "builtin",
+      "builtinId": "fg-table",
+      "size": 24,
+      "color": "#EB644C",
+      "dataUrl": "",
+      "name": ""
+    },
+    "title": {
+      "show": true,
+      "align": "left",
+      "font": "Lato",
+      "size": 16,
+      "weight": 500,
+      "color": "#68707D",
+      "italic": false
+    },
+    "explanation": {
+      "show": true,
+      "reserveSpace": false,
+      "font": "Lato",
+      "size": 12,
+      "weight": 400,
+      "color": "#68707D",
+      "italic": true
+    },
+    "data": {
+      "maxRows": 1000
+    },
+    "card": {
+      "padding": 15,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0,
+      "gap": 10,
+      "plotBg": "#FFFFFF",
+      "plotBgOpacity": 0
+    },
+    "numbers": {
+      "font": "Lato"
+    },
+    "format": {
+      "scale": "none",
+      "decimals": 0,
+      "pctFromRatio": true,
+      "thousands": true,
+      "unit": "",
+      "unitPosition": "suffix",
+      "unitSpace": true,
+      "plusSign": false,
+      "negStyle": "minus"
+    },
+    "period": {
+      "unit": "auto"
+    },
+    "values": {
+      "show": "pct",
+      "decimals": 0,
+      "hidePeriod0": false,
+      "emptyText": "",
+      "zeroText": ""
+    },
+    "heat": {
+      "mode": "ramp",
+      "low": "#EAF0FB",
+      "high": "#2F4B7C",
+      "minMode": "auto",
+      "min": 0,
+      "maxMode": "auto",
+      "max": 100,
+      "scope": "grid",
+      "autoText": true,
+      "noneBg": "#EAF0FB",
+      "emptyBg": "#F6F7F9",
+      "emptyOpacity": 100
+    },
+    "layout": {
+      "cellMinWidth": 52,
+      "rowHeight": 32,
+      "gap": 2,
+      "radius": 4,
+      "showSize": true,
+      "summary": "none",
+      "summaryLabel": "Average",
+      "freeze": true
+    },
+    "sort": {
+      "cohorts": "asc",
+      "lastCohorts": 0,
+      "firstPeriods": 0
+    },
+    "headers": {
+      "periodLabel": "M{n}",
+      "cornerText": "Cohort",
+      "sizeLabel": "Size",
+      "col": {
+        "font": "Lato",
+        "size": 11,
+        "weight": 700,
+        "color": "#27357E",
+        "italic": false,
+        "upper": false,
+        "letterSpacing": 0
+      },
+      "row": {
+        "font": "Lato",
+        "size": 12,
+        "weight": 700,
+        "color": "#27357E",
+        "italic": false,
+        "upper": false,
+        "letterSpacing": 0
+      },
+      "size": {
+        "font": "Lato",
+        "size": 11,
+        "weight": 400,
+        "color": "#68707D",
+        "italic": false,
+        "upper": false,
+        "letterSpacing": 0
+      },
+      "cornerStyle": {
+        "font": "Lato",
+        "size": 11,
+        "weight": 400,
+        "color": "#8C96A3",
+        "italic": true,
+        "upper": false,
+        "letterSpacing": 0
+      },
+      "colAlign": "center",
+      "bg": "#FFFFFF",
+      "bgOpacity": 0,
+      "summaryBold": true
+    },
+    "cells": {
+      "main": {
+        "font": "Lato",
+        "size": 12,
+        "weight": 600,
+        "color": "#17202B",
+        "italic": false
+      }
+    },
+    "tooltip": {
+      "show": true,
+      "fullNumbers": true
+    },
+    "interaction": {
+      "rightClickMenu": true,
+      "hover": true,
+      "hoverColor": "#EB644C",
+      "dblclick": "format",
+      "dialog": "onTop",
+      "selectInTableau": true,
+      "tableauTooltip": false
+    },
+    "export": {
+      "button": "hover",
+      "includeTitle": true,
+      "picture": true
+    }
+  }
+}

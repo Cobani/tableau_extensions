@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.treemapdonut" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Treemap and donut chart: the composition of a whole, with drill-down through a hierarchy of dimensions. Size by one measure, optional colour measure.</description>
+    <author name="Ilyas Coban" email="ilyas.cbn@gmail.com" organization="Ilyas Coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/treemap-donut/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="category">
+      <display-name resource-id="category-name">Category</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="4"/>
+      <tooltip resource-id="category-tooltip">1 to 4 dimensions, outermost level first (e.g. Department, then Category, then Product). Each extra dimension is one more level to click into. Required.</tooltip>
+    </encoding>
+
+    <encoding id="value">
+      <display-name resource-id="value-name">Size</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <encoding-icon token="metric"/>
+      <tooltip resource-id="value-tooltip">The measure that sizes the tiles and slices. Required.</tooltip>
+    </encoding>
+
+    <encoding id="color">
+      <display-name resource-id="color-name">Colour</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="color-tooltip">Optional measure that shades the tiles (e.g. growth %). Colours: Measure in the Format window.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Treemap &amp; Donut</text></resource>
+    <resource id="category-name"><text locale="en_US">Category</text></resource>
+    <resource id="category-tooltip"><text locale="en_US">1 to 4 dimensions, outermost level first (e.g. Department, then Category, then Product). Each extra dimension is one more level to click into. Required.</text></resource>
+    <resource id="value-name"><text locale="en_US">Size</text></resource>
+    <resource id="value-tooltip"><text locale="en_US">The measure that sizes the tiles and slices. Required.</text></resource>
+    <resource id="color-name"><text locale="en_US">Colour</text></resource>
+    <resource id="color-tooltip"><text locale="en_US">Optional measure that shades the tiles (e.g. growth %). Colours: Measure in the Format window.</text></resource>
+  </resources>
+</manifest>

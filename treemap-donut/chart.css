@@ -1,0 +1,212 @@
+/* Treemap & Donut — header styled like KPI Card 3; fonts, colours and sizes are set
+   inline by chart.js from the saved settings. */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: transparent;
+  border-right: 1px dashed transparent;
+  line-height: normal;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+  overflow: hidden;
+}
+
+/* ---- Header (same as KPI Card 3) ------------------------------------- */
+.head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  min-width: 0;
+  flex: none;
+}
+
+.icon {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.head.icon-span .icon { grid-row: 1 / span 2; }
+
+.icon svg,
+.icon img { display: block; }
+
+.title {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.explanation {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card.no-icon .head { grid-template-columns: minmax(0, 1fr); }
+
+.card.no-icon .title,
+.card.no-icon .explanation { grid-column: 1; }
+
+.card.no-head .head { display: none; }
+
+/* ---- Chart ------------------------------------------------------------ */
+.plot {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.svg .node { cursor: pointer; }
+.svg .node:hover .shape { filter: brightness(1.08); }
+.svg .hole { cursor: pointer; }
+.svg text { pointer-events: none; }
+
+/* ---- Breadcrumb (drill path) and note ----------------------------------- */
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+  margin-top: 6px;
+  min-width: 0;
+  flex: none;
+  font-size: 12px;
+  color: #55606e;
+}
+.crumbs .sep { color: #9aa1ab; }
+.crumbs .crumb { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crumbs button.crumb {
+  border: 0;
+  background: none;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font: inherit;
+  color: #2f4b7c;
+  cursor: pointer;
+}
+.crumbs button.crumb:hover { background: #eef0f2; text-decoration: underline; }
+.crumbs .is-current { font-weight: 700; color: #263244; }
+.note {
+  display: none;
+  flex: none;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #68707d;
+  font-style: italic;
+}
+
+/* ---- Tooltip ---------------------------------------------------------- */
+.tooltip {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  pointer-events: none;
+  min-width: 140px;
+  max-width: 280px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid #e2e4e8;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(38, 50, 68, 0.12);
+  font-size: 12px;
+  line-height: 1.4;
+  color: #263244;
+  white-space: nowrap;
+}
+
+.tt-name { color: #68707d; margin-bottom: 2px; }
+.tt-value { font-weight: 700; font-size: 14px; }
+/* Long text (bar names, notes) wraps inside the tooltip's max width; value rows stay on one line. */
+.tt-name, .tt-note { white-space: normal; overflow-wrap: anywhere; }
+.tt-note { color: #68707d; font-size: 11px; margin-top: 2px; }
+.tt-rows { margin-top: 6px; border-top: 1px solid #eef0f2; padding-top: 5px; }
+.tt-row { display: flex; align-items: center; gap: 6px; }
+.tt-row .sw { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.tt-row .nm { flex: 1; min-width: 0; color: #55606e; overflow: hidden; text-overflow: ellipsis; }
+.tt-row .vl { font-weight: 600; }
+
+/* ---- Right-click menu ------------------------------------------------- */
+.menu {
+  display: none;
+  position: fixed;
+  z-index: 20;
+  min-width: 190px;
+  padding: 4px 0;
+  background: #ffffff;
+  border: 1px solid #e2e4e8;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(38, 50, 68, 0.16);
+  font: 12.5px/1.3 "Lato", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #263244;
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menu button:hover { background: #f2f4f6; }
+.menu hr { border: 0; border-top: 1px solid #eef0f2; margin: 4px 0; }
+
+/* ---- Empty state ------------------------------------------------------ */
+.hint {
+  display: none;
+  margin: auto;
+  max-width: 90%;
+  font: 12px/1.45 "Lato", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #68707d;
+  text-align: center;
+}
+
+.card.is-empty > :not(.hint) { display: none; }
+.card.is-empty .hint { display: block; }

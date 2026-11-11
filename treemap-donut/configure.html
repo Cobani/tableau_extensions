@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Treemap &amp; Donut — Format</title>
+    <link rel="stylesheet" href="../shared/fonts/fonts.css?v=22ceb76171" />
+    <link rel="stylesheet" href="../shared/dialog.css?v=89b219bfe8" />
+    <link rel="stylesheet" href="./configure.css?v=ecfb3a02a9" />
+  </head>
+
+  <body>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+
+    <main class="body" id="panels"></main>
+
+    <footer class="footer">
+      <button class="btn" id="reset-tab" type="button" title="Restore the defaults for this tab">Reset tab</button>
+      <span class="status" id="status"></span>
+      <button class="btn" id="cancel" type="button">Cancel</button>
+      <button class="btn btn--primary" id="done" type="button">Done</button>
+    </footer>
+
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=a23405d5e8" data-name="Treemap &amp; Donut — Format" data-ext-version="1.0.0"></script>
+    <script src="../shared/core.js?v=2cdac465b4"></script>
+    <script src="../shared/theme.js?v=cbd846f937"></script>
+    <script src="../shared/dialog.js?v=18c830d481"></script>
+    <script src="./icons.js?v=899a3f9c7f"></script>
+    <script src="./config.js?v=09d99cb4b8"></script>
+    <script src="./configure.js?v=5d28cad242"></script>
+    <script>
+      if (window.ExtBoot) {
+        ExtBoot.start(function () { if (!window.TreemapDonutConfigure) return false; window.TreemapDonutConfigure.init(); return true; }, { dialog: true });
+      } else {
+        console.error('Could not load the Treemap &amp; Donut files.');
+      }
+    </script>
+  </body>
+</html>

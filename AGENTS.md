@@ -88,6 +88,9 @@ tools/make_icons.py manifest icons
 | sankey | chart.js | Sankey / Sk / SankeyConfigure | sankey1 | sankey.trex |
 | funnel | chart.js | Funnel / Fn / FunnelConfigure | funnel1 | funnel.trex |
 | bullet-gauge | chart.js | BulletGauge / Bg / BulletGaugeConfigure | bulletGauge1 | bullet-gauge.trex |
+| cohort-grid | chart.js | CohortGrid / Cg / CohortGridConfigure | cohortGrid1 | cohort-grid.trex |
+| treemap-donut | chart.js | TreemapDonut / Td / TreemapDonutConfigure | treemapDonut1 | treemap-donut.trex |
+| maturity-ladder | chart.js | MaturityLadder / Ml / MaturityLadderConfigure | maturityLadder1 | maturity-ladder.trex |
 
 Versions: `python3 release.py versions`. Manifest id: `com.ilyascoban.vizext.<slug without dashes>`;
 hosted at `https://cobani.github.io/tableau_extensions/<slug>/`.

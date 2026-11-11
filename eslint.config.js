@@ -11,6 +11,9 @@ const ext = {};
   'Sankey', 'Sk', 'SankeyConfigure',
   'Funnel', 'Fn', 'FunnelConfigure',
   'BulletGauge', 'Bg', 'BulletGaugeConfigure',
+  'CgExport', 'CohortGrid', 'Cg', 'CohortGridConfigure',
+  'TreemapDonut', 'Td', 'TreemapDonutConfigure',
+  'MaturityLadder', 'Ml', 'MaturityLadderConfigure',
   'ChartExport', 'MxExport', 'KPI_ICONS', 'EXT_ICONS'].forEach(function (n) { ext[n] = 'writable'; });
 
 module.exports = [

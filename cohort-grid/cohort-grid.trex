@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.cohortgrid" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Cohort grid: a retention triangle. Cohorts down the side, periods since the start across the top, every cell shaded by its value, as a number or as a percentage of the cohort size.</description>
+    <author name="Ilyas Coban" email="ilyas.cbn@gmail.com" organization="Ilyas Coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/cohort-grid/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="cohort">
+      <display-name resource-id="cohort-name">Cohort</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+        <role-type>continuous-dimension</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="cohort-tooltip">Required. One dimension: the group each row of the grid stands for, e.g. first-order month or sign-up week. Dates sort as dates.</tooltip>
+    </encoding>
+
+    <encoding id="period">
+      <display-name resource-id="period-name">Period</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+        <role-type>continuous-dimension</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="period-tooltip">Required. One dimension: time since the cohort started. Either a number (0, 1, 2 ...) or a date, which is counted in months, weeks or days from the cohort date.</tooltip>
+    </encoding>
+
+    <encoding id="value">
+      <display-name resource-id="value-name">Value</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <encoding-icon token="metric"/>
+      <tooltip resource-id="value-tooltip">Required. One measure: what each cell shows and is shaded by, e.g. number of active customers.</tooltip>
+    </encoding>
+
+    <encoding id="size">
+      <display-name resource-id="size-name">Cohort size</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <encoding-icon token="metric"/>
+      <tooltip resource-id="size-tooltip">Optional. One measure: the size of the cohort (e.g. customers acquired), used for the percentages. Empty = the value in period 0.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Cohort Grid</text></resource>
+    <resource id="cohort-name"><text locale="en_US">Cohort</text></resource>
+    <resource id="cohort-tooltip"><text locale="en_US">Required. One dimension: the group each row of the grid stands for, e.g. first-order month or sign-up week. Dates sort as dates.</text></resource>
+    <resource id="period-name"><text locale="en_US">Period</text></resource>
+    <resource id="period-tooltip"><text locale="en_US">Required. One dimension: time since the cohort started. Either a number (0, 1, 2 ...) or a date, which is counted in months, weeks or days from the cohort date.</text></resource>
+    <resource id="value-name"><text locale="en_US">Value</text></resource>
+    <resource id="value-tooltip"><text locale="en_US">Required. One measure: what each cell shows and is shaded by, e.g. number of active customers.</text></resource>
+    <resource id="size-name"><text locale="en_US">Cohort size</text></resource>
+    <resource id="size-tooltip"><text locale="en_US">Optional. One measure: the size of the cohort (e.g. customers acquired), used for the percentages. Empty = the value in period 0.</text></resource>
+  </resources>
+</manifest>

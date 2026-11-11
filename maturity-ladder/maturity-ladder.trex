@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.maturityladder" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Maturity ladder: amounts that fall due over time (contracts, leases, agreements by end date), one bar per week, month, quarter or year, stacked by an optional group, with a Today marker, an optional running total and overdue / later bars.</description>
+    <author name="Ilyas Coban" email="ilyas.cbn@gmail.com" organization="Ilyas Coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/maturity-ladder/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="date">
+      <display-name resource-id="date-name">Maturity date</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+        <role-type>continuous-dimension</role-type>
+      </role-spec>
+      <fields max-count="3"/>
+      <tooltip resource-id="date-tooltip">Required. When each amount falls due: one exact date, or date parts such as YEAR and MONTH (up to 3 fields).</tooltip>
+    </encoding>
+
+    <encoding id="amount">
+      <display-name resource-id="amount-name">Amount</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <encoding-icon token="metric"/>
+      <tooltip resource-id="amount-tooltip">Required. The measure that falls due (for example contract value). Negative amounts are drawn below zero.</tooltip>
+    </encoding>
+
+    <encoding id="color">
+      <display-name resource-id="color-name">Group</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="color-tooltip">Optional. A dimension that stacks each bar (for example contract type).</tooltip>
+    </encoding>
+
+    <encoding id="detail">
+      <display-name resource-id="detail-name">Item</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="detail-tooltip">Optional. One dimension with the individual items (for example the contract name): the largest are listed in the tooltip and the items are counted.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Maturity Ladder</text></resource>
+    <resource id="date-name"><text locale="en_US">Maturity date</text></resource>
+    <resource id="date-tooltip"><text locale="en_US">Required. When each amount falls due: one exact date, or date parts such as YEAR and MONTH (up to 3 fields).</text></resource>
+    <resource id="amount-name"><text locale="en_US">Amount</text></resource>
+    <resource id="amount-tooltip"><text locale="en_US">Required. The measure that falls due (for example contract value). Negative amounts are drawn below zero.</text></resource>
+    <resource id="color-name"><text locale="en_US">Group</text></resource>
+    <resource id="color-tooltip"><text locale="en_US">Optional. A dimension that stacks each bar (for example contract type).</text></resource>
+    <resource id="detail-name"><text locale="en_US">Item</text></resource>
+    <resource id="detail-tooltip"><text locale="en_US">Optional. One dimension with the individual items (for example the contract name): the largest are listed in the tooltip and the items are counted.</text></resource>
+  </resources>
+</manifest>

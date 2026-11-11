@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Treemap &amp; Donut — dev preview</title>
+<style>
+  body { margin: 0; font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #263244; background: #eef0f2; }
+  .bar { display: flex; gap: 14px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e2e4e8; flex-wrap: wrap; }
+  .bar b { font-size: 14px; }
+  .wrap { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  .zone { resize: both; overflow: hidden; width: 900px; height: 460px; background: #fff; border: 1px solid #d5d9df; }
+  .zone iframe, .dlg iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .dlg { width: 600px; height: 760px; background: #fff; border: 1px solid #d5d9df; box-shadow: 0 6px 24px rgba(0,0,0,.12); display: none; }
+  button, select { font: inherit; padding: 4px 10px; }
+  .note { color: #68707d; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <b>Treemap &amp; Donut — dev preview</b>
+    <label>Sample data
+      <select id="ds">
+        <option value="default">Department › Category › Product (120 leaves)</option>
+        <option value="flat">Flat: one level, 9 members</option>
+        <option value="skewed">Skewed: one member 80 %</option>
+        <option value="odd">Odd: zeros, negatives, nulls, duplicate names</option>
+        <option value="big">Big: 1,500 leaves</option>
+        <option value="renamed">Renamed pills</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="rename"> Rename the first Category pill</label>
+    <button id="fmt" type="button">Format Extension</button>
+    <button id="reset" type="button">Reset settings</button>
+    <span class="note">Click a tile to open it or select it; right-click to format. Drag the zone's corner to resize.</span>
+  </div>
+  <div class="wrap">
+    <div class="zone"><iframe id="card" title="chart"></iframe></div>
+    <div class="dlg" id="dlg"><iframe id="dialog" title="Format dialog"></iframe></div>
+  </div>
+<script>
+  var ds = document.getElementById('ds');
+  ds.value = localStorage.getItem('tdMockData') || 'default';
+  var rn = document.getElementById('rename');
+  rn.checked = localStorage.getItem('tdMockRename') === '1';
+  rn.addEventListener('change', function () { localStorage.setItem('tdMockRename', rn.checked ? '1' : '0'); closeDlg(); load(); });
+  function load () { document.getElementById('card').src = '../index.html?mock&data=' + ds.value + (rn.checked ? '&rename' : ''); }
+  ds.addEventListener('change', function () { localStorage.setItem('tdMockData', ds.value); closeDlg(); load(); });
+  document.getElementById('reset').addEventListener('click', function () { localStorage.removeItem('tdMockSettings'); closeDlg(); load(); });
+  document.getElementById('fmt').addEventListener('click', function () {
+    document.getElementById('card').contentWindow.postMessage({ type: 'td-configure' }, '*');
+  });
+  function closeDlg () {
+    document.getElementById('dlg').style.display = 'none';
+    document.getElementById('dialog').src = 'about:blank';
+    var c = document.getElementById('card').contentWindow;
+    if (c) c.postMessage({ type: 'td-dialog-closed' }, '*');
+  }
+  window.addEventListener('message', function (e) {
+    if (!e.data) return;
+    if (e.data.type === 'td-open-dialog') {
+      document.getElementById('dlg').style.display = 'block';
+      document.getElementById('dialog').src = e.data.url;
+    }
+    if (e.data.type === 'td-close-dialog') closeDlg();
+  });
+  load();
+</script>
+</body>
+</html>
