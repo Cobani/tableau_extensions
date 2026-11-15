@@ -416,12 +416,13 @@
       if (model === m) { syncFromParam(m); applySelection(); }
     }, function (err) {
       done();
-      console.error('Parameter Switcher: Tableau did not accept the value', choice.raw, err);
+      var info = diagnose(m.param, choice, err);
+      console.error('Parameter Switcher: Tableau did not accept the value. ' + info, err);
       if (model === m) {
         m.selected = prev.selected;
         m.currentText = prev.text;
         applySelection();
-        showMsg('Tableau did not accept “' + label + '”. The parameter was not changed.');
+        showMsg('Tableau did not accept “' + label + '”. The parameter was not changed. ' + info, 30000);
       }
     });
   }
@@ -469,13 +470,32 @@
     return out;
   }
 
+  var lastAttempts = [];
+
+  /** What was sent and what Tableau says about the parameter, to diagnose a refused value. */
+  function diagnose (p, choice, err) {
+    var av = p.allowableValues || {};
+    var vals = (av.allowableValues || []).slice(0, 8).map(function (dv) {
+      return JSON.stringify(dv.value) + ' → ' + JSON.stringify(dv.formattedValue);
+    });
+    var cv = p.currentValue || {};
+    return 'Sent: ' + lastAttempts.map(function (v) { return JSON.stringify(v) + ' (' + typeof v + ')'; }).join(', ') +
+      ' · Parameter "' + p.name + '", type ' + p.dataType + ', ' + (av.type || '?') +
+      ' · Current: ' + JSON.stringify(cv.value) + ' → ' + JSON.stringify(cv.formattedValue) +
+      (vals.length ? ' · Values: ' + vals.join(', ') : '') +
+      ' · Choice: key ' + JSON.stringify(choice.key) + ', raw ' + JSON.stringify(choice.raw) + ', label ' + JSON.stringify(choice.formatted) +
+      ' · Error: ' + (err && (err.message || err.errorCode) ? String(err.message || err.errorCode) : String(err));
+  }
+
   /** changeValueAsync with each candidate until Tableau accepts one; rejects with the first error. */
   function changeWithFallback (p, choice) {
     var list = valueCandidates(p, choice);
     var firstErr = null;
+    lastAttempts = [];
     var attempt = function (i) {
       if (i >= list.length) return Promise.reject(firstErr || new Error('No value to set'));
       var pr;
+      lastAttempts.push(list[i]);
       try { pr = Promise.resolve(p.changeValueAsync(list[i])); } catch (e) { pr = Promise.reject(e); }
       return pr.then(function (res) {
         // Tableau may "accept" a value it could not match and leave the parameter as it was.
@@ -503,11 +523,11 @@
     return choose({ key: String(v), raw: v, formatted: String(v) });
   }
 
-  function showMsg (text) {
+  function showMsg (text, ms) {
     clearTimeout(msgTimer);
     el.msg.textContent = text;
     el.msg.style.display = '';
-    msgTimer = setTimeout(clearMsg, 5000);
+    msgTimer = setTimeout(clearMsg, ms || 5000);
   }
 
   function clearMsg () {

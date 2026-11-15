@@ -249,6 +249,11 @@ body {
   margin-top: 6px;
   font: 12px/1.35 "Lato", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   color: #b4233a;
+  max-height: 45%;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 /* ---- Empty state ---------------------------------------------------------------------- */
