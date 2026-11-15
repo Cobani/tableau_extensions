@@ -351,6 +351,12 @@
     var cv = p.currentValue || {};
     m.selected = cv.value == null ? null : keyOf(p, cv.value);
     var hit = m.choices.find(function (c) { return c.key === m.selected; });
+    if (!hit && cv.formattedValue != null) {
+      // Aliased values: match on the alias when the raw value doesn't line up.
+      var ft = String(cv.formattedValue);
+      hit = m.choices.find(function (c) { return c.formatted === ft; });
+      if (hit) m.selected = hit.key;
+    }
     m.currentText = hit ? Ps.labelFor(cfg.options, hit.key, hit.formatted) : (cv.formattedValue != null ? String(cv.formattedValue) : String(m.selected == null ? '' : m.selected));
   }
 
@@ -405,9 +411,7 @@
     applySelection();
     var label = m.currentText;
     var done = function () { changing--; };
-    var promise;
-    try { promise = Promise.resolve(m.param.changeValueAsync(choice.raw)); } catch (e) { promise = Promise.reject(e); }
-    return promise.then(function () {
+    return changeWithFallback(m.param, choice).then(function () {
       done();
       if (model === m) { syncFromParam(m); applySelection(); }
     }, function (err) {
@@ -420,6 +424,54 @@
         showMsg('Tableau did not accept “' + label + '”. The parameter was not changed.');
       }
     });
+  }
+
+  /**
+   * The values to offer Tableau, best first. Tableau can refuse the raw value of a list
+   * parameter whose values have aliases ("Display as"), most often integer parameters, and
+   * accept the alias or the plain text instead; so each is tried in turn.
+   */
+  function valueCandidates (p, choice) {
+    var out = [];
+    var add = function (v) {
+      if (v == null || v === '') return;
+      if (!out.some(function (x) { return x === v; })) out.push(v);
+    };
+    var dt = String(p.dataType || '').toLowerCase();
+    var raw = coerce(p, choice.raw);
+    if (dt === 'int' && typeof raw === 'number' && isFinite(raw)) raw = Math.round(raw);
+    add(raw);
+    if (typeof raw === 'number') add(String(raw));
+    var listed = ((p.allowableValues || {}).allowableValues || []).find(function (dv) { return keyOf(p, dv.value) === choice.key; });
+    if (listed) {
+      add(listed.value);
+      if (listed.formattedValue != null) add(String(listed.formattedValue));
+    }
+    if (choice.formatted != null) add(String(choice.formatted));
+    return out;
+  }
+
+  /** changeValueAsync with each candidate until Tableau accepts one; rejects with the first error. */
+  function changeWithFallback (p, choice) {
+    var list = valueCandidates(p, choice);
+    var firstErr = null;
+    var attempt = function (i) {
+      if (i >= list.length) return Promise.reject(firstErr || new Error('No value to set'));
+      var pr;
+      try { pr = Promise.resolve(p.changeValueAsync(list[i])); } catch (e) { pr = Promise.reject(e); }
+      return pr.then(function (res) {
+        // Tableau may "accept" a value it could not match and leave the parameter as it was.
+        var cv = res && res.value !== undefined ? res : null;
+        if (cv && keyOf(p, cv.value) !== choice.key && i + 1 < list.length) {
+          return attempt(i + 1).catch(function () { return res; });
+        }
+        return res;
+      }, function (err) {
+        if (!firstErr) firstErr = err;
+        return attempt(i + 1);
+      });
+    };
+    return attempt(0);
   }
 
   /** Next / previous value of a range too long to list. */

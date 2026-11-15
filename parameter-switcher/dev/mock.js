@@ -8,6 +8,8 @@
  *   (two frames) see each other's changes, like they do inside Tableau.
  * - ?data=NAME  data set (see DATASETS below; default "default"). Each one starts with its own
  *   parameter and style already chosen, until you save something in the Format dialog.
+ * - ?data=aliased: an integer list parameter with aliases ("Display as"); like Tableau in the
+ *   reported bug, its changeValueAsync refuses the raw number and accepts only the alias.
  * - ?rejectChange  parameter.changeValueAsync rejects, to see the control revert with a message.
  * - changeValueAsync updates the parameter's current value and fires ParameterChanged;
  *   mockSetParameter(name, value) does the same from "elsewhere" (a button in the preview).
@@ -26,6 +28,7 @@
     range: 'Top N (range 5-50 step 5, stepper)',
     options: 'Region (all values, 14 on the Options tile)',
     many: 'Region (40 on the Options tile)',
+    aliased: 'Scenario (integer list with aliases)',
     none: 'No parameter chosen'
   };
   const dataName = DATASETS[params.get('data')] ? params.get('data') : 'default';
@@ -51,7 +54,8 @@
     listDef('Period', ['Day', 'Week', 'Month', 'Quarter', 'Year'], 'Month'),
     listDef('Show targets', ['Yes', 'No'], 'Yes'),
     { name: 'Top N', dataType: 'int', current: 10, type: 'range', min: 5, max: 50, step: 5 },
-    { name: 'Region', dataType: 'string', current: REGIONS[0], type: 'all' }
+    { name: 'Region', dataType: 'string', current: REGIONS[0], type: 'all' },
+    { name: 'Scenario', dataType: 'int', current: 1, type: 'list', values: [1, 2, 3], aliases: { 1: 'Base', 2: 'Upside', 3: 'Downside' } }
   ];
 
   function makeParameter (d) {
@@ -60,15 +64,15 @@
       name: d.name,
       id: '[Parameters].[' + d.name + ']',
       dataType: d.dataType,
-      currentValue: dv(d.current),
+      currentValue: d.aliases ? { value: d.current, formattedValue: d.aliases[d.current] } : dv(d.current),
       allowableValues: d.type === 'list'
-        ? { type: 'list', allowableValues: d.values.map(dv) }
+        ? { type: 'list', allowableValues: d.values.map(function (v) { return d.aliases ? { value: v, formattedValue: d.aliases[v] } : dv(v); }) }
         : d.type === 'range'
           ? { type: 'range', minValue: dv(d.min), maxValue: dv(d.max), stepSize: d.step }
           : { type: 'all' },
       addEventListener: function (t, h) { if (t === 'parameter-changed') handlers.push(h); return function () {}; },
       _set: function (v) {
-        p.currentValue = dv(v);
+        p.currentValue = d.aliases ? { value: v, formattedValue: d.aliases[v] } : dv(v);
         handlers.slice().forEach(function (h) { h({ getParameterAsync: function () { return Promise.resolve(p); } }); });
       },
       changeValueAsync: function (v) {
@@ -76,6 +80,11 @@
         return new Promise(function (resolve, reject) {
           setTimeout(function () {
             if (REJECT) { reject(new Error('mock: Tableau rejected the value (?rejectChange)')); return; }
+            if (d.aliases) {
+              const k = Object.keys(d.aliases).find(function (x) { return d.aliases[x] === v; });
+              if (k === undefined) { reject(new Error('mock: invalid parameter value ' + JSON.stringify(v) + ' (aliased int)')); return; }
+              v = Number(k);
+            }
             p._set(v);
             resolve(p.currentValue);
           }, 40);
@@ -99,6 +108,7 @@
     range: { parameter: { name: 'Top N' }, control: { style: 'stepper' } },
     options: { parameter: { name: 'Region' }, control: { style: 'tabs' } },
     many: { parameter: { name: 'Region' }, control: { style: 'tabs' } },
+    aliased: { parameter: { name: 'Scenario' }, control: { style: 'tabs' } },
     none: {}
   };
 
