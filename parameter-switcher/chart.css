@@ -211,6 +211,17 @@ body {
   cursor: pointer;
 }
 .sel:hover { background-color: var(--ps-h-bg, #f1f3f5); }
+/* The list: only the current value uses the selected colours; the rest use the normal ones. */
+.sel option {
+  color: var(--ps-n-text, #68707d);
+  background-color: var(--ps-n-bg, #fff);
+  font-weight: var(--ps-w, 400);
+}
+.sel option.is-selected,
+.sel option:checked {
+  color: var(--ps-s-text, #eb644c);
+  font-weight: var(--ps-ws, 700);
+}
 
 /* ---- Stepper: previous / value / next --------------------------------------------- */
 .ctl--stepper { align-items: stretch; gap: 0; border: var(--ps-bw, 1px) solid var(--ps-bc, #d5d9df); border-radius: var(--ps-radius, 6px); background: var(--ps-n-bg, #fff); overflow: hidden; flex-direction: row !important; }

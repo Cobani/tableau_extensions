@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
-  <worksheet-extension id="com.ilyascoban.vizext.parameterswitcher" extension-version="1.0.1">
+  <worksheet-extension id="com.ilyascoban.vizext.parameterswitcher" extension-version="1.0.2">
     <default-locale>en_US</default-locale>
     <name resource-id="name"/>
     <description>Parameter Switcher: shows the values of one Tableau parameter as tabs, buttons, pills, a dropdown, a toggle or a stepper, and sets the parameter when one is clicked.</description>

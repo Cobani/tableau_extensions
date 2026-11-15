@@ -766,6 +766,9 @@
       } else {
         ui.select.value = String(idx);
       }
+      Array.prototype.forEach.call(ui.select.options || [], function (o) {
+        o.classList.toggle('is-selected', o.value === ui.select.value);
+      });
     }
     if (ui.value) {
       ui.value.textContent = model.currentText;
