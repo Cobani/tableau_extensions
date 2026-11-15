@@ -427,9 +427,10 @@
   }
 
   /**
-   * The values to offer Tableau, best first. Tableau can refuse the raw value of a list
-   * parameter whose values have aliases ("Display as"), most often integer parameters, and
-   * accept the alias or the plain text instead; so each is tried in turn.
+   * The values to offer Tableau, best first. Every refused value shows Tableau's own error
+   * dialog ("Error in parameters for command 'set-parameter-value' bad value: value-string"),
+   * so the first one has to be right: numbers go as plain text ("2", never 2 or "2.0"), which
+   * is what set-parameter-value reads, aliased or not. The alias is only a last resort.
    */
   function valueCandidates (p, choice) {
     var out = [];
@@ -439,15 +440,14 @@
     };
     var dt = String(p.dataType || '').toLowerCase();
     var raw = coerce(p, choice.raw);
-    if (dt === 'int' && typeof raw === 'number' && isFinite(raw)) raw = Math.round(raw);
-    add(raw);
-    if (typeof raw === 'number') add(String(raw));
-    var listed = ((p.allowableValues || {}).allowableValues || []).find(function (dv) { return keyOf(p, dv.value) === choice.key; });
-    if (listed) {
-      add(listed.value);
-      if (listed.formattedValue != null) add(String(listed.formattedValue));
+    if ((dt === 'int' || dt === 'float') && typeof raw === 'number' && isFinite(raw)) {
+      add(String(dt === 'int' ? Math.round(raw) : raw));
+    } else {
+      add(raw);
     }
-    if (choice.formatted != null) add(String(choice.formatted));
+    var listed = ((p.allowableValues || {}).allowableValues || []).find(function (dv) { return keyOf(p, dv.value) === choice.key; });
+    var alias = listed && listed.formattedValue != null ? String(listed.formattedValue) : (choice.formatted != null ? String(choice.formatted) : null);
+    if (alias != null && alias !== out[0]) add(alias);
     return out;
   }
 

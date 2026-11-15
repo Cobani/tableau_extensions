@@ -9,7 +9,8 @@
  * - ?data=NAME  data set (see DATASETS below; default "default"). Each one starts with its own
  *   parameter and style already chosen, until you save something in the Format dialog.
  * - ?data=aliased: an integer list parameter with aliases ("Display as"); like Tableau in the
- *   reported bug, its changeValueAsync refuses the raw number and accepts only the alias.
+ *   reported bug, its changeValueAsync refuses a JS number with Tableau's "bad value: value-string"
+ *   error and accepts the value as text ("2").
  * - ?rejectChange  parameter.changeValueAsync rejects, to see the control revert with a message.
  * - changeValueAsync updates the parameter's current value and fires ParameterChanged;
  *   mockSetParameter(name, value) does the same from "elsewhere" (a button in the preview).
@@ -81,9 +82,11 @@
           setTimeout(function () {
             if (REJECT) { reject(new Error('mock: Tableau rejected the value (?rejectChange)')); return; }
             if (d.aliases) {
-              const k = Object.keys(d.aliases).find(function (x) { return d.aliases[x] === v; });
-              if (k === undefined) { reject(new Error('mock: invalid parameter value ' + JSON.stringify(v) + ' (aliased int)')); return; }
-              v = Number(k);
+              if (typeof v !== 'string' || !(v in d.aliases)) {
+                reject(new Error("mock: Error in parameters for command 'set-parameter-value' bad value: value-string (" + JSON.stringify(v) + ')'));
+                return;
+              }
+              v = Number(v);
             }
             p._set(v);
             resolve(p.currentValue);
