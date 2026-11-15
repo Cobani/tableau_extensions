@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
+## 1.2.1 — 2026-11-15
+- More space between the title and the chart, matching Line Chart (default 'Space above chart' 10 px, plot top margin 8 px).
+
 ## 1.2.0 — 2026-11-10
 - Small multiples: new 'Small multiples' group on the Grouping tab (Split by, minimum panel width for automatic columns, axis labels on outer panels only, show at most N panels with a 'Showing N of M panels' note). Defaults keep today's look.
 - New: dated event markers. With a date on the Dimension tile, Gridlines & Target → Events draws a labelled line at the bar holding each event date (hover shows label and date). Empty by default.

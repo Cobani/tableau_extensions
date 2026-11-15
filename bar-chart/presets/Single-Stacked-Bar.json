@@ -46,7 +46,7 @@
       "padding": 15,
       "bgColor": "#FFFFFF",
       "bgOpacity": 0,
-      "gap": 0,
+      "gap": 10,
       "plotBg": "#FFFFFF",
       "plotBgOpacity": 0
     },

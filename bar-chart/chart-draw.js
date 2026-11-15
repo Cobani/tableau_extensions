@@ -179,7 +179,7 @@
     runs.forEach(function (r, i) { if (i > 0 && (r.grp || runs[i - 1].grp)) nGapRuns++; });
     var groupGapPx = showGroups ? Math.max(0, B.S.cfg.spacing.groupGap) : 0;
 
-    var M = { l: 4, r: 4, t: 4, b: 4 }; // margins around the plot
+    var M = { l: 4, r: 4, t: 8, b: 4 }; // margins around the plot (top 8 = line-chart)
     var catLabelThick = 0;
     var iconThick = axisIcons ? B.iconBox() + IC.gap + (IC.accent ? 6 : 0) : 0;
     var groupThick = 0;

@@ -173,7 +173,7 @@
       padding: 15,
       bgColor: '#FFFFFF',
       bgOpacity: 0,
-      gap: 0, // space between the header and the chart
+      gap: 10, // space between the header and the chart (same as line-chart)
       plotBg: '#FFFFFF',
       plotBgOpacity: 0
     },
