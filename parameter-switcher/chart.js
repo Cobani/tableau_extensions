@@ -427,10 +427,25 @@
   }
 
   /**
+   * The alias ("Display As" text) of a list value, or null when it has none. A number that is
+   * only formatted ("1,000", "5%") is not an alias.
+   */
+  function aliasOf (dv) {
+    if (!dv || dv.formattedValue == null) return null;
+    var f = String(dv.formattedValue);
+    if (f === String(dv.value)) return null;
+    if (typeof dv.value === 'number') {
+      var n = Number(f.replace(/[,\s\u00a0%]/g, ''));
+      if (isFinite(n) && (n === dv.value || n === dv.value * 100)) return null;
+    }
+    return f;
+  }
+
+  /**
    * The values to offer Tableau, best first. Every refused value shows Tableau's own error
    * dialog ("Error in parameters for command 'set-parameter-value' bad value: value-string"),
-   * so the first one has to be right: numbers go as plain text ("2", never 2 or "2.0"), which
-   * is what set-parameter-value reads, aliased or not. The alias is only a last resort.
+   * so the first one has to be right. Tableau's docs: for a list parameter with aliases,
+   * changeValueAsync takes the alias, not the raw value. Otherwise the raw value as text.
    */
   function valueCandidates (p, choice) {
     var out = [];
@@ -438,6 +453,12 @@
       if (v == null || v === '') return;
       if (!out.some(function (x) { return x === v; })) out.push(v);
     };
+    var av = p.allowableValues || {};
+    var listed = String(av.type || '').toLowerCase() === 'list'
+      ? (av.allowableValues || []).find(function (dv) { return keyOf(p, dv.value) === choice.key; })
+      : null;
+    var alias = aliasOf(listed);
+    if (alias != null) add(alias);
     var dt = String(p.dataType || '').toLowerCase();
     var raw = coerce(p, choice.raw);
     if ((dt === 'int' || dt === 'float') && typeof raw === 'number' && isFinite(raw)) {
@@ -445,9 +466,6 @@
     } else {
       add(raw);
     }
-    var listed = ((p.allowableValues || {}).allowableValues || []).find(function (dv) { return keyOf(p, dv.value) === choice.key; });
-    var alias = listed && listed.formattedValue != null ? String(listed.formattedValue) : (choice.formatted != null ? String(choice.formatted) : null);
-    if (alias != null && alias !== out[0]) add(alias);
     return out;
   }
 
