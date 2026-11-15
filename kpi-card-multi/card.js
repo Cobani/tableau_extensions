@@ -1277,16 +1277,19 @@
       var mode = b.mode;
       el.bottom.className = 'bottom is-' + mode;
       el.bottom.title = '';
+      el.metricRow.title = '';
       shown = [];
 
       if (mode === 'chart') {
         var pts = windowed();
         if (pts.length < 2) {
-          var msg = lastData.dateIssue || 'Not enough dates to draw a trend.';
+          // Only one date (or a 1-point window): no trend to draw, so the chart
+          // area collapses and the big number shows on its own. The reason
+          // stays available as a hover hint on the number row.
           el.chart.innerHTML = '';
-          el.bottom.classList.add('has-msg');
-          applyFont(el.bottomText, { font: cfg.explanation.font, size: 11, weight: 400, italic: false, color: cfg.explanation.color });
-          el.bottomText.textContent = msg;
+          el.bottomText.textContent = '';
+          el.bottom.className = 'bottom is-none';
+          el.metricRow.title = lastData.dateIssue || 'Not enough dates to draw a trend.';
         } else {
           drawChart();
         }

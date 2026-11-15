@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `kpiCard.trex`.
 
+## 2.3.1 — 2026-11-15
+- One date in the data: the card shows the big number on its own (the chart area collapses) instead of a message box that could cover it on small zones.
+
 ## 2.3.0 — 2026-11-10
 - New: brand theme section in the Presets tab.
 - New: use Tableau's own tooltip (Format → Card → Interaction), trend-line hover = that date's row, elsewhere = latest date.

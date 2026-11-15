@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `kpiCardMulti.trex`.
 
+## 1.2.1 — 2026-11-15
+- One date in the data: each card shows the big number on its own (the chart area collapses) instead of a message box.
+
 ## 1.2.0 — 2026-11-10
 - Presets tab: apply a brand theme or save this look as a theme.
 - New option Format → Card → Interaction → Use Tableau's tooltip (off by default, shared by all cards): shows the tooltip designed in Tableau for the hovered date (latest date when hovering elsewhere on a card).
