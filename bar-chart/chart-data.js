@@ -97,10 +97,27 @@
    */
   async function readSummaryData (extra) {
     var limit = ExtCore.rowLimit(S.cfg.data.maxRows);
+    var fmtP = extra ? null : readSheetFormatted();
     var table = await ExtCore.readSummary(S.worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
-    if (!extra) { S.lastLimit = limit; ExtCore.rowNotice(table); }
+    if (!extra) { S.lastLimit = limit; ExtCore.rowNotice(table); table.sheetFmt = await fmtP; }
     return table;
   }
+
+  /**
+   * A few rows with the worksheet's own number formats (right-click a pill → Format…), which
+   * override the field's default format (Tableau 2025.1+; older versions send the default).
+   * Read separately so the dimension text used for labels and selection stays as it was.
+   * Only the measures' formatted values are used (Workbook number format). Null on failure.
+   */
+  async function readSheetFormatted () {
+    try {
+      if (!S.worksheet || !S.worksheet.getSummaryDataAsync) return null;
+      return await S.worksheet.getSummaryDataAsync({ maxRows: SHEET_FMT_ROWS, ignoreSelection: true, applyWorksheetFormatting: true });
+    } catch (e) {
+      return null;
+    }
+  }
+  var SHEET_FMT_ROWS = 200;
 
   /** True when the row limit in the settings no longer matches the data that was read. */
   function limitChanged () {
@@ -246,8 +263,33 @@
       if (any || !cMN) out.push(o);
     });
 
+    // the pill's own format (worksheet formatting) wins over the field's default format
+    var sheetSamples = {};
+    var ft = table.sheetFmt;
+    if (ft && ft.columns && ft.columns.length === table.columns.length &&
+        ft.columns.every(function (c, i) { return c.fieldName === table.columns[i].fieldName; })) {
+      var fMN = cMN ? ft.columns[table.columns.indexOf(cMN)] : null;
+      (ft.data || []).forEach(function (row) {
+        var mn2 = fMN ? norm(row[fMN.index].formattedValue || row[fMN.index].value) : null;
+        meas.concat(lines, target, extras.filter(function (r) { return !r.dim; })).forEach(function (r) {
+          var c = cellOf(row, r, mn2);
+          var n = toNumber(c);
+          if (!isFinite(n) || n === 0 || c.formattedValue == null) return;
+          var a = sheetSamples[r.key] || (sheetSamples[r.key] = []);
+          if (a.length < 40) a.push([n, c.formattedValue]);
+        });
+      });
+    }
     var patterns = {};
     Object.keys(samples).forEach(function (k) { var p = Bc.workbookPattern(samples[k]); if (p) patterns[k] = p; });
+    Object.keys(sheetSamples).forEach(function (k) {
+      var p = Bc.workbookPattern(sheetSamples[k]);
+      if (!p) return;
+      var d = patterns[k];
+      // differs from the default format → Tableau's per-row text is out of date, use the pattern everywhere
+      p.sheet = !d || JSON.stringify(d) !== JSON.stringify(p);
+      patterns[k] = p;
+    });
     Bc.setWorkbookPatterns(patterns, meas[0] ? meas[0].key : null);
 
     var strip = function (r) { return { key: r.key, name: r.name }; };

@@ -303,7 +303,17 @@
   ws.getSummaryDataAsync = function (opts) {
     return ws.getSummaryDataReaderAsync(undefined, opts).then(function (r) { return r.getAllPagesAsync(); }).then(function (t) {
       var n = opts && opts.maxRows;
-      return n ? { columns: t.columns, data: t.data.slice(0, n) } : t;
+      var data = n ? t.data.slice(0, n) : t.data;
+      // ?pillfmt in the URL: pretend every measure pill is formatted "SAR 1,234.5" (right-click pill → Format…)
+      if (opts && opts.applyWorksheetFormatting && /[?&]pillfmt\b/.test(location.search)) {
+        data = data.map(function (row) {
+          return row.map(function (c) {
+            if (typeof c.value !== 'number') return c;
+            return Object.assign({}, c, { formattedValue: (c.value < 0 ? '-' : '') + 'SAR ' + Math.abs(c.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) });
+          });
+        });
+      }
+      return n || data !== t.data ? { columns: t.columns, data: data } : t;
     });
   };
 })();

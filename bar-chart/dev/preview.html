@@ -51,7 +51,7 @@
   var rn = document.getElementById('rename');
   rn.checked = localStorage.getItem('bcMockRename') === '1';
   rn.addEventListener('change', function () { localStorage.setItem('bcMockRename', rn.checked ? '1' : '0'); closeDlg(); load(); });
-  function load () { document.getElementById('card').src = '../index.html?mock&data=' + ds.value + (rn.checked ? '&rename' : '') + (/debug/.test(location.search) ? '&debug' : ''); }
+  function load () { document.getElementById('card').src = '../index.html?mock&data=' + ds.value + (rn.checked ? '&rename' : '') + (/debug/.test(location.search) ? '&debug' : '') + (/pillfmt/.test(location.search) ? '&pillfmt' : ''); }
   ds.addEventListener('change', function () { localStorage.setItem('bcMockData', ds.value); closeDlg(); load(); });
   document.getElementById('reset').addEventListener('click', function () { localStorage.removeItem('bcMockSettings'); closeDlg(); load(); });
   document.getElementById('fmt').addEventListener('click', function () {

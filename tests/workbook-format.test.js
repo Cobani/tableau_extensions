@@ -21,6 +21,7 @@ test('bar-chart: Workbook format follows Tableau\'s pattern for sums and ticks',
   assert.deepEqual(fmtWith(Bc, [[0.1234, '12.3%'], [0.5, '50.0%']], [0.98765]), ['98.8%']);
   assert.deepEqual(fmtWith(Bc, [[-1200, '(1,200)'], [3400, '3,400']], [-99999]), ['(99,999)']);
   assert.deepEqual(fmtWith(Bc, [[1234.5, '1.234,50 €'], [12.5, '12,50 €']], [987654.321]), ['987.654,32 €']);
+  assert.deepEqual(fmtWith(Bc, [[-1200, '-SAR 1,200.0'], [3400, 'SAR 3,400.0']], [-99999]), ['-SAR 99,999.0']);
 });
 
 test('bar-chart: Workbook format without readable samples falls back to Dynamic', function () {

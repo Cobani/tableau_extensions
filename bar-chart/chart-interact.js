@@ -381,7 +381,8 @@
           if (!isFinite(n.x[x.key])) {
             var a = n.xt[x.key];
             val = a.length <= 3 ? a.join(', ') : a.slice(0, 3).join(', ') + ' +' + (a.length - 3) + ' more';
-          } else val = n.xf && n.xf[x.key] && !n.isOthers ? n.xf[x.key] : Bc.formatNumber(n.x[x.key], f, { full: TT.fullNumbers });
+          } else if (n.xf && n.xf[x.key] && !n.isOthers && !(f.scale === 'workbook' && Bc.sheetPattern(x.key))) val = n.xf[x.key];
+          else val = Bc.formatNumber(n.x[x.key], f, { full: TT.fullNumbers, wbKey: x.key });
           return '<div class="tt-row"><span class="nm">' + esc(B.fieldLabel(x)) + ':</span><span class="vl">' + esc(val) + '</span></div>';
         }).join('') + '</div>';
       }

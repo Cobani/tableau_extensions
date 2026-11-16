@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
+## 1.2.3 — 2026-11-16
+- Workbook format follows the pill's own format (right-click the pill → Format…) when it has one, over the field's default number format (Tableau 2025.1+).
+
 ## 1.2.2 — 2026-11-16
 - Workbook format now works everywhere: Tableau's number format (prefix/suffix, decimals, separators, K/M/B, %, negatives) is read per measure and applied to summed bars, totals, groups, tooltips, lines and axis ticks, not only to single-row bars.
 

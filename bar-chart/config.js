@@ -695,6 +695,8 @@
     var s = String(text).replace(/ /g, ' ').trim();
     var paren = /^\(.*\)$/.test(s);
     if (paren) s = s.slice(1, -1).trim();
+    var lead = /^[-\u2212]\s*/.exec(s); // sign before a prefix: "-SAR 1,200"
+    if (lead) s = s.slice(lead[0].length);
     var m = /^(.*?)([-−]?)(\d[\d.,' ]*\d|\d)(.*)$/.exec(s);
     if (!m) return null;
     var prefix = m[1].replace(/[-−]\s*$/, '');
@@ -730,7 +732,7 @@
         var n = Number(intPart + (dec ? '.' + parts[1] : ''));
         var tol = 0.5 * Math.pow(10, -dec) + 1e-9 * Math.max(1, n);
         if (Math.abs(a / mults[j] - n) <= tol * 1.0001) {
-          return { prefix: prefix, suffix: suffix, mult: mults[j], dec: dec, dsep: dsep || (gsep === ',' ? '.' : gsep === '.' ? ',' : '.'), gsep: gsep, long: intPart.length >= 4, neg: paren ? 'paren' : (m[2] ? 'minus' : null), exact: a !== 0 };
+          return { prefix: prefix, suffix: suffix, mult: mults[j], dec: dec, dsep: dsep || (gsep === ',' ? '.' : gsep === '.' ? ',' : '.'), gsep: gsep, long: intPart.length >= 4, neg: paren ? 'paren' : (m[2] || lead ? 'minus' : null), exact: a !== 0 };
         }
       }
     }
@@ -779,6 +781,12 @@
     WB.first = first != null && WB.patterns[first] ? first : Object.keys(WB.patterns)[0] || null;
   }
 
+  /** True when the measure's pill has its own format (so Tableau's per-row text, in the default format, is not used). */
+  function sheetPattern (key) {
+    var p = key != null ? WB.patterns[key] : null;
+    return !!(p && p.sheet);
+  }
+
   function patternOf (key) {
     if (key != null && WB.patterns[key]) return WB.patterns[key];
     return WB.first != null ? WB.patterns[WB.first] : null;
@@ -803,6 +811,7 @@
     var a = Math.abs(v);
     var scale = f.scale;
     var negStyle = f.negStyle;
+    if (scale === 'workbook' && opts.fv && sheetPattern(opts.wbKey)) opts = Object.assign({}, opts, { fv: null });
     if (opts.full) {
       if (scale === 'workbook' && opts.fv) return String(opts.fv);
       if (scale === 'percentDynamic') scale = 'percent';
@@ -1034,6 +1043,7 @@
     formatNumber: formatNumber,
     workbookPattern: workbookPattern,
     setWorkbookPatterns: setWorkbookPatterns,
+    sheetPattern: sheetPattern,
     parseDate: parseDate,
     formatDate: formatDate,
     comparer: comparer,
