@@ -61,6 +61,10 @@ Right-click the chart for a shortcut menu. The window stays on top of Tableau an
 The last tab saves and loads every setting. **Export** "Look only" leaves out member colours, the title / explanation text, the path's top name and the row limit,
 which belong to your data. It also has **Brand theme** (shared by all extensions). Samples: `presets/Default.json` and `presets/Dark.json`.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Settings and deploying
 
 Everything is saved in the workbook under one settings key (`treemapDonut1`). Own colours are stored by the first-level member's name.

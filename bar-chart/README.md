@@ -164,6 +164,10 @@ lollipops with rings, hexagon value badges, icons with two-tone bars, value pill
 median line, table with bars, bars + line with diamond labels, slim bars with tags, outlined pills with ring labels and
 progress rows. Fine-tune any of them on the other tabs.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Settings and deploying
 
 Everything is stored in the workbook under one settings key. Series, line and member settings are stored by name

@@ -62,6 +62,10 @@ Presets. Right-click or double-click a stage in the chart to jump to its setting
 The last tab saves and loads every setting. **Export** "Look only" leaves out per-stage settings, the manual order and texts that name your data.
 It also has **Brand theme** (shared by all extensions). Samples: `presets/Default.json` and `presets/Dark.json`.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Settings and deploying
 
 Per-stage settings are stored by the pill's (or member's) name. Everything is saved in the workbook under one settings key (`funnel1`).

@@ -412,7 +412,7 @@
 
   function baseName () {
     var c = state.cfg || {};
-    var n = (c.export && c.export.fileName) || (c.title && c.title.text) || state.name;
+    var n = (c.export && c.export.fileName) || (c.title && c.title.text && ExtText.fill(c.title.text)) || state.name;
     n = String(n).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || state.name;
     var d = new Date();
     return n + ' ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());

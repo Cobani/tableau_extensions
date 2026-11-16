@@ -168,6 +168,7 @@
         });
         var changed = JSON.stringify(next) !== JSON.stringify(params);
         params = next;
+        ExtText.setParams(Object.keys(next).map(function (k) { return next[k]; })); // shared with the title / explanation
         if (changed && raw && cfg) paintHeader();
       }).catch(function (e) { console.info('Sankey: parameters not available', e && e.message); });
     } catch (e) { return Promise.resolve(); }
@@ -179,7 +180,10 @@
   }
 
   /** "<Year>" → the parameter's value; {total} {nodes} {links} {flow} → numbers of this chart. */
-  function fillText (text) {
+  /** The chart's own tokens and parameters, then fields ({Sales}, {Region.count}…: shared/text.js). */
+  function fillText (text) { return ExtText.fill(ownTokens(text), { params: paramValue }); }
+
+  function ownTokens (text) {
     var g = graph;
     return String(text || '')
       .replace(/<([^<>]+)>/g, function (all, nm) { var v = paramValue(nm); return v != null ? v : all; })
@@ -232,7 +236,7 @@
       } catch (e) { /* ignore */ }
       paint();
     };
-    return tableau.extensions.ui.displayDialogAsync(url, payload, options).then(done, function (err) {
+    return ExtText.ready(worksheet).then(function () { return tableau.extensions.ui.displayDialogAsync(url, ExtText.addInfo(payload), options); }).then(done, function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.warn('Sankey dialog:', err && err.message);
       done();
@@ -346,6 +350,8 @@
   async function readSummaryData (extra) {
     var limit = ExtCore.rowLimit(cfg.data.maxRows);
     var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    ExtText.init({ worksheet: worksheet, onChange: function () { paint(); } });
+    if (!extra) ExtText.setTable(table); // fields for {Field} in the title / explanation
     if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
     return table;
   }

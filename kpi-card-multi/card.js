@@ -163,7 +163,7 @@
       cards: cards.map(function (c) { return { key: c.key, label: c.label }; }),
       details: detailKeys(lastFields ? lastFields.details : []) // the dialog can't read the Marks card itself
     });
-    return tableau.extensions.ui.displayDialogAsync(url, payload, options).catch(function (err) {
+    return ExtText.ready(worksheet).then(function () { return tableau.extensions.ui.displayDialogAsync(url, ExtText.addInfo(payload), options); }).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.error('KPI Card Multi dialog error:', err);
     });
@@ -435,6 +435,8 @@
   async function readSummaryData (extra) {
     var limit = ExtCore.rowLimit(store.shared.data.maxRows);
     var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    ExtText.init({ worksheet: worksheet, onChange: function () { renderAll(); } });
+    if (!extra) ExtText.setTable(table); // fields for {Field} in the title / explanation
     if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
     return table;
   }
@@ -1182,7 +1184,7 @@
 
       var t = cfg.title;
       applyFont(el.title, t);
-      el.title.textContent = t.text || lastData.label;
+      el.title.textContent = ExtText.fill(t.text) || lastData.label;
       el.title.style.textAlign = t.align || 'left';
       el.title.style.display = t.show === false ? 'none' : '';
 
@@ -1192,7 +1194,7 @@
       var hasText = ex.show && !!String(ex.text || '').trim();
       applyFont(el.explanation, ex);
       el.explanation.style.textAlign = t.align || 'left';
-      el.explanation.textContent = hasText ? ex.text : '\u00A0';
+      el.explanation.textContent = hasText ? ExtText.fill(ex.text) : '\u00A0';
       el.explanation.style.display = hasText || ex.reserveSpace ? '' : 'none';
       updateIconSpan();
     }

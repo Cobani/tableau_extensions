@@ -150,7 +150,7 @@
       } catch (e) { /* ignore */ }
       paint();
     };
-    return tableau.extensions.ui.displayDialogAsync(url, payload, options).then(done, function (err) {
+    return ExtText.ready(S.worksheet).then(function () { return tableau.extensions.ui.displayDialogAsync(url, ExtText.addInfo(payload), options); }).then(done, function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.warn('Bar Chart dialog:', err && err.message);
       done();

@@ -91,6 +91,10 @@ When it starts, the server prints the palettes it found. When you pick a shape, 
 extension is hosted somewhere without `serve.py`, the Tableau shapes tab shows a note. Upload still works there, and you
 can upload any `.png` file from a Shapes folder.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Click selects in Tableau
 Optional (Format → Card → Interaction → **Click selects in Tableau**, off by default). Click the card to select its latest date in Tableau, or click a point on the trend line to select that date, so dashboard filter, highlight and go-to-sheet actions fire. Click the same place again (or press Esc) to clear. It needs a field on the Date tile; without one a click does nothing. While on, the card shows a pointer cursor and a thin outline in the trend line colour once a date is selected.
 

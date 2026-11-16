@@ -104,8 +104,8 @@ function fakeDocument () {
 }
 
 /** ExtDialog in a sandbox with the fake DOM, plus a kit bound to a plain settings object. */
-function setup (settings, options) {
-  const win = h.sandbox(['shared/core.js', 'shared/dialog.js']);
+function setup (settings, options, scripts) {
+  const win = h.sandbox(scripts || ['shared/core.js', 'shared/dialog.js']);
   win.document = fakeDocument();
   win.Event = function (type) { this.type = type; };
   const cfg = settings || {};
@@ -246,6 +246,38 @@ test('textRow shows null as "null" unless textNullAsEmpty, and writes what is ty
   assert.equal(input.placeholder, 'hint');
   input.value = 'y'; input.dispatch('input');
   assert.deepEqual(t.calls, [['t', 'y']]);
+});
+
+test('tokenTextRow: Insert field / parameter lists, a preview, and a warning for unknown names', function () {
+  const t = setup({ title: { text: 'Sales' } }, null, ['shared/core.js', 'shared/text.js', 'shared/dialog.js']);
+  const X = t.win.ExtText;
+  X.setTable({
+    columns: [{ fieldName: 'Region', dataType: 'string', index: 0 }, { fieldName: 'SUM(Sales)', dataType: 'float', index: 1 }],
+    data: [[{ value: 'East', formattedValue: 'East' }, { value: 2500, nativeValue: 2500 }], [{ value: 'West', formattedValue: 'West' }, { value: 1500, nativeValue: 1500 }]]
+  });
+  X.setParams([{ name: 'Year', value: '2026' }]);
+  X.readPayload(X.addInfo('{}'));
+  const wrap = t.kit.tokenTextRow('Title', 'title.text', '', { tokens: ['total'] });
+  const input = find(wrap, 'input');
+  const selects = [];
+  (function walk (n) { n.children.forEach(function (c) { if (c.tagName === 'SELECT') selects.push(c); walk(c); }); })(wrap);
+  assert.equal(selects.length, 2);
+  assert.ok(selects[0].children.some(function (o) { return o.value === '{Sales}' && /4\.0K/.test(o.textContent); }));
+  assert.ok(selects[0].children.some(function (o) { return o.value === '{Region}'; }));
+  assert.equal(selects[1].children[1].value, '<Year>');
+  input.selectionStart = input.selectionEnd = 5;
+  selects[0].value = '{Sales}'; selects[0].dispatch('change');
+  assert.equal(t.cfg.title.text, 'Sales{Sales}');
+  const prev = (function walk (n) { for (const c of n.children) { if (/tok-preview/.test(c.className)) return c; const f = walk(c); if (f) return f; } return null; })(wrap);
+  assert.equal(prev.textContent, 'Shows: Sales4.0K');
+  input.value = '{total} {Regoin} <Year>'; input.dispatch('input');
+  assert.equal(prev.textContent, 'Shows: {total} {Regoin} 2026  (nothing called {Regoin})');
+  assert.ok(prev.classList.contains('is-warn'));
+});
+
+test('tokenTextRow without shared/text.js is a plain text row', function () {
+  const t = setup({ x: 'a' });
+  assert.equal(find(t.kit.tokenTextRow('T', 'x'), 'input').value, 'a');
 });
 
 test('segRow marks the pressed button and sets its value', function () {

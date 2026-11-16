@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `waterfall.trex`.
 
+## 1.4.0 — 2026-11-16
+- Title and explanation can show worksheet fields and parameters: {Sales}, {Sales.avg|K|1}, {Region}, {Region.count}, {Order Date.last}, <Parameter name>. Format → Title & text has Insert field / Insert parameter lists and a preview.
+
 ## 1.3.0 — 2026-11-10
 - New: Brand theme section in the Presets tab (apply or save a theme shared by all extensions).
 - New: Use Tableau's tooltip (Format → Bars → All bars) shows the tooltip designed in Tableau instead of the extension's own.

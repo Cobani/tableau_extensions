@@ -85,6 +85,10 @@ renamed pills) and opens the Format dialog next to the chart.
 | Card | padding, space above the chart, backgrounds · save as picture · maximum rows |
 | Presets | export, import and save settings · apply or save a brand theme (colours, fonts) shared by all extensions |
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Settings and deploying
 
 Everything is stored in the workbook under one settings key (`sankey1`). Level colours are stored by position; column

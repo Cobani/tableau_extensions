@@ -27,6 +27,7 @@
  * Bound to one dialog by ExtDialog.kit(options):
  *   row(label, path)             .row with a label (options.rowDecorator may mark it)
  *   textRow, unitRow             text box; text box with currency sign buttons
+ *   tokenTextRow, tokenHelp      title / explanation box with Insert field / parameter + preview (needs shared/text.js)
  *   numberRow                    number box, clamped to min / max, empty input ignored
  *   rangeRow                     slider with a readout
  *   checkboxRow                  checkbox, set(path, true / false)
@@ -339,9 +340,98 @@
       if (withItalic !== false) g.appendChild(checkboxRow('Italic', fontPath(section, 'italic')));
     }
 
+    /**
+     * Title / explanation text box that can hold fields and parameters (shared/text.js):
+     * "Insert field…" and "Insert parameter…" lists, a "Shows:" line with the chart's
+     * numbers, and a warning for names that match nothing. The lists come from the
+     * chart (ExtText.addInfo → ExtText.readPayload). extra.tokens: the chart's own
+     * token names ({total}…) so they are not flagged. Without ExtText it is a textRow.
+     */
+    function tokenTextRow (label, path, placeholder, extra) {
+      const X = root.ExtText;
+      if (!X) return textRow(label, path, placeholder);
+      const chartTokens = {};
+      ((extra && extra.tokens) || []).forEach(function (t) { chartTokens[String(t).toLowerCase()] = null; });
+      const wrap = h('div', { className: 'tok-wrap' });
+      const r = row(label, path);
+      const cur = get(path);
+      const input = h('input', { type: 'text', value: cur == null ? '' : cur, placeholder: placeholder || '' });
+      r.appendChild(input);
+      wrap.appendChild(r);
+      const data = X.dialogData();
+      const line = h('div', { className: 'inline tok-tools' });
+      const prev = h('span', { className: 'help tok-preview' });
+      const upd = function () {
+        const t = input.value;
+        if (!/\{[^{}]+\}|<[^<>]+>/.test(t)) { prev.textContent = ''; prev.classList.remove('is-warn'); return; }
+        const bad = data.known ? X.unknown(t, { tokens: chartTokens }) : [];
+        const known = bad.length < (t.match(/\{[^{}]+\}|<[^<>]+>/g) || []).length;
+        prev.textContent = (data.known && known ? 'Shows: ' + X.preview(t, { tokens: chartTokens }) : '') +
+          (bad.length ? (known ? '  ' : '') + '(nothing called ' + bad.join(', ') + ')' : '');
+        prev.classList.toggle('is-warn', bad.length > 0);
+      };
+      const insert = function (tok) {
+        const a = input.selectionStart != null ? input.selectionStart : input.value.length;
+        const b = input.selectionEnd != null ? input.selectionEnd : a;
+        input.value = input.value.slice(0, a) + tok + input.value.slice(b);
+        set(path, input.value);
+        upd();
+        input.focus();
+        if (input.setSelectionRange) input.setSelectionRange(a + tok.length, a + tok.length);
+      };
+      const picker = function (first, items) {
+        const sel = h('select', { className: 'tok-insert' });
+        sel.appendChild(h('option', { value: '', textContent: first }));
+        items.forEach(function (it) { sel.appendChild(h('option', { value: it[0], textContent: it[1] })); });
+        sel.addEventListener('change', function () {
+          const v = sel.value;
+          sel.value = '';
+          if (v) insert(v);
+        });
+        return sel;
+      };
+      const short = function (s) { s = String(s); return s.length > 28 ? s.slice(0, 27) + '…' : s; };
+      const fields = data.fields.filter(function (f) { return !/^measure names$/i.test(f.name); });
+      if (fields.length) {
+        const items = [];
+        fields.forEach(function (f) {
+          const tok = '{' + f.name + '}';
+          items.push([tok, f.name + '  ·  ' + short(X.preview(tok))]);
+        });
+        fields.filter(function (f) { return f.kind === 'measure'; }).forEach(function (f) {
+          ['avg', 'min', 'max', 'last'].forEach(function (st) {
+            if (st === f.agg) return;
+            const tok = '{' + f.name + '.' + st + '}';
+            items.push([tok, f.name + ' (' + { avg: 'average', min: 'smallest', max: 'largest', last: 'last row' }[st] + ')  ·  ' + short(X.preview(tok))]);
+          });
+        });
+        fields.filter(function (f) { return f.kind === 'dimension'; }).forEach(function (f) {
+          items.push(['{' + f.name + '.count}', f.name + ' (how many)  ·  ' + X.preview('{' + f.name + '.count}')]);
+        });
+        line.appendChild(picker('Insert field…', items));
+      }
+      if (data.params.length) {
+        line.appendChild(picker('Insert parameter…', data.params.map(function (p) { return ['<' + p.name + '>', p.name + '  ·  ' + short(p.value)]; })));
+      }
+      input.addEventListener('input', function () { set(path, input.value); upd(); });
+      line.appendChild(prev);
+      const tools = h('div', { className: 'row tok-row' });
+      tools.appendChild(h('span'));
+      tools.appendChild(line);
+      wrap.appendChild(tools);
+      upd();
+      return wrap;
+    }
+
+    /** The help line under the Title row of every Title & text tab. */
+    function tokenHelp (more) {
+      return help('Write {Field} for a field on the worksheet ({Sales} = total, {Region} = its values; add .avg .min .max .count .first .last, ' +
+        'or |K |M |full |1 |% |+ to change the number) and <Parameter name> for a parameter’s value. Works in the explanation too.' + (more ? ' ' + more : ''));
+    }
+
     return {
       h: h, group: group, help: help, wrapRows: wrapRows,
-      row: row, textRow: textRow, numberRow: numberRow, rangeRow: rangeRow, checkboxRow: checkboxRow,
+      row: row, textRow: textRow, tokenTextRow: tokenTextRow, tokenHelp: tokenHelp, numberRow: numberRow, rangeRow: rangeRow, checkboxRow: checkboxRow,
       selectRow: selectRow, segRow: segRow, colorRow: colorRow, unitRow: unitRow,
       fontFamilyRow: fontFamilyRow, fontRows: fontRows
     };

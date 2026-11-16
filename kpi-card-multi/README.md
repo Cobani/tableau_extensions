@@ -69,6 +69,10 @@ Cards are matched to their settings by measure name without the aggregation (`SU
 Stock Value`), so changing SUM to AVG keeps a card's settings; renaming the field starts that card from the shared
 settings. Settings are one JSON string under the key `kpiCardMulti1` in the workbook.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Performance
 
 - One `getSummaryDataAsync` call for all cards. On a page load the card order comes from this browser's cache

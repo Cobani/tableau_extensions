@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `data-lineage.trex`.
 
+## 1.4.0 — 2026-11-16
+- Title and explanation can show worksheet fields and parameters: {Sales}, {Sales.avg|K|1}, {Region}, {Region.count}, {Order Date.last}, <Parameter name>. Format → Title & text has Insert field / Insert parameter lists and a preview.
+
 ## 1.3.0 — 2026-11-10
 - New: apply or save a brand theme in the Presets tab.
 - New: option to show Tableau's own tooltip when hovering a node (Search & actions → Tooltip), off by default.

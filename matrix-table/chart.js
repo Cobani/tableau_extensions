@@ -159,7 +159,7 @@
     var DS = tableau.DialogStyle || {};
     var style = cfg && cfg.interaction.dialog === 'floating' ? DS.Modeless : DS.Modal;
     if (style) options.dialogStyle = style;
-    return tableau.extensions.ui.displayDialogAsync(url, payload, options).catch(function (err) {
+    return ExtText.ready(worksheet).then(function () { return tableau.extensions.ui.displayDialogAsync(url, ExtText.addInfo(payload), options); }).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.warn('Matrix Table dialog:', err && err.message);
     });
@@ -287,6 +287,8 @@
   async function readSummaryData (extra) {
     var limit = ExtCore.rowLimit(cfg.data.maxRows);
     var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    ExtText.init({ worksheet: worksheet, onChange: function () { paint(); } });
+    if (!extra) ExtText.setTable(table); // fields for {Field} in the title / explanation
     if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
     return table;
   }
@@ -1104,7 +1106,7 @@
 
     var t = cfg.title;
     applyFont(el.title, t);
-    el.title.textContent = t.text || defaultTitle();
+    el.title.textContent = ExtText.fill(t.text) || defaultTitle();
     el.title.style.textAlign = t.align || 'left';
     el.title.style.display = t.show === false ? 'none' : '';
 
@@ -1112,7 +1114,7 @@
     var hasText = ex.show && !!ex.text;
     applyFont(el.explanation, ex);
     el.explanation.style.textAlign = t.align || 'left';
-    el.explanation.textContent = hasText ? ex.text : ' ';
+    el.explanation.textContent = hasText ? ExtText.fill(ex.text) : ' ';
     el.explanation.style.display = hasText || ex.reserveSpace ? '' : 'none';
 
     var headVisible = showIcon || t.show !== false || hasText || ex.reserveSpace;
@@ -1659,7 +1661,7 @@
   function pictureItems () {
     if (!cfg.export.picture || !window.ExtSnapshot) return [];
     var out = [null];
-    ExtSnapshot.menuItems({ element: el.card, title: function () { return cfg.export.fileName || cfg.title.text || defaultTitle(); }, full: true }).forEach(function (it) {
+    ExtSnapshot.menuItems({ element: el.card, title: function () { return cfg.export.fileName || ExtText.fill(cfg.title.text) || defaultTitle(); }, full: true }).forEach(function (it) {
       out.push([it.label, function () {
         var p;
         try { p = it.run(); } catch (e) { p = Promise.reject(e); }
@@ -1767,7 +1769,7 @@
   // Export
   // ---------------------------------------------------------------------------
   function baseName () {
-    var n = cfg.export.fileName || (cfg.title.text || defaultTitle());
+    var n = cfg.export.fileName || (ExtText.fill(cfg.title.text) || defaultTitle());
     n = String(n).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Matrix';
     var d = new Date();
     return n + ' ' + d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
@@ -1805,13 +1807,13 @@
     var totalCols = nRC + m.cols.length;
     if (cfg.export.includeTitle && !noTitle) {
       if (cfg.title.show !== false) {
-        put(0, 0, { v: cfg.title.text || defaultTitle(), s: { font: fontSpec(cfg.title) } });
+        put(0, 0, { v: ExtText.fill(cfg.title.text) || defaultTitle(), s: { font: fontSpec(cfg.title) } });
         merge(0, 0, 0, Math.max(0, totalCols - 1));
         heights[0] = Math.max(20, cfg.title.size * 1.6);
         top = 1;
       }
       if (cfg.explanation.show && cfg.explanation.text) {
-        put(top, 0, { v: cfg.explanation.text, s: { font: fontSpec(cfg.explanation) } });
+        put(top, 0, { v: ExtText.fill(cfg.explanation.text), s: { font: fontSpec(cfg.explanation) } });
         merge(top, 0, top, Math.max(0, totalCols - 1));
         top++;
       }

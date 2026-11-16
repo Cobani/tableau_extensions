@@ -59,6 +59,7 @@ shared/        core.js    ExtCore   escaping, colours, settings merge, number fo
                                     summary data with row limit, selection, Tableau tooltip   (tests/core.test.js)
                boot.js    ExtBoot   loads the API library + dev mock, reload recovery, error mark with details
                dialog.js  ExtDialog Format dialog control builders (+ dialog.css base styles) (tests/dialog.test.js)
+               text.js    ExtText   {Field} / <Parameter> in titles and explanations; Insert lists via the dialog payload (tests/text.test.js)
                snapshot.js ExtSnapshot  PNG / SVG of a drawn chart, Save-as-picture button and menu items
                theme.js   ExtTheme  brand themes: apply / save, the Presets-tab section, themes/*.json  (tests/theme.test.js)
                timing.js  ExtTiming load timings (?debug)

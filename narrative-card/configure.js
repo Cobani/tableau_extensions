@@ -50,6 +50,7 @@
   // ---------------------------------------------------------------------------
   function init () {
     return tableau.extensions.initializeDialogAsync().then(function (payload) {
+      ExtText.readPayload(payload); // fields and parameters for the title / explanation
       try {
         var info = JSON.parse(payload || '{}');
         fieldList = info.fields || [];
@@ -305,7 +306,8 @@
   function buildTextTab (p) {
     var g1 = group(p, 'Title');
     g1.appendChild(checkboxRow('Show title', 'title.show'));
-    g1.appendChild(textRow('Title', 'title.text', 'e.g. Weekly summary'));
+    g1.appendChild(kit.tokenTextRow('Title', 'title.text', 'e.g. Weekly summary'));
+    g1.appendChild(kit.tokenHelp());
     g1.appendChild(segRow('Alignment', 'title.align', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']]));
     g1.appendChild(h('div', { className: 'help', textContent: 'An optional heading above the text (with the icon, if shown). The explanation follows the same alignment.' }));
     fontRows(g1, 'title');
@@ -313,7 +315,7 @@
     var g2 = group(p, 'Explanation text');
     g2.appendChild(checkboxRow('Show explanation', 'explanation.show'));
     g2.appendChild(checkboxRow('Keep space when empty', 'explanation.reserveSpace'));
-    g2.appendChild(textRow('Text', 'explanation.text', 'e.g. Source: orders system'));
+    g2.appendChild(kit.tokenTextRow('Text', 'explanation.text', 'e.g. Source: orders system'));
     fontRows(g2, 'explanation', true);
   }
 

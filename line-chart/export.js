@@ -412,7 +412,7 @@
 
   function baseName () {
     var c = state.cfg || {};
-    var n = (c.export && c.export.fileName) || (c.title && c.title.text) || state.name;
+    var n = (c.export && c.export.fileName) || (c.title && c.title.text && ExtText.fill(c.title.text)) || state.name;
     n = String(n).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || state.name;
     var d = new Date();
     return n + ' ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -496,7 +496,7 @@
     if (window.ExtSnapshot && !(c && c.export && c.export.picture === false)) {
       var pics = ExtSnapshot.menuItems({
         element: function () { return state.card; },
-        title: function () { return String((c && c.title && c.title.text) || state.name); },
+        title: function () { return String((c && c.title && c.title.text && ExtText.fill(c.title.text)) || state.name); },
         // no vector: the title and legend are HTML outside the plot's SVG
         onError: function (err) { toast('Picture failed: ' + (err && err.message), true); }
       });

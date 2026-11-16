@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
+## 1.3.0 — 2026-11-16
+- Title and explanation can show worksheet fields and parameters: {Sales}, {Sales.avg|K|1}, {Region}, {Region.count}, {Order Date.last}, <Parameter name>. Format → Title & text has Insert field / Insert parameter lists and a preview.
+
 ## 1.2.3 — 2026-11-16
 - Workbook format follows the pill's own format (right-click the pill → Format…) when it has one, over the field's default number format (Tableau 2025.1+).
 

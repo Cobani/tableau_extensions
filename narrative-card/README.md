@@ -102,6 +102,10 @@ Unchanged from the KPI Card, applied to each measure on its own (see `../kpi-car
 The last tab saves and loads every setting. "Look only" leaves out the template, per-measure formats, title and explanation text and the
 row limit. Samples: `presets/Default.json` and `presets/Editorial.json`.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Settings and deploying
 
 Everything is saved in the workbook under one settings key (`narrativeCard1`).

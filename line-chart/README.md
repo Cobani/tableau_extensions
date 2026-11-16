@@ -119,6 +119,10 @@ panel under the pointer. More than 24 panels: the first 24 are drawn and a note 
 
 The last tab of the Format window saves and loads every setting of the chart. **Export** a preset as "Look only" (leaves out per-series colours and styles, the band's lower / upper series, the forecast start, title and explanation text, export file name) or "Everything"; download it as .json, copy it, or keep it under **My presets** on this computer. **Import** from a file or pasted text; "Keep this chart's…" keeps the sheet-specific settings. Presets store only values that differ from the defaults, and carry a version so older files keep working.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Settings and deploying
 
 Series settings are stored by the pill's name (e.g. `SUM(Revenue)`), or `SUM(Orders) · Channel` with a Color

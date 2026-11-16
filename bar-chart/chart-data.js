@@ -33,6 +33,7 @@
         });
         var changed = JSON.stringify(next) !== JSON.stringify(S.params);
         S.params = next;
+        ExtText.setParams(Object.keys(next).map(function (k) { return next[k]; })); // shared with the title / explanation
         if (changed && S.raw) B.schedule();
       }).catch(function (e) { console.info('Bar Chart: parameters not available', e && e.message); });
     } catch (e) { return Promise.resolve(); }
@@ -99,6 +100,8 @@
     var limit = ExtCore.rowLimit(S.cfg.data.maxRows);
     var fmtP = extra ? null : readSheetFormatted();
     var table = await ExtCore.readSummary(S.worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    ExtText.init({ worksheet: S.worksheet, onChange: function () { B.schedule(); } });
+    if (!extra) ExtText.setTable(table); // fields for {Field} in the title / explanation
     if (!extra) { S.lastLimit = limit; ExtCore.rowNotice(table); table.sheetFmt = await fmtP; }
     return table;
   }

@@ -162,7 +162,7 @@
     var options = { width: 600, height: 760 };
     // Modal keeps the Format window in front of Tableau until Done; the chart behind it still updates live.
     if (tableau.DialogStyle && tableau.DialogStyle.Modal) options.dialogStyle = tableau.DialogStyle.Modal;
-    return tableau.extensions.ui.displayDialogAsync(url, payload, options).catch(function (err) {
+    return ExtText.ready(worksheet).then(function () { return tableau.extensions.ui.displayDialogAsync(url, ExtText.addInfo(payload), options); }).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.warn('Line Chart dialog:', err && err.message);
     });
@@ -244,6 +244,8 @@
   async function readSummaryData (extra) {
     var limit = ExtCore.rowLimit(cfg.data.maxRows);
     var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    ExtText.init({ worksheet: worksheet, onChange: function () { paint(); } });
+    if (!extra) ExtText.setTable(table); // fields for {Field} in the title / explanation
     if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
     return table;
   }
@@ -678,12 +680,12 @@
       ? model.measures.map(function (m) { return m.name; })
       : list.filter(function (s) { return s.sc.type !== 'hidden'; }).map(function (s) { return s.name; });
     if (!names.length) names = model.measures.map(function (m) { return m.name; });
-    el.title.textContent = cfg.title.text ||
+    el.title.textContent = ExtText.fill(cfg.title.text) ||
       (names.length > 3 ? names.slice(0, 3).join(', ') + ' and ' + (names.length - 3) + ' more' : names.join(' vs '));
 
     var ex = cfg.explanation;
     applyFont(el.explanation, ex);
-    el.explanation.textContent = ex.text;
+    el.explanation.textContent = ExtText.fill(ex.text);
     el.explanation.style.display = ex.show && ex.text ? '' : 'none';
     updateIconSpan();
   }

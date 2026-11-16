@@ -131,7 +131,7 @@
         fields: fieldNames(lastFields ? lastFields.value : []),
         params: Object.keys(params).map(function (k) { return params[k].name; })
       });
-      return tableau.extensions.ui.displayDialogAsync(url, payload, options);
+      return ExtText.ready(worksheet).then(function () { return tableau.extensions.ui.displayDialogAsync(url, ExtText.addInfo(payload), options); });
     }).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.error('Narrative Card dialog error:', err);
@@ -303,6 +303,8 @@
   async function readSummaryData (extra) {
     var limit = ExtCore.rowLimit(cfg.data.maxRows);
     var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    ExtText.init({ worksheet: worksheet, onChange: function () { paint(); } });
+    if (!extra) ExtText.setTable(table); // fields for {Field} in the title / explanation
     if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
     return table;
   }
@@ -931,7 +933,7 @@
 
     var t = cfg.title;
     applyFont(el.title, t);
-    el.title.textContent = t.text || '';
+    el.title.textContent = ExtText.fill(t.text) || '';
     el.title.style.textAlign = t.align || 'left';
     el.title.style.display = t.show && t.text ? '' : 'none';
 
@@ -941,7 +943,7 @@
     var hasText = ex.show && !!String(ex.text || '').trim();
     applyFont(el.explanation, ex);
     el.explanation.style.textAlign = t.align || 'left';
-    el.explanation.textContent = hasText ? ex.text : '\u00A0';
+    el.explanation.textContent = hasText ? ExtText.fill(ex.text) : '\u00A0';
     el.explanation.style.display = hasText || ex.reserveSpace ? '' : 'none';
     updateIconSpan();
   }
@@ -1018,6 +1020,7 @@
         });
         var changed = JSON.stringify(next) !== JSON.stringify(params);
         params = next;
+        ExtText.setParams(Object.keys(next).map(function (k) { return next[k]; })); // shared with the title / explanation
         paramsState = 2;
         if (changed && model && cfg) paint();
       }).catch(function (e) { paramsState = 2; console.info('Narrative Card: parameters not available', e && e.message); });

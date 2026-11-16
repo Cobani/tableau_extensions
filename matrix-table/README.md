@@ -123,6 +123,10 @@ download normally.
 
 **Undo and search.** The **↶ / ↷** buttons in the footer (or Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z) step back and forward through your changes in this dialog; a slider drag or a typed number counts as one step. The search box above the tabs finds a setting on any tab: type two or more letters, click a result, and the dialog opens that tab and highlights the setting.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Settings and deploying
 
 All settings are saved in the workbook under one key (`matrixTable1`). The extension is served from GitHub Pages

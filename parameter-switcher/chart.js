@@ -124,7 +124,7 @@
       parameters: params.map(function (p) { return { name: p.name, dataType: p.dataType }; }),
       choices: model && model.choices ? model.choices.map(function (c) { return { key: c.key, label: c.formatted }; }) : []
     });
-    return tableau.extensions.ui.displayDialogAsync(url, payload, options).catch(function (err) {
+    return ExtText.ready(worksheet).then(function () { return tableau.extensions.ui.displayDialogAsync(url, ExtText.addInfo(payload), options); }).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.error('Parameter Switcher dialog error:', err);
     });
@@ -177,6 +177,7 @@
       var list = await withRetry(function () { return worksheet.getParametersAsync(); }, 'getParametersAsync');
       if (token !== renderToken) return;
       params = list || [];
+      ExtText.setParams(params.map(function (p) { var cv = p.currentValue || {}; return { name: p.name, value: cv.formattedValue != null ? cv.formattedValue : cv.value }; }));
       if (first) T.mark('parameters received', params.length + ' parameters');
 
       var name = cfg.parameter.name;
@@ -216,6 +217,8 @@
   async function readSummaryData () {
     var limit = ExtCore.rowLimit(cfg.data.maxRows);
     var table = await ExtCore.readSummary(worksheet, { limit: limit });
+    ExtText.init({ worksheet: worksheet, onChange: function () { paint(); } });
+    ExtText.setTable(table); // fields for {Field} in the title / explanation
     lastLimit = limit;
     ExtCore.rowNotice(table);
     return table;
@@ -606,7 +609,7 @@
 
     var t = cfg.title;
     applyFont(el.title, t);
-    el.title.textContent = t.text || (model && model.param ? model.param.name : '');
+    el.title.textContent = ExtText.fill(t.text) || (model && model.param ? model.param.name : '');
     el.title.style.textAlign = t.align || 'left';
     el.title.style.display = t.show === false ? 'none' : '';
 
@@ -614,7 +617,7 @@
     var hasText = ex.show && !!String(ex.text || '').trim();
     applyFont(el.explanation, ex);
     el.explanation.style.textAlign = t.align || 'left';
-    el.explanation.textContent = hasText ? ex.text : ' ';
+    el.explanation.textContent = hasText ? ExtText.fill(ex.text) : ' ';
     el.explanation.style.display = hasText || (ex.show && ex.reserveSpace) ? '' : 'none';
 
     var head = el.title.parentNode;
@@ -671,7 +674,7 @@
     var host = el.control;
     host.innerHTML = '';
     host.className = 'control v-' + (c.vAlign || 'top');
-    host.setAttribute('aria-label', cfg.title.text || (model.param && model.param.name) || 'Parameter');
+    host.setAttribute('aria-label', ExtText.fill(cfg.title.text) || (model.param && model.param.name) || 'Parameter');
 
     var wrap = mk('div', 'ctl ctl--' + style + ' lay-' + c.layout + ' al-' + c.align + (c.equalWidth ? ' is-eq' : ''));
     ui = { style: style, items: [], select: null, value: null, prev: null, next: null, wrap: wrap };

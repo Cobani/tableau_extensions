@@ -54,6 +54,10 @@ Card (padding, background, maximum rows, save as picture) · Presets. The window
 The last tab saves and loads every setting. **Export** "Look only" leaves out the parameter name, choice labels and texts that name your
 data. It also has **Brand theme** (shared by all extensions). Samples: `presets/Default.json` and `presets/Dark-pills.json`.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Settings and deploying
 
 Everything is saved in the workbook under one settings key (`parameterSwitcher1`). The parameter is stored by its name.

@@ -49,6 +49,7 @@
   // ---------------------------------------------------------------------------
   function init () {
     return tableau.extensions.initializeDialogAsync().then(function (payload) {
+      ExtText.readPayload(payload); // fields and parameters for the title / explanation
       try { detailList = (JSON.parse(payload || '{}').details) || []; } catch (e) { detailList = []; }
       cfg = KpiCardConfig.read();
       original = KpiCardConfig.clone(cfg);
@@ -300,7 +301,8 @@
   function buildTextTab (p) {
     var g1 = group(p, 'Title');
     g1.appendChild(checkboxRow('Show title', 'title.show'));
-    g1.appendChild(textRow('Title', 'title.text', 'Defaults to the Big number field name'));
+    g1.appendChild(kit.tokenTextRow('Title', 'title.text', 'Defaults to the Big number field name'));
+    g1.appendChild(kit.tokenHelp());
     g1.appendChild(segRow('Alignment', 'title.align', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']]));
     g1.appendChild(h('div', { className: 'help', textContent: 'The explanation text follows the same alignment.' }));
     fontRows(g1, 'title');
@@ -309,7 +311,7 @@
     g2.appendChild(checkboxRow('Show explanation', 'explanation.show'));
     g2.appendChild(checkboxRow('Keep space when empty', 'explanation.reserveSpace'));
     g2.appendChild(h('div', { className: 'help', textContent: 'Reserves the explanation line even when it is empty or hidden, so big numbers line up across cards on a dashboard.' }));
-    g2.appendChild(textRow('Text', 'explanation.text', 'e.g. % Top-Up vs Local Transfer'));
+    g2.appendChild(kit.tokenTextRow('Text', 'explanation.text', 'e.g. % Top-Up vs Local Transfer'));
     fontRows(g2, 'explanation', true);
   }
 

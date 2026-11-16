@@ -48,6 +48,7 @@
   // ---------------------------------------------------------------------------
   function init () {
     return tableau.extensions.initializeDialogAsync().then(function (payload) {
+      ExtText.readPayload(payload); // fields and parameters for the title / explanation
       try {
         var pl = JSON.parse(payload || '{}');
         paramList = pl.parameters || [];
@@ -304,7 +305,8 @@
     var g1 = group(p, 'Title');
     g1.appendChild(checkboxRow('Show title', 'title.show'));
     g1.appendChild(help('The header (icon, title, explanation) is off by default: a control usually needs no heading.'));
-    g1.appendChild(textRow('Title', 'title.text', 'Defaults to the parameter name'));
+    g1.appendChild(kit.tokenTextRow('Title', 'title.text', 'Defaults to the parameter name'));
+    g1.appendChild(kit.tokenHelp());
     g1.appendChild(segRow('Alignment', 'title.align', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']]));
     g1.appendChild(h('div', { className: 'help', textContent: 'The explanation text follows the same alignment.' }));
     fontRows(g1, 'title');
@@ -313,7 +315,7 @@
     g2.appendChild(checkboxRow('Show explanation', 'explanation.show'));
     g2.appendChild(checkboxRow('Keep space when empty', 'explanation.reserveSpace'));
     g2.appendChild(h('div', { className: 'help', textContent: 'Reserves the explanation line even when it is empty.' }));
-    g2.appendChild(textRow('Text', 'explanation.text', 'e.g. Pick the metric shown below'));
+    g2.appendChild(kit.tokenTextRow('Text', 'explanation.text', 'e.g. Pick the metric shown below'));
     fontRows(g2, 'explanation', true);
   }
 

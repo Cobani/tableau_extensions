@@ -72,6 +72,10 @@ The Format window opens on top of Tableau, and the chart behind it updates live.
   Needs Tableau 2024.2 or newer; otherwise the extension's own tooltip (category, actual, target, % of target, comparison, each range limit) is used.
 - **Save as picture** adds a button in the top-right corner (on hover) that saves the chart as a PNG.
 
+## Fields and parameters in the title
+
+The title and the explanation can show parameter values (`<Parameter name>`) and worksheet fields (`{Sales}`, `{Sales.avg|K|1}`, `{Region}`, `{Region.count}`, `{Order Date.last}`). *Format → Title & text* has *Insert field…* / *Insert parameter…* lists and a preview. The full list is in the [main README](../README.md#fields-and-parameters-in-titles).
+
 ## Presets
 
 The last tab saves and loads every setting. **Export** as "Look only" (leaves out title and explanation text and the row limit) or "Everything".

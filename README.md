@@ -21,6 +21,7 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 
 - [The extensions](#the-extensions)
 - [What every extension can do](#what-every-extension-can-do)
+- [Fields and parameters in titles](#fields-and-parameters-in-titles)
 - [Extension details](#kpi-card)
 - [Getting started in Tableau](#getting-started-in-tableau)
 - [Repository layout](#repository-layout)
@@ -51,7 +52,7 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 ## What every extension can do
 
 - **Format dialog for everything.** Open it with **Format Extension** on the Marks card (or right-click the chart). The chart updates live behind it; **Cancel** undoes everything since it opened and **Reset tab** restores that tab's defaults. It stays on top of Tableau.
-- **Card header** shared by all extensions: an icon (built-in icon set, Tableau shape palettes or your own upload), a title and an explanation line, each with full font control. Titles can show a parameter's value with `<Parameter name>`.
+- **Card header** shared by all extensions: an icon (built-in icon set, Tableau shape palettes or your own upload), a title and an explanation line, each with full font control. Titles and explanations can show parameter values and worksheet fields: `<Parameter name>`, `{Sales}`, `{Region.count}` (see [below](#fields-and-parameters-in-titles)).
 - **One number formatter** across the family: K / M / B / Dynamic / full / Percentage / workbook format, decimals, unit text, `+` sign, and negatives as `−201.4`, `-201.4` or `(201.4)`. Tooltips show full, unabbreviated values.
 - **Settings live in the workbook.** They travel with it when you publish to Tableau Server, and new options always come with defaults so older workbooks keep working.
 - **Works with dashboard actions.** A click selects marks in Tableau, so filter, highlight and go-to-sheet actions fire: a bar, node or cell (Bar Chart, Data Lineage, Matrix), a point or series (Line Chart), a breakdown segment (Waterfall), a card or a date on its trend line (KPI cards). It is a setting in each Format dialog; in Line Chart, Waterfall, Matrix and the KPI cards it is off until you switch it on.
@@ -65,6 +66,27 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 - **Undo, redo and search in the Format dialog.** Ctrl/Cmd+Z works on every change, and the search box finds a setting on any tab.
 - **Errors you can report.** If something goes wrong, a small **!** mark appears in the corner; click it for details (extension version, API version, the error) that you can copy to whoever supports the dashboard.
 - **Self-contained.** No CDNs or external services: the Tableau Extensions API library and the Lato fonts are bundled.
+
+## Fields and parameters in titles
+
+The title and the explanation line of every extension can show values from the worksheet and Tableau parameters. *Format → Title & text* has **Insert field…** and **Insert parameter…** lists and a *Shows:* line with the result; a name that matches nothing is flagged there.
+
+| Write | You get |
+|---|---|
+| `<Parameter name>` | the parameter's current value, as Tableau formats it |
+| `{Sales}` | a measure: its total over the rows the worksheet sends (an AVG / MIN / MAX pill gives the average / smallest / largest) |
+| `{Region}` | a dimension: its value, or "North, South, East and 2 more" when there are several |
+| `{Sales.avg}` `.min` `.max` `.sum` `.count` `.first` `.last` | that statistic of a measure (`.count` = rows with a value) |
+| `{Region.count}` `.list` `.first` `.last` | how many values, all of them, the first, the last |
+| `{Sales.name}` | the field's name |
+| `{Sales\|K\|1}` `{Sales\|full}` `{Margin\|%}` `{Change\|+}` | number overrides: scale (K, M, B, `dynamic`, `full`), decimals, percentage (×100), plus sign; they combine |
+
+- Names are the pill names without SUM / AVG, in any capitals; `{SUM(Sales)}` and a renamed pill's shown name work too.
+- Only fields on the worksheet can be used (put a field on *Detail* or the Tooltip tile to make it available). Values follow filters, like the chart.
+- Numbers are written as 1.3M / 250K / 42 unless you add an override.
+- *First* and *last* follow the first date on the worksheet, earliest first (`{Order Date.last}` is the latest date); without a date, the order of the rows.
+- Text in braces or angle brackets that matches nothing stays as you typed it, so older titles look the same.
+- Sankey and Data Lineage also have their own `{total}`, `{nodes}`, `{links}`, `{paths}` and `{flow}`.
 
 ---
 

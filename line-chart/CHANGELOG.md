@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `line-chart.trex`.
 
+## 1.3.0 — 2026-11-16
+- Title and explanation can show worksheet fields and parameters: {Sales}, {Sales.avg|K|1}, {Region}, {Region.count}, {Order Date.last}, <Parameter name>. Format → Title & text has Insert field / Insert parameter lists and a preview.
+
 ## 1.2.0 — 2026-11-10
 - New: small multiples (Series tab): split into one small chart per Color member or per measure, shared or own value scale, up to 24 panels.
 - New: dated event markers (Reference lines tab → Events): a vertical line and label at any date, with overlap-free labels and a hover tooltip.

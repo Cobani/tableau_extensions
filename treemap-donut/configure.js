@@ -53,6 +53,7 @@
   // ---------------------------------------------------------------------------
   function init () {
     return tableau.extensions.initializeDialogAsync().then(function (payload) {
+      ExtText.readPayload(payload); // fields and parameters for the title / explanation
       try {
         var p = JSON.parse(payload || '{}');
         info.levels = p.levels || 0;
@@ -533,12 +534,13 @@
 
   function buildTextTab (p) {
     var g1 = group(p, 'Title');
-    g1.appendChild(textRow('Title', 'title.text', 'Defaults to "Size by Category"'));
+    g1.appendChild(kit.tokenTextRow('Title', 'title.text', 'Defaults to "Size by Category"'));
+    g1.appendChild(kit.tokenHelp());
     fontRows(g1, 'title');
 
     var g2 = group(p, 'Explanation text');
     g2.appendChild(checkboxRow('Show explanation', 'explanation.show'));
-    g2.appendChild(textRow('Text', 'explanation.text', 'e.g. Web shop, last 30 days'));
+    g2.appendChild(kit.tokenTextRow('Text', 'explanation.text', 'e.g. Web shop, last 30 days'));
     fontRows(g2, 'explanation', true);
   }
 

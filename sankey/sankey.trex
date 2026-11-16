@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
-  <worksheet-extension id="com.ilyascoban.vizext.sankey" extension-version="1.0.0">
+  <worksheet-extension id="com.ilyascoban.vizext.sankey" extension-version="1.1.0">
     <default-locale>en_US</default-locale>
     <name resource-id="name"/>
     <description>Sankey flow diagram: each dimension on Levels is a column of nodes, and the links between neighbouring columns are as thick as the summed Value. Hover to highlight a flow, click a node or link to select it in Tableau.</description>

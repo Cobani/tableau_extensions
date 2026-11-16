@@ -27,6 +27,9 @@
     S.el.plot.style.backgroundColor = c.plotBgOpacity > 0 ? Bc.rgba(c.plotBg, c.plotBgOpacity / 100) : 'transparent';
   }
 
+  /** Title / explanation: parameters (the chart's own list), then fields ({Sales}, {Region.count}…: shared/text.js). */
+  function headerText (text) { return ExtText.fill(B.fillParams(text), { params: function () { return null; } }); }
+
   function paintHeader (v) {
     var ic = S.cfg.icon;
     var showIcon = ic.show && (ic.source === 'builtin' || ic.dataUrl);
@@ -61,12 +64,12 @@
 
     t = S.cfg.title;
     applyFont(S.el.title, t);
-    S.el.title.textContent = t.text ? B.fillParams(t.text) : B.defaultTitle(v);
+    S.el.title.textContent = t.text ? headerText(t.text) : B.defaultTitle(v);
     S.el.title.style.textAlign = t.align || 'left';
     S.el.title.style.display = t.show === false ? 'none' : '';
 
     var ex = S.cfg.explanation;
-    var exText = B.fillParams(ex.text);
+    var exText = headerText(ex.text);
     var hasText = ex.show && !!exText;
     applyFont(S.el.explanation, ex);
     S.el.explanation.style.textAlign = t.align || 'left';

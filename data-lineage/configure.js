@@ -54,6 +54,7 @@
   // ---------------------------------------------------------------------------
   function init () {
     return tableau.extensions.initializeDialogAsync().then(function (payload) {
+      ExtText.readPayload(payload); // fields and parameters for the title / explanation
       try {
         var p = JSON.parse(payload || '{}');
         Object.keys(info).forEach(function (k) { if (p[k] != null) info[k] = p[k]; });
@@ -359,15 +360,15 @@
   function buildTextTab (p) {
     var g1 = group(p, 'Title');
     g1.appendChild(checkboxRow('Show title', 'title.show'));
-    g1.appendChild(paramTextRow('Title', 'title.text', 'Lineage flow'));
-    g1.appendChild(help('Write {paths}, {nodes} or {flow} (the levels joined by →) for this chart’s numbers, and <Parameter name> for a parameter’s value.'));
+    g1.appendChild(kit.tokenTextRow('Title', 'title.text', 'Lineage flow', { tokens: ['paths', 'nodes', 'flow'] }));
+    g1.appendChild(kit.tokenHelp('This chart also has {paths}, {nodes} and {flow} (the levels joined by →).'));
     g1.appendChild(segRow('Alignment', 'title.align', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']]));
     fontRows(g1, 'title');
 
     var g2 = group(p, 'Explanation text');
     g2.appendChild(checkboxRow('Show explanation', 'explanation.show'));
     g2.appendChild(checkboxRow('Keep space when empty', 'explanation.reserveSpace'));
-    g2.appendChild(paramTextRow('Text', 'explanation.text', '{paths} {flow} paths · click a node to select it'));
+    g2.appendChild(kit.tokenTextRow('Text', 'explanation.text', '{paths} {flow} paths · click a node to select it', { tokens: ['paths', 'nodes', 'flow'] }));
     fontRows(g2, 'explanation', true);
   }
 
@@ -647,63 +648,6 @@
   }
 
 
-  // ---------------------------------------------------------------------------
-  // Parameters in texts, and names of the Measure / Line / Target / Tooltip fields
-  // ---------------------------------------------------------------------------
-  function paramVal (name) {
-    var k = String(name || '').trim().replace(/^\[?parameters\]?\./i, '').replace(/^\[|\]$/g, '').toLowerCase();
-    var p = (info.params || []).find(function (x) { return String(x.name).toLowerCase() === k; });
-    return p ? p.value : null;
-  }
-
-  function fillTokens (text) {
-    return String(text || '').replace(/<([^<>]+)>/g, function (all, nm) { var v = paramVal(nm); return v != null ? v : all; });
-  }
-
-  /** Text setting that can hold <Parameter> tokens: an "Insert parameter" list and a preview. */
-  function paramTextRow (label, path, placeholder, onChange) {
-    var wrap = h('div');
-    var r = row(label);
-    var cur = get(path);
-    var input = h('input', { type: 'text', value: cur == null ? '' : cur, placeholder: placeholder || '' });
-    r.appendChild(input);
-    wrap.appendChild(r);
-    var tools = h('div', { className: 'row' });
-    tools.appendChild(h('span'));
-    var line = h('div', { className: 'inline param-tools' });
-    var prev = h('span', { className: 'help param-preview' });
-    var upd = function () {
-      var t = input.value;
-      var has = /<[^<>]+>/.test(t);
-      prev.textContent = has ? 'Shows: ' + fillTokens(t) : '';
-      var unknown = (t.match(/<([^<>]+)>/g) || []).filter(function (x) { return paramVal(x.slice(1, -1)) == null; });
-      prev.classList.toggle('is-warn', unknown.length > 0);
-      if (unknown.length) prev.textContent += '  (no parameter named ' + unknown.join(', ') + ')';
-    };
-    input.addEventListener('input', function () { set(path, input.value); upd(); if (onChange) onChange(); });
-    if ((info.params || []).length) {
-      var sel = h('select', { className: 'param-insert' });
-      sel.appendChild(h('option', { value: '', textContent: 'Insert parameter…' }));
-      info.params.forEach(function (p) { sel.appendChild(h('option', { value: p.name, textContent: p.name + '  (' + p.value + ')' })); });
-      sel.addEventListener('change', function () {
-        if (!sel.value) return;
-        var tok = '<' + sel.value + '>';
-        var a = input.selectionStart != null ? input.selectionStart : input.value.length;
-        var b = input.selectionEnd != null ? input.selectionEnd : a;
-        input.value = input.value.slice(0, a) + tok + input.value.slice(b);
-        sel.value = '';
-        set(path, input.value); upd(); if (onChange) onChange();
-        input.focus();
-        input.setSelectionRange(a + tok.length, a + tok.length);
-      });
-      line.appendChild(sel);
-    }
-    line.appendChild(prev);
-    tools.appendChild(line);
-    wrap.appendChild(tools);
-    upd();
-    return wrap;
-  }
 
 
   function buildIconTab (p) {

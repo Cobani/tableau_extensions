@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `kpiCardMulti.trex`.
 
+## 1.3.0 — 2026-11-16
+- Title and explanation can show worksheet fields and parameters: {Sales}, {Sales.avg|K|1}, {Region}, {Region.count}, {Order Date.last}, <Parameter name>. Format → Title & text has Insert field / Insert parameter lists and a preview.
+
 ## 1.2.1 — 2026-11-15
 - One date in the data: each card shows the big number on its own (the chart area collapses) instead of a message box.
 

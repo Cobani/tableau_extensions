@@ -135,7 +135,7 @@
     }
     // The Format dialog lists the Details tile measures (it can't read the Marks card itself).
     var payload = JSON.stringify({ details: detailKeys(lastFields ? lastFields.details : []) });
-    return tableau.extensions.ui.displayDialogAsync(url, payload, options).catch(function (err) {
+    return ExtText.ready(worksheet).then(function () { return tableau.extensions.ui.displayDialogAsync(url, ExtText.addInfo(payload), options); }).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.error('KPI Card dialog error:', err);
     });
@@ -305,6 +305,8 @@
   async function readSummaryData (extra) {
     var limit = ExtCore.rowLimit(cfg.data.maxRows);
     var table = await ExtCore.readSummary(worksheet, { limit: limit, columnsToIncludeById: extra && extra.columnsToIncludeById });
+    ExtText.init({ worksheet: worksheet, onChange: function () { paint(); } });
+    if (!extra) ExtText.setTable(table); // fields for {Field} in the title / explanation
     if (!extra) { lastLimit = limit; ExtCore.rowNotice(table); }
     return table;
   }
@@ -1034,7 +1036,7 @@
 
     var t = cfg.title;
     applyFont(el.title, t);
-    el.title.textContent = t.text || lastData.label;
+    el.title.textContent = ExtText.fill(t.text) || lastData.label;
     el.title.style.textAlign = t.align || 'left';
     el.title.style.display = t.show === false ? 'none' : '';
 
@@ -1044,7 +1046,7 @@
     var hasText = ex.show && !!String(ex.text || '').trim();
     applyFont(el.explanation, ex);
     el.explanation.style.textAlign = t.align || 'left';
-    el.explanation.textContent = hasText ? ex.text : '\u00A0';
+    el.explanation.textContent = hasText ? ExtText.fill(ex.text) : '\u00A0';
     el.explanation.style.display = hasText || ex.reserveSpace ? '' : 'none';
     updateIconSpan();
   }

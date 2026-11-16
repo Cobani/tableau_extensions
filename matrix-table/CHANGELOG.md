@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `matrix-table.trex`.
 
+## 1.2.0 — 2026-11-16
+- Title and explanation can show worksheet fields and parameters: {Sales}, {Sales.avg|K|1}, {Region}, {Region.count}, {Order Date.last}, <Parameter name>. Format → Title & text has Insert field / Insert parameter lists and a preview.
+
 ## 1.1.0 — 2026-11-10
 - Presets tab: apply a brand theme or save this look as a theme.
 - Option to show Tableau's own tooltip on cells (Tooltip & actions: Use Tableau's tooltip, off by default).

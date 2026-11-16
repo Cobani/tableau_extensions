@@ -2,7 +2,7 @@
 // Run: npm run lint
 const globals = require('globals');
 
-const shared = { tableau: 'readonly', ExtCore: 'readonly', ExtBoot: 'readonly', ExtTiming: 'readonly', ExtDialog: 'readonly', ExtTheme: 'readonly', ExtSnapshot: 'readonly', KpiBoot: 'readonly' };
+const shared = { tableau: 'readonly', ExtCore: 'readonly', ExtBoot: 'readonly', ExtTiming: 'readonly', ExtDialog: 'readonly', ExtTheme: 'readonly', ExtSnapshot: 'readonly', ExtText: 'readonly', KpiBoot: 'readonly' };
 // Each extension's own globals (chart / config / dialog / helpers), see the table in AGENTS.md.
 const ext = {};
 ['KpiCard', 'KpiCardConfig', 'KpiCardConfigure', 'KpiCardMulti', 'KpiCardMultiConfig', 'KpiCardMultiConfigure',
@@ -42,7 +42,7 @@ module.exports = [
     languageOptions: { globals: { module: 'readonly', globalThis: 'readonly' } }
   },
   {
-    files: ['shared/theme.js'],
+    files: ['shared/theme.js', 'shared/text.js'],
     languageOptions: { globals: { module: 'readonly', require: 'readonly', globalThis: 'readonly' } }
   }
 ];
