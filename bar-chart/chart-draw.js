@@ -136,7 +136,7 @@
       if (opts.extent && isFinite(opts.extent.llo)) { llo = Math.min(llo, opts.extent.llo); lhi = Math.max(lhi, opts.extent.lhi); }
       lsc = LA.sync ? sc : B.scaleFor(llo, lhi, Bc.merge(LA, { ticks: sc.ticks.length - 1 }), {});
       var lf = LA.useGlobalFormat ? B.S.cfg.format : LA.fmt;
-      lTick = B.tickTexts(lsc.ticks, lf, { exact: LA.useGlobalFormat });
+      lTick = B.tickTexts(lsc.ticks, lf, { exact: LA.useGlobalFormat, wbKey: lines[0].key });
       if (LA.show) {
         lThick = vert ? Math.max.apply(null, lTick.map(function (t) { return B.textWidth(t, LA.size, 400, AV.font); })) + 8 : LA.size + 8;
         if (LA.title) lThick += LA.size + 6;
@@ -442,7 +442,7 @@
           }
           item.track = { pt: pt, tm: tm };
           if (PR.showRemaining && tm > b.shown) {
-            var rl = B.boxLabel(Bc.formatNumber(tm - b.shown, B.fmtOf(LB.fmt)), Math.max(8, LB.size - 1), 400, family, 'none');
+            var rl = B.boxLabel(Bc.formatNumber(tm - b.shown, B.fmtOf(LB.fmt), { wbKey: b.m }), Math.max(8, LB.size - 1), 400, family, 'none');
             rl.fill = PR.remainingColor;
             rl.prio = 1;
             B.placeOn(rl, TF, 'insideEnd', LB.offset + 2);
@@ -691,7 +691,7 @@
           gl.appendChild(hit);
           B.S.drawn.push({ node: q.n, kind: 'line', line: l, lv: q.v, color: col, i: q.n.idx, x: q.x, y: q.y });
           if (lc.labels) {
-            var lbl = B.boxLabel(Bc.formatNumber(q.v, B.lineFmt()), lc.labelSize, lc.labelWeight, family, 'none');
+            var lbl = B.boxLabel(Bc.formatNumber(q.v, B.lineFmt(), { wbKey: l.key }), lc.labelSize, lc.labelWeight, family, 'none');
             lbl.fill = col;
             lbl.prio = Math.abs(q.v) * 0.5;
             var dy = lc.markerSize / 2 + 3 + lbl.h / 2;

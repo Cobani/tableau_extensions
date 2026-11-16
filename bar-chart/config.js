@@ -678,7 +678,121 @@
    *   opts.noUnit      leave the unit off
    *   opts.abs         drop the sign (diverging axis)
    *   opts.full        no K/M/B (tooltips)
+   *   opts.wbKey       Workbook format without opts.fv: the measure whose Tableau
+   *                    format is used (default: the first measure)
+   *   opts.wbDec       Workbook format: this many decimals instead of Tableau's (axis ticks)
    */
+  // ---- Workbook format ------------------------------------------------------
+  // Tableau sends each value already formatted ("SAR 1,234.5", "12.3%", "1.2M").
+  // A bar that sums several rows, a total or an axis tick has no such text, so
+  // the pattern (text around the number, decimals, separators, K/M/B or %) is
+  // read from the measure's formatted values and applied to any number.
+  var WB = { patterns: {}, first: null };
+
+  /** One sample (value + Tableau's text) → pattern, or null when it can't be read. */
+  function readPattern (v, text) {
+    if (text == null || !isFinite(v)) return null;
+    var s = String(text).replace(/ /g, ' ').trim();
+    var paren = /^\(.*\)$/.test(s);
+    if (paren) s = s.slice(1, -1).trim();
+    var m = /^(.*?)([-−]?)(\d[\d.,' ]*\d|\d)(.*)$/.exec(s);
+    if (!m) return null;
+    var prefix = m[1].replace(/[-−]\s*$/, '');
+    var core = m[3];
+    var suffix = m[4];
+    var a = Math.abs(v);
+    var seps = core.replace(/\d/g, '');
+    // candidate readings of the separators: [decimal sep, group sep]
+    var reads = [];
+    if (!seps) reads.push(['', '']);
+    else {
+      var last = seps.charAt(seps.length - 1);
+      var other = seps.replace(new RegExp('\\' + last, 'g'), '');
+      var lastCount = seps.split(last).length - 1;
+      if (other) reads.push([last, other.charAt(0)]);
+      else {
+        if (lastCount === 1 && (last === '.' || last === ',')) reads.push([last, '']);
+        reads.push(['', last]);
+      }
+    }
+    // full numbers first; a display unit (K, M, %…) always leaves text next to the number
+    var mults = [1, 0.01, 1e3, 1e6, 1e9, 1e12];
+    for (var j = 0; j < mults.length; j++) {
+      if (mults[j] !== 1 && !(prefix + suffix).trim()) continue;
+      for (var i = 0; i < reads.length; i++) {
+        var dsep = reads[i][0];
+        var gsep = reads[i][1];
+        var parts = dsep ? core.split(dsep) : [core];
+        if (parts.length > 2) continue;
+        var intPart = gsep ? parts[0].split(gsep).join('') : parts[0];
+        if (!/^\d+$/.test(intPart) || (parts[1] != null && !/^\d+$/.test(parts[1]))) continue;
+        var dec = parts[1] ? parts[1].length : 0;
+        var n = Number(intPart + (dec ? '.' + parts[1] : ''));
+        var tol = 0.5 * Math.pow(10, -dec) + 1e-9 * Math.max(1, n);
+        if (Math.abs(a / mults[j] - n) <= tol * 1.0001) {
+          return { prefix: prefix, suffix: suffix, mult: mults[j], dec: dec, dsep: dsep || (gsep === ',' ? '.' : gsep === '.' ? ',' : '.'), gsep: gsep, long: intPart.length >= 4, neg: paren ? 'paren' : (m[2] ? 'minus' : null), exact: a !== 0 };
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Samples [[value, text], …] → the measure's pattern (most common reading). */
+  function workbookPattern (samples) {
+    var best = null;
+    var votes = {};
+    var decs = {};
+    var negStyle = null;
+    var grouped = null;
+    var long = false;
+    (samples || []).forEach(function (sm) {
+      var p = readPattern(sm[0], sm[1]);
+      if (!p || !p.exact) return;
+      if (p.neg && sm[0] < 0) negStyle = negStyle || p.neg;
+      if (p.gsep) grouped = p.gsep;
+      if (p.long) long = true;
+      var k = [p.prefix, p.suffix, p.mult, p.dsep].join('\u0001');
+      var o = votes[k] || (votes[k] = { n: 0, p: p, dec: {} });
+      o.n++;
+      o.dec[p.dec] = (o.dec[p.dec] || 0) + 1;
+      if (!best || o.n > best.n) best = o;
+    });
+    if (!best) return null;
+    var out = clone(best.p);
+    // decimals: the most common count (Automatic formats vary per value); ties → fewer
+    Object.keys(best.dec).map(Number).sort(function (x, y) { return x - y; }).forEach(function (d) {
+      if (decs.d == null || best.dec[d] > best.dec[decs.d]) decs.d = d;
+    });
+    out.dec = decs.d;
+    // group separator: seen on a sample, or none if long numbers showed none; else Tableau's default
+    out.gsep = grouped || (long ? '' : (out.dsep === ',' ? '.' : ','));
+    if (out.gsep === out.dsep) out.gsep = '';
+    out.neg = negStyle;
+    delete out.exact;
+    delete out.long;
+    return out;
+  }
+
+  /** Measure key → pattern; `first` is used where a number has no measure (axis, totals). */
+  function setWorkbookPatterns (map, first) {
+    WB.patterns = map || {};
+    WB.first = first != null && WB.patterns[first] ? first : Object.keys(WB.patterns)[0] || null;
+  }
+
+  function patternOf (key) {
+    if (key != null && WB.patterns[key]) return WB.patterns[key];
+    return WB.first != null ? WB.patterns[WB.first] : null;
+  }
+
+  /** The number part written with a pattern (no sign). */
+  function workbookBody (a, p) {
+    var x = (a / p.mult).toFixed(p.dec);
+    var parts = x.split('.');
+    var int = parts[0];
+    if (p.gsep) int = int.replace(/\B(?=(\d{3})+(?!\d))/g, p.gsep);
+    return p.prefix + int + (parts[1] ? p.dsep + parts[1] : '') + p.suffix;
+  }
+
   function formatNumber (v, f, opts) {
     opts = opts || {};
     f = f || FORMAT;
@@ -688,10 +802,11 @@
     var neg = v < 0;
     var a = Math.abs(v);
     var scale = f.scale;
+    var negStyle = f.negStyle;
     if (opts.full) {
       if (scale === 'workbook' && opts.fv) return String(opts.fv);
       if (scale === 'percentDynamic') scale = 'percent';
-      else if (scale !== 'percent') scale = 'none';
+      else if (scale !== 'percent' && !(scale === 'workbook' && patternOf(opts.wbKey))) scale = 'none';
     }
     var dec = f.decimals;
     if (opts.full && scale === 'none' && a !== Math.round(a)) dec = Math.max(dec, 2);
@@ -701,6 +816,12 @@
         scale === 'percentDynamic' ? opts.forceScale : '', f.thousands) + '%';
     } else if (scale === 'workbook' && opts.fv) {
       body = String(opts.fv).replace(/^[-−(]\s*/, '').replace(/\)$/, '');
+      if (/^\s*\(/.test(opts.fv)) negStyle = 'paren';
+      else if (/^\s*-/.test(opts.fv)) negStyle = 'hyphen';
+    } else if (scale === 'workbook' && patternOf(opts.wbKey)) {
+      var wp = patternOf(opts.wbKey);
+      body = workbookBody(a, opts.wbDec != null ? merge(wp, { dec: Math.min(6, opts.wbDec) }) : wp);
+      if (wp.neg) negStyle = wp.neg === 'paren' ? 'paren' : 'hyphen'; // Tableau's own negatives
     } else {
       var sc = scale === 'workbook' ? 'dynamic' : scale;
       body = formatScaled(a, sc, dec, opts.forceScale, f.thousands);
@@ -711,8 +832,8 @@
       body = f.unitPosition === 'prefix' ? f.unit + sp + body : body + sp + f.unit;
     }
     if (neg) {
-      if (f.negStyle === 'paren') return '(' + body + ')';
-      return (f.negStyle === 'hyphen' ? '-' : '−') + body;
+      if (negStyle === 'paren') return '(' + body + ')';
+      return (negStyle === 'hyphen' ? '-' : '−') + body;
     }
     if (opts.signed && f.plusSign && /[1-9]/.test(body)) return '+' + body;
     return body;
@@ -911,6 +1032,8 @@
     fixed: fixed,
     formatScaled: formatScaled,
     formatNumber: formatNumber,
+    workbookPattern: workbookPattern,
+    setWorkbookPatterns: setWorkbookPatterns,
     parseDate: parseDate,
     formatDate: formatDate,
     comparer: comparer,

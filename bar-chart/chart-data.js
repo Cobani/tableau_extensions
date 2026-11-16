@@ -200,6 +200,12 @@
 
     var out = [];
     var dateCache = {}; // the same axis values repeat on many rows
+    // Workbook number format: a few of Tableau's formatted values per measure
+    var samples = {};
+    var sample = function (key, n, text) {
+      var a = samples[key] || (samples[key] = []);
+      if (a.length < 40 && text != null && n !== 0) a.push([n, text]);
+    };
     rows.forEach(function (row, rowIdx) {
       var mn = cMN ? norm(row[cMN.index].formattedValue || row[cMN.index].value) : null;
       var o = { d: [], dd: [], v: {}, fv: {}, l: {}, t: NaN, x: {}, xt: {}, xf: {}, sri: rowIdx }; // sri: position in the summary data as Tableau sent it (Tableau's own tooltip)
@@ -226,18 +232,23 @@
         var n = toNumber(cell);
         if (!isFinite(n)) return;
         o.v[r.key] = n; o.fv[r.key] = cell.formattedValue; any = true;
+        sample(r.key, n, cell.formattedValue);
       });
-      lines.forEach(function (r) { var c = cellOf(row, r, mn); var n = toNumber(c); if (isFinite(n)) { o.l[r.key] = n; any = true; } });
-      target.forEach(function (r) { var c = cellOf(row, r, mn); var n = toNumber(c); if (isFinite(n)) { o.t = n; any = true; } });
+      lines.forEach(function (r) { var c = cellOf(row, r, mn); var n = toNumber(c); if (isFinite(n)) { o.l[r.key] = n; any = true; sample(r.key, n, c.formattedValue); } });
+      target.forEach(function (r) { var c = cellOf(row, r, mn); var n = toNumber(c); if (isFinite(n)) { o.t = n; any = true; sample(r.key, n, c.formattedValue); } });
       extras.forEach(function (r) {
         var c = cellOf(row, r, mn);
         if (r.dim) { if (c) o.xt[r.key] = cellText(c); return; }
         var n = toNumber(c);
-        if (isFinite(n)) { o.x[r.key] = n; if (c.formattedValue != null) o.xf[r.key] = String(c.formattedValue); any = true; }
+        if (isFinite(n)) { o.x[r.key] = n; if (c.formattedValue != null) o.xf[r.key] = String(c.formattedValue); any = true; sample(r.key, n, c.formattedValue); }
         else if (c && cellText(c) !== 'Null') o.xt[r.key] = cellText(c); // e.g. ATTR of a text field
       });
       if (any || !cMN) out.push(o);
     });
+
+    var patterns = {};
+    Object.keys(samples).forEach(function (k) { var p = Bc.workbookPattern(samples[k]); if (p) patterns[k] = p; });
+    Bc.setWorkbookPatterns(patterns, meas[0] ? meas[0].key : null);
 
     var strip = function (r) { return { key: r.key, name: r.name }; };
     return {
@@ -648,7 +659,7 @@
     n.total = 0;
     n.items.forEach(function (it) {
       if (it.m) n.mv[it.m] = (n.mv[it.m] || 0) + it.v;
-      var o = n.vals[it.s] || (n.vals[it.s] = { v: 0, n: 0, fv: null });
+      var o = n.vals[it.s] || (n.vals[it.s] = { v: 0, n: 0, fv: null, m: it.m });
       o.v += it.v; o.n++; o.fv = o.n === 1 ? it.fv : null;
       n.total += it.v;
     });
@@ -957,7 +968,7 @@
         if (v.layout === 'stacked' || v.layout === 'stacked100' || v.layout === 'diverging') {
           if (shown >= 0) { from = pos; pos += shown; to = pos; } else { from = neg; neg += shown; to = neg; }
         }
-        n.bars.push({ node: n, s: s, si: si, v: val, fv: o.fv, shown: shown, from: from, to: to, count: o.n });
+        n.bars.push({ node: n, s: s, si: si, m: o.m, v: val, fv: o.fv, shown: shown, from: from, to: to, count: o.n });
       });
       n.stackPos = pos;
       n.stackNeg = neg;

@@ -276,6 +276,19 @@
     if (/percent/.test(f.scale) && f.pctFromRatio) stp *= 100;
     var need = 0;
     while (need < 4 && Math.abs(Math.round(stp * Math.pow(10, need)) - stp * Math.pow(10, need)) > 1e-6) need++;
+    var wbKey = opts && opts.wbKey;
+    if (f.scale === 'workbook') {
+      // Tableau's format with as few decimals as keep neighbouring ticks apart (400,000 not 400,000.00)
+      var k = 0;
+      for (; k < 4; k++) {
+        var uq = {};
+        ticks.forEach(function (t) { uq[Bc.formatNumber(t, f, { wbKey: wbKey, wbDec: k })] = 1; });
+        if (Object.keys(uq).length === ticks.length) break;
+      }
+      out = ticks.map(function (t) { return Bc.formatNumber(t, f, { wbKey: wbKey, wbDec: k, abs: !!(opts && opts.abs) }); });
+      var z0 = Bc.formatNumber(0, f, { wbKey: wbKey, wbDec: 0 });
+      return out.map(function (t, i) { return ticks[i] === 0 ? z0 : t; });
+    }
     var startDec = opts && opts.exact ? need : Math.max(need, f.decimals);
     for (var d = startDec; d <= Math.max(startDec, 4); d++) {
       use.decimals = d;
@@ -485,14 +498,14 @@
     var LB = S.cfg.labels;
     var f = fmtOf(LB.fmt);
     var n = b.node;
-    var value = function () { return Bc.formatNumber(b.v, f, { fv: b.count === 1 ? b.fv : null, signed: true }); };
+    var value = function () { return Bc.formatNumber(b.v, f, { fv: b.count === 1 ? b.fv : null, signed: true, wbKey: b.m }); };
     var catSum = n.bars.reduce(function (a, x) { return a + Math.abs(x.v); }, 0) || 1;
     var tot = v.totalsBySeries[b.s.key] || 1;
     switch (LB.content) {
       case 'pctTotal': return Bc.formatNumber(b.v / tot, pctFmt(f));
       case 'pctCat': return Bc.formatNumber(b.v / catSum, pctFmt(f));
       case 'valuePct': return value() + ' (' + Bc.formatNumber(v.visSeries.length > 1 ? b.v / catSum : b.v / tot, pctFmt(f)) + ')';
-      case 'diffPrev': return b.prev ? Bc.formatNumber(b.v - b.prev.v, Bc.merge(f, { plusSign: true }), { signed: true }) : '';
+      case 'diffPrev': return b.prev ? Bc.formatNumber(b.v - b.prev.v, Bc.merge(f, { plusSign: true }), { signed: true, wbKey: b.m }) : '';
       case 'pctDiffPrev': return b.prev && b.prev.v ? Bc.formatNumber((b.v - b.prev.v) / Math.abs(b.prev.v), Bc.merge(pctFmt(f), { plusSign: true }), { signed: true }) : '';
       case 'rank': return '#' + rankOf(v, b);
       case 'nameValue': return n.label + ': ' + value();

@@ -169,7 +169,7 @@
       g.appendChild(checkboxRow('Value is a 0–1 ratio', P(base, 'pctFromRatio')));
       g.appendChild(help('On: 0.4523 → 45.23%. Off: 45.23 → 45.23%.'));
     }
-    if (scale === 'workbook') g.appendChild(help('Uses Tableau’s format when a bar is a single value; sums (stacks, groups, Others) fall back to Dynamic.'));
+    if (scale === 'workbook') g.appendChild(help('Uses each measure’s number format from Tableau (Format → Numbers on the pill): prefix and suffix, decimals, separators, K / M / B or %. It also applies to totals, stacks, groups and the axis. Decimal places below only apply when Tableau’s format can’t be read.'));
     g.appendChild(numberRow('Decimal places', P(base, 'decimals'), 0, 6, 1));
     g.appendChild(checkboxRow('Thousands separator', P(base, 'thousands')));
     g.appendChild(unitRow('Unit', P(base, 'unit'), 'e.g. SAR, M, %'));

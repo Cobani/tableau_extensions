@@ -250,8 +250,8 @@
     tt.style.top = Math.max(4, top) + 'px';
   }
 
-  function fullOpts (fv, count) {
-    return { full: S.cfg.tooltip.fullNumbers, fv: count === 1 ? fv : null };
+  function fullOpts (fv, count, m) {
+    return { full: S.cfg.tooltip.fullNumbers, fv: count === 1 ? fv : null, wbKey: m };
   }
 
   /** Rows for the tooltip list: breakdown members, or every series of the category. */
@@ -274,13 +274,13 @@
       var segs = spec ? B.segmentsOf(n, d.b.s.key, spec) : [];
       var colors = spec ? B.segColors(segs, d.b.color, spec) : {};
       var sh = Bc.shades(d.b.color, Math.max(1, order.length));
-      var rows = order.map(function (k, j) { return { name: k, v: sums[k], color: colors[k] || sh[j] }; });
+      var rows = order.map(function (k, j) { return { name: k, v: sums[k], color: colors[k] || sh[j], m: d.b.m }; });
       if (rows.length > 1 || (rows.length === 1 && rows[0].name !== n.label)) {
         return { title: S.raw.dims.slice(n.depth).map(function (x) { return x.name; }).join(' · '), rows: rows, total: d.b.v };
       }
     }
     if (V.visSeries.length > 1 && TT.showSeries) {
-      return { title: S.raw.seriesIdx.length ? S.raw.seriesFields.map(function (f) { return f.name; }).join(' · ') : 'Measure', rows: n.bars.map(function (b) { return { name: b.s.name, v: b.v, color: b.color, fv: b.fv, count: b.count, me: d.b && b.s.key === d.b.s.key }; }), total: n.bars.reduce(function (a, b) { return a + Math.abs(b.v); }, 0) };
+      return { title: S.raw.seriesIdx.length ? S.raw.seriesFields.map(function (f) { return f.name; }).join(' · ') : 'Measure', rows: n.bars.map(function (b) { return { name: b.s.name, v: b.v, color: b.color, fv: b.fv, count: b.count, m: b.m, me: d.b && b.s.key === d.b.s.key }; }), total: n.bars.reduce(function (a, b) { return a + Math.abs(b.v); }, 0) };
     }
     return null;
   }
@@ -304,7 +304,7 @@
     if (d.kind === 'line') {
       var lc = Bc.lineCfg(S.cfg, d.line.key);
       html += '<div class="tt-series"><span class="sw" style="display:inline-block;width:12px;height:3px;background:' + d.color + '"></span>' + esc(B.lineLabel(d.line)) + '</div>';
-      html += '<div class="tt-value" style="color:' + d.color + '">' + esc(Bc.formatNumber(d.lv, B.tipFmt(), { full: TT.fullNumbers })) + '</div>';
+      html += '<div class="tt-value" style="color:' + d.color + '">' + esc(Bc.formatNumber(d.lv, B.tipFmt(), { full: TT.fullNumbers, wbKey: d.line.key })) + '</div>';
     } else if (d.b) {
       var b = d.b;
       if (V.series.length > 1 && TT.showSeries) {
@@ -312,7 +312,7 @@
       } else if (S.raw.measures.length === 1 || V.axisType !== 'measureNames') {
         html += '<div class="tt-note">' + esc(b.s.name) + '</div>';
       }
-      html += '<div class="tt-value" style="color:' + Bc.readable(b.color) + '">' + esc(Bc.formatNumber(b.v, f, fullOpts(b.fv, b.count))) + '</div>';
+      html += '<div class="tt-value" style="color:' + Bc.readable(b.color) + '">' + esc(Bc.formatNumber(b.v, f, fullOpts(b.fv, b.count, b.m))) + '</div>';
       if (TT.showPct) {
         var tot = V.totalsBySeries[b.s.key];
         var notes = [];
@@ -325,7 +325,7 @@
         if (notes.length) html += '<div class="tt-note">' + notes.join(' · ') + '</div>';
       }
       if (B.targetInfo() && !V.noTarget && isFinite(n.t) && S.cfg.target.inTooltip) {
-        html += '<div class="tt-note">' + esc(B.fieldLabel(B.targetInfo())) + ': ' + esc(Bc.formatNumber(n.t, f, { full: TT.fullNumbers })) +
+        html += '<div class="tt-note">' + esc(B.fieldLabel(B.targetInfo())) + ': ' + esc(Bc.formatNumber(n.t, f, { full: TT.fullNumbers, wbKey: B.targetInfo().key })) +
           (n.t ? ' (' + Bc.formatNumber(n.total / n.t, pctFmt(f)) + ' achieved)' : '') + '</div>';
       }
       if (n.isOthers && n.members) html += '<div class="tt-note">' + n.members.length + ' members: ' + esc(n.members.slice(0, 6).join(', ')) + (n.members.length > 6 ? '…' : '') + '</div>';
@@ -351,7 +351,7 @@
         rows.slice(0, max).forEach(function (r) {
           var me = r.me || (segName != null && r.name === segName);
           html += '<div class="tt-row"' + (me ? ' style="font-weight:700"' : '') + '><span class="sw" style="background:' + r.color + '"></span><span class="nm">' + esc(r.name) +
-            '</span><span class="vl">' + esc(Bc.formatNumber(r.v, f, fullOpts(r.fv, r.count))) + '</span>' +
+            '</span><span class="vl">' + esc(Bc.formatNumber(r.v, f, fullOpts(r.fv, r.count, r.m))) + '</span>' +
             (TT.showPct ? '<span class="pc">' + (R.total ? esc(Bc.formatNumber(r.v / R.total, pctFmt(f))) : '') + '</span>' : '') + '</div>';
         });
         if (rows.length > max) html += '<div class="tt-more">+ ' + (rows.length - max) + ' more — click the bar to see all</div>';
@@ -365,7 +365,7 @@
         html += '<div class="tt-rows">' + lr.map(function (l) {
           var lc2 = Bc.lineCfg(S.cfg, l.key);
           return '<div class="tt-row"><span class="sw" style="height:3px;background:' + B.lineColor(l.key, S.raw.lines.indexOf(l)) + '"></span><span class="nm">' + esc(B.lineLabel(l)) +
-            '</span><span class="vl">' + esc(Bc.formatNumber(n.l[l.key], B.tipFmt(), { full: TT.fullNumbers })) + '</span></div>';
+            '</span><span class="vl">' + esc(Bc.formatNumber(n.l[l.key], B.tipFmt(), { full: TT.fullNumbers, wbKey: l.key })) + '</span></div>';
         }).join('') + '</div>';
       }
     }

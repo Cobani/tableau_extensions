@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
+## 1.2.2 — 2026-11-16
+- Workbook format now works everywhere: Tableau's number format (prefix/suffix, decimals, separators, K/M/B, %, negatives) is read per measure and applied to summed bars, totals, groups, tooltips, lines and axis ticks, not only to single-row bars.
+
 ## 1.2.1 — 2026-11-15
 - More space between the title and the chart, matching Line Chart (default 'Space above chart' 10 px, plot top margin 8 px).
 
