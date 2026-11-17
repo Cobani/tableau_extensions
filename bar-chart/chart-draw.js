@@ -67,6 +67,20 @@
     var showBars = B.S.cfg.chart.showBars !== false;
     var lines = B.S.cfg.chart.showLines === false ? [] : B.S.raw.lines.filter(function (l) { return !B.S.state.off['l:' + l.key]; });
     var centerDiv = lay === 'diverging' && B.S.cfg.diverging.labels === 'center';
+    // names between the two sides: wrap, and break a single word that is wider than the space
+    function wrapCenter (text, width, maxLines, size, weight, family) {
+      var parts = [];
+      String(text).split(/\s+/).filter(Boolean).forEach(function (w) {
+        if (B.textWidth(w, size, weight, family) <= width) { parts.push(w); return; }
+        var cur = '';
+        for (var ch = 0; ch < w.length; ch++) {
+          if (cur && B.textWidth(cur + w[ch], size, weight, family) > width) { parts.push(cur); cur = ''; }
+          cur += w[ch];
+        }
+        if (cur) parts.push(cur);
+      });
+      return B.wrapText(parts.join(' '), width, maxLines, size, weight, family);
+    }
     // no grow animation for big charts: hundreds of animated bars make every refresh feel slow
     var animate = B.S.state.animate && B.S.cfg.chart.animate && nodes.length * Math.max(1, v.visSeries.length) <= 300;
     svg.classList.toggle('animate', !!animate);
@@ -197,7 +211,7 @@
       if (axisLabels) {
         var lh = Math.round(AC.size * 1.25);
         if (AC.orientation === 'wrap') {
-          xl = nodes.map(function (n) { return B.wrapText(n.label, Math.max(12, slot * 0.96), Math.max(1, AC.maxLines), AC.size, AC.weight, AC.font); });
+          xl = nodes.map(function (n) { return (centerDiv ? wrapCenter : B.wrapText)(n.label, Math.max(12, slot * 0.96), Math.max(1, AC.maxLines), AC.size, AC.weight, AC.font); });
           catLabelThick = Math.max.apply(null, xl.map(function (ls) { return ls.length; })) * lh + 6;
           if (AC.placement === 'pill') catLabelThick += 8;
         } else {
@@ -221,7 +235,7 @@
         var lw = Math.min(maxW, B.maxCatLabelW(v) + (AC.placement === 'pill' ? 16 : 0));
         catLabelThick = Math.ceil(lw) + 8;
         var lines2 = Math.max(1, Math.min(AC.maxLines, Math.floor(slot / (AC.size * 1.2)) || 1));
-        xl = nodes.map(function (n) { return B.wrapText(n.label, lw - (AC.placement === 'pill' ? 16 : 0), lines2, AC.size, AC.weight, AC.font); });
+        xl = nodes.map(function (n) { return (centerDiv ? wrapCenter : B.wrapText)(n.label, lw - (AC.placement === 'pill' ? 16 : 0), lines2, AC.size, AC.weight, AC.font); });
       }
       if (showGroups) {
         var gw = Math.max.apply(null, runs.filter(function (r) { return r.grp; }).map(function (r) { return B.textWidth(r.grp.label, G.size, G.weight, family); }).concat([0]));
@@ -771,7 +785,12 @@
             if (AC.orientation === 'angled') room = room * Math.SQRT2;
             L.axes.appendChild(node('text', Object.assign({ x: cc, y: cpos, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: color, transform: 'rotate(' + angc + ' ' + cc + ' ' + cpos + ')' }, catFont), B.ellipsize(ls[0], Math.max(12, room), AC.size, AC.weight, AC.font)));
           } else {
-            L.axes.appendChild(node('text', Object.assign({ x: q[0], y: q[1] + AC.size * 0.35, 'text-anchor': 'middle', fill: color }, catFont), B.ellipsize(n.label, Math.abs(cGap) - 6, AC.size, AC.weight, AC.font)));
+            // left-right: wrapped lines centred in the gap
+            var lhh = Math.round(AC.size * 1.25);
+            var yh = q[1] - (ls.length - 1) * lhh / 2 + AC.size * 0.35;
+            ls.forEach(function (t, k) {
+              L.axes.appendChild(node('text', Object.assign({ x: q[0], y: yh + k * lhh, 'text-anchor': 'middle', fill: color }, catFont), t));
+            });
           }
           return;
         }

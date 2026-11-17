@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
+## 1.3.3 — 2026-11-17
+- Names between the two sides wrap when they don't fit (long single words break too); left-right layout wraps them as well.
+
 ## 1.3.2 — 2026-11-17
 - Diverging up-down with names between the two sides: Category axis Direction (Horizontal / Angled / Vertical) now applies.
 
