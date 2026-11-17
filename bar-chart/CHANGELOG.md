@@ -3,6 +3,7 @@
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
 ## 1.4.0 — 2026-11-17
+- Fonts updated to Lato 2.015 with all nine weights (Hairline to Black, upright and italic); Light, Semibold and Black now use real font files, and Hairline, Thin and Heavy are new options in every Weight list.
 - Dimension tile takes up to 8 fields (was 6).
 
 ## 1.3.3 — 2026-11-17

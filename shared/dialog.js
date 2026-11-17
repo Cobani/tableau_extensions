@@ -165,7 +165,8 @@
 
   function delAt (o, path) { setAt(o, path, undefined); }
 
-  const WEIGHTS = [[300, 'Light'], [400, 'Regular'], [500, 'Medium'], [600, 'Semibold'], [700, 'Bold'], [900, 'Black']];
+  // One option per bundled Lato face (shared/fonts/fonts.css).
+  const WEIGHTS = [[100, 'Hairline'], [200, 'Thin'], [300, 'Light'], [400, 'Regular'], [500, 'Medium'], [600, 'Semibold'], [700, 'Bold'], [800, 'Heavy'], [900, 'Black']];
 
   // Currency signs offered under the Unit box (clicking one fills the box).
   // Saudi riyal and Turkish lira first, then by how widely the currency is used.
