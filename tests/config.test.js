@@ -74,3 +74,15 @@ test('every extension formats numbers the same way (shared formatter)', function
     assert.equal(api.formatScaled(-0.0001, 'none', 1), '0.0', slug);
   });
 });
+
+test('line-chart: Date format writes axis dates by pattern, in UTC, and auto keeps Tableau\'s text', function () {
+  const api = h.configApi(h.sandbox(h.configScripts('line-chart')));
+  assert.equal(api.DEFAULTS.axisX.dateFormat, 'auto'); // old workbooks keep Tableau's labels
+  const d = Date.UTC(2026, 0, 5);
+  assert.equal(api.formatDate(d, 'MMM yyyy'), 'Jan 2026');
+  assert.equal(api.formatDate(d, 'dd/MM/yyyy'), '05/01/2026');
+  assert.equal(api.formatDate(d, 'Qq yy'), 'Q1 26');
+  assert.equal(api.formatDate(Date.UTC(2025, 11, 31), 'MMMM yyyy'), 'December 2025');
+  assert.equal(api.formatDate(null, 'MMM'), '');
+  assert.ok(api.DATE_FORMATS.every(function (o) { return o[0] === 'auto' || api.formatDate(d, o[0]) === o[1]; }), 'option labels match their output');
+});

@@ -364,6 +364,35 @@
     return iso ? Date.UTC(+iso[1], +iso[2] - 1, +iso[3]) : null;
   }
 
+  /**
+   * A calendar date (UTC ms) built from date-part pills, for the Date format
+   * setting: YEAR alone, or YEAR with QUARTER / MONTH / DAY. Null when there is
+   * no YEAR, or another part (WEEK, WEEKDAY, any other dimension) is on the tile.
+   */
+  function partsDay (info, row) {
+    if (!info.length || !info.every(function (o) { return o.part; })) return null;
+    var y = NaN; var m = 1; var day = 1;
+    for (var i = 0; i < info.length; i++) {
+      var v = ordinal(row[info[i].c.index]);
+      if (!isFinite(v)) return null;
+      var g = info[i].g;
+      if (g === 1) y = v;
+      else if (g === 2) { if (v < 1 || v > 4) return null; m = (v - 1) * 3 + 1; }
+      else if (g === 3) { if (v < 1 || v > 12) return null; m = v; }
+      else if (v >= 1 && v <= 31) day = v;
+      else return null;
+    }
+    return isFinite(y) && y > 999 && y < 10000 ? Date.UTC(y, m - 1, day) : null;
+  }
+
+  /** How a point on the horizontal axis is written: Format → Axes → Date format, or Tableau's own text. */
+  function pointText (x) {
+    if (!x) return '';
+    var f = cfg && cfg.axisX && cfg.axisX.dateFormat;
+    if (!f || f === 'auto' || x.d == null) return x.label;
+    return Lc.formatDate(x.d, f) || x.label;
+  }
+
   function compareKeys (a, b) {
     for (var i = 0; i < a.key.length; i++) {
       var x = a.key[i];
@@ -419,10 +448,10 @@
     matchLeftovers(table, reqs, taken, !!(cMN && cMV));
 
     // Date columns coarse → fine, so YEAR + MONTH sorts by year first.
-    var cDates = dReqs.filter(function (r) { return r.col; })
-      .map(function (r, k) { return { c: r.col, k: k, g: fieldGrain(r) }; })
-      .sort(function (a, b) { return a.g - b.g || a.k - b.k; })
-      .map(function (o) { return o.c; });
+    var cDateInfo = dReqs.filter(function (r) { return r.col; })
+      .map(function (r, k) { return { c: r.col, k: k, g: fieldGrain(r), part: /^(YEAR|QUARTER|MONTH|DAY)\(/i.test(r.field.name) }; })
+      .sort(function (a, b) { return a.g - b.g || a.k - b.k; });
+    var cDates = cDateInfo.map(function (o) { return o.c; });
     var cColor = cReqs[0] && cReqs[0].col;
 
     // The finest date column that holds real dates gives the time scale.
@@ -458,6 +487,7 @@
           label: label,
           key: cDates.map(function (c) { return ordinal(r[c.index]); }),
           t: cDay ? toDay(r[cDay.index]) : null,
+          d: cDay ? toDay(r[cDay.index]) : partsDay(cDateInfo, r),
           i: rowI,
           rawX: cDates.map(function (c) { return { fieldName: c.fieldName, value: r[c.index].value }; })
         });
@@ -503,7 +533,7 @@
     });
 
     return {
-      xs: xs.map(function (x) { return { label: x.label, t: x.t, rawX: x.rawX, i: x.i }; }),
+      xs: xs.map(function (x) { return { label: x.label, t: x.t, d: x.d, rawX: x.rawX, i: x.i }; }),
       series: series,
       measures: mReqs.map(function (m) { return { key: m.key, name: m.name }; }),
       colorDim: cReqs[0] ? { key: cReqs[0].field.name, name: cleanName(cReqs[0].field.name) } : null,
@@ -1318,7 +1348,7 @@
     });
 
     // ---- horizontal axis labels ---------------------------------------------
-    var labels = model.xs.map(function (x) { return x.label; });
+    var labels = model.xs.map(pointText);
     var xText = [];
     var xW = [];
     var shown = [];
@@ -1902,13 +1932,13 @@
       return { name: a.s.name, color: a.s.color, v: a.s.vals[i], fv: a.s.fvs[i], share: share, area: a.s.isArea, stacked: a.s.stacked,
         ch: pointChange(a.s, i) };
     });
-    var prevLabel = i > 0 && model.xs[i - 1] ? model.xs[i - 1].label : '';
+    var prevLabel = i > 0 && model.xs[i - 1] ? pointText(model.xs[i - 1]) : '';
     var sort = cfg.chart.tooltipSort;
     if (sort === 'valDesc') rows.sort(function (a, b) { return b.v - a.v; });
     else if (sort === 'valAsc') rows.sort(function (a, b) { return a.v - b.v; });
 
     var anyCh = rows.some(function (r) { return r.ch; });
-    var html = '<div class="tt-name">' + esc(x.label || model.xName || '') +
+    var html = '<div class="tt-name">' + esc(pointText(x) || model.xName || '') +
       (anyCh && prevLabel ? '<span class="tt-vs">vs ' + esc(prevLabel) + '</span>' : '') + '</div><div class="tt-rows">';
     html += rows.map(function (r) {
       return '<div class="tt-item"><div class="tt-row"><span class="sw' + (r.area ? '' : ' sw--line') + '" style="background:' + r.color + '"></span><span class="nm">' +
@@ -2003,7 +2033,7 @@
 
   /** Second tooltip line under a series: ▲ +3.25%   vs 1,195,000 (date only when it isn't the previous point). */
   function changeHtml (ch, i) {
-    var gap = ch.prevIdx !== i - 1 && model.xs[ch.prevIdx] ? model.xs[ch.prevIdx].label : '';
+    var gap = ch.prevIdx !== i - 1 && model.xs[ch.prevIdx] ? pointText(model.xs[ch.prevIdx]) : '';
     var vs = ch.prev != null ? 'vs ' + ch.prev + (gap ? ' (' + gap + ')' : '') : (gap ? 'vs ' + gap : '');
     return '<div class="tt-ch"><span class="tt-delta" style="color:' + ch.color + '">' + CH_ARROWS[ch.dir] + esc(ch.text) + '</span>' +
       (vs ? '<span class="tt-prev">' + esc(vs) + '</span>' : '') + '</div>';

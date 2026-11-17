@@ -282,6 +282,7 @@
       weight: 400,
       color: '#55606E',
       orientation: 'auto', // auto (skip labels to fit) | angled | vertical
+      dateFormat: 'auto', // auto (as Tableau writes it) | a pattern from DATE_FORMATS
       showLine: true,
       lineColor: '#C9CDD4',
       lineWidth: 1,
@@ -512,7 +513,41 @@
     'numbers.negative': ['format.negStyle']
   };
 
+  // ---- date labels ---------------------------------------------------------
+  var MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function pad2 (n) { return (n < 10 ? '0' : '') + n; }
+
+  /**
+   * A date (UTC ms at midnight, as the chart keeps them) written with a pattern:
+   * yyyy yy MMMM MMM MM dd Qq q. Read in UTC so a viewer's time zone never shifts the day.
+   */
+  function formatDate (ms, pattern) {
+    if (ms == null || !isFinite(ms)) return '';
+    var d = new Date(ms);
+    return String(pattern).replace(/yyyy|yy|MMMM|MMM|MM|dd|Qq|q/g, function (t) {
+      switch (t) {
+        case 'yyyy': return String(d.getUTCFullYear());
+        case 'yy': return pad2(d.getUTCFullYear() % 100);
+        case 'MMMM': return MONTHS_LONG[d.getUTCMonth()];
+        case 'MMM': return MONTHS_SHORT[d.getUTCMonth()];
+        case 'MM': return pad2(d.getUTCMonth() + 1);
+        case 'dd': return pad2(d.getUTCDate());
+        case 'Qq': return 'Q' + (Math.floor(d.getUTCMonth() / 3) + 1);
+        case 'q': return String(Math.floor(d.getUTCMonth() / 3) + 1);
+      }
+      return t;
+    });
+  }
+
+  // Same list as the Bar Chart's Dimension Axis → Date format.
+  var DATE_FORMATS = [['auto', 'As Tableau writes it'], ['MMM yyyy', 'Jan 2026'], ['MMM yy', 'Jan 26'], ['MMM', 'Jan'],
+    ['MMMM', 'January'], ['MMMM yyyy', 'January 2026'], ['yyyy', '2026'], ['Qq yyyy', 'Q1 2026'], ['dd MMM', '05 Jan'], ['dd MMM yyyy', '05 Jan 2026'],
+    ['dd/MM/yyyy', '05/01/2026'], ['MM/dd/yyyy', '01/05/2026'], ['yyyy-MM-dd', '2026-01-05']];
+
   window.Lc = {
+    formatDate: formatDate,
+    DATE_FORMATS: DATE_FORMATS,
     STORAGE_KEY: STORAGE_KEY,
     DEFAULTS: DEFAULTS,
     THEME_MAP: THEME_MAP,

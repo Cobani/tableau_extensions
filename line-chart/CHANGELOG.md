@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `line-chart.trex`.
 
+## 1.4.0 — 2026-11-17
+- Format → Axes → Horizontal axis: new Date format option (Jan 2026, Q1 2026, 05/01/2026 …) for dates on the axis and in the tooltip. Default keeps Tableau's own labels.
+
 ## 1.3.1 — 2026-11-17
 - Fonts updated to Lato 2.015 with all nine weights (Hairline to Black, upright and italic); Light, Semibold and Black now use real font files, and Hairline, Thin and Heavy are new options in every Weight list.
 - The Saudi riyal sign (⃁) now shows correctly everywhere (title, explanation, numbers, tooltips, Format dialog, saved pictures) instead of "?" or a box: the sign is bundled as a tiny font.

@@ -553,6 +553,8 @@
     if (x.show) {
       g4.appendChild(segRow('Labels', 'axisX.orientation', [['auto', 'Horizontal'], ['angled', 'Angled'], ['vertical', 'Vertical']]));
       g4.appendChild(help('Labels that don’t fit are skipped; the last point is always labelled.'));
+      g4.appendChild(selectRow('Date format', 'axisX.dateFormat', Lc.DATE_FORMATS,
+        'For dates on the axis and in the tooltip. Needs a full date or a YEAR pill; other labels stay as Tableau writes them.'));
       g4.appendChild(textRow('Axis title', 'axisX.title', 'e.g. Month'));
       fontRows(g4, 'axisX', false);
     }
