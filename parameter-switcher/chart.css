@@ -80,7 +80,7 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  font-family: var(--ps-font, "Lato", sans-serif);
+  font-family: var(--ps-font, "Saudi Riyal", "Lato", sans-serif);
   font-size: var(--ps-fs, 14px);
   font-style: var(--ps-italic, normal);
   font-weight: var(--ps-w, 500);

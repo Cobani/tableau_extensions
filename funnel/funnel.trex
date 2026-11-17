@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
-  <worksheet-extension id="com.ilyascoban.vizext.funnel" extension-version="1.1.0">
+  <worksheet-extension id="com.ilyascoban.vizext.funnel" extension-version="1.1.1">
     <default-locale>en_US</default-locale>
     <name resource-id="name"/>
     <description>Funnel chart: the stages of a process, each narrower than the one before, with the conversion and drop-off between them. One measure per stage, or a Stage dimension with a Value measure.</description>

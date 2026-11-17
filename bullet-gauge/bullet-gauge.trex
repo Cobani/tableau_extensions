@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
-  <worksheet-extension id="com.ilyascoban.vizext.bulletgauge" extension-version="1.1.0">
+  <worksheet-extension id="com.ilyascoban.vizext.bulletgauge" extension-version="1.1.1">
     <default-locale>en_US</default-locale>
     <name resource-id="name"/>
     <description>Actual against target with qualitative ranges: bullet rows, semi-circular gauges or progress bars, one per category; optional comparison tick, % of target and status colors.</description>

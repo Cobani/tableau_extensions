@@ -62,12 +62,15 @@
   /** Lighter version of a colour: t = 0 keeps it, t = 1 is white. */
   function tint (hex, t) { return mix(hex, '#FFFFFF', t); }
 
-  const FONT_STACK_FALLBACK =
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  // "Saudi Riyal" (shared/fonts/fonts.css) only has the riyal sign U+20C1, which Lato and most
+  // system fonts lack: first in every stack, it draws that one character and nothing else.
+  const RIYAL_FONT = '"Saudi Riyal"';
+  const SYSTEM_FONTS = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  const FONT_STACK_FALLBACK = RIYAL_FONT + ', ' + SYSTEM_FONTS;
 
   function fontStack (family) {
     if (!family) return FONT_STACK_FALLBACK;
-    return '"' + String(family).replace(/"/g, '') + '", ' + FONT_STACK_FALLBACK;
+    return RIYAL_FONT + ', "' + String(family).replace(/"/g, '') + '", ' + SYSTEM_FONTS;
   }
 
   // ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@
   font-weight: 400;
   font-display: swap;
   src: local("Lato Regular"), local("Lato-Regular"), url("./Lato-Regular.woff2") format("woff2");
-  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
+  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20C0, U+20C2-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: "Lato";
@@ -14,7 +14,7 @@
   font-weight: 400;
   font-display: swap;
   src: local("Lato Italic"), local("Lato-Italic"), url("./Lato-Italic.woff2") format("woff2");
-  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
+  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20C0, U+20C2-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: "Lato";
@@ -22,7 +22,7 @@
   font-weight: 500;
   font-display: swap;
   src: local("Lato Medium"), local("Lato-Medium"), url("./Lato-Medium.woff2") format("woff2");
-  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
+  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20C0, U+20C2-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: "Lato";
@@ -30,7 +30,7 @@
   font-weight: 500;
   font-display: swap;
   src: local("Lato Medium Italic"), local("Lato-MediumItalic"), url("./Lato-MediumItalic.woff2") format("woff2");
-  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
+  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20C0, U+20C2-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: "Lato";
@@ -38,7 +38,7 @@
   font-weight: 700;
   font-display: swap;
   src: local("Lato Bold"), local("Lato-Bold"), url("./Lato-Bold.woff2") format("woff2");
-  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
+  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20C0, U+20C2-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
 }
 @font-face {
   font-family: "Lato";
@@ -46,5 +46,44 @@
   font-weight: 700;
   font-display: swap;
   src: local("Lato Bold Italic"), local("Lato-BoldItalic"), url("./Lato-BoldItalic.woff2") format("woff2");
-  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
+  unicode-range: U+0000-017F, U+0192, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2070-209F, U+20A0-20C0, U+20C2-20CF, U+2100-2122, U+2190-2193, U+2212, U+2215, U+2248, U+2260, U+2264-2265, U+25B2-25BE, U+FEFF, U+FFFD;
+}
+
+/* Saudi riyal sign (U+20C1, Unicode 17). Lato and most system fonts don't have it yet, so it shows as
+   "?" or a box. This one glyph comes from the official open-source Saudi Riyal font (SIL OFL 1.1,
+   github.com/emran-alhaddad/Saudi-Riyal-Font), subset to U+20C1 and scaled to Lato's cap height
+   (≈0.5 KB, loaded only on pages that show the sign). One weight on purpose: bold text gets a
+   synthesised bold sign. "Saudi Riyal" is first in every font stack (ExtCore.fontStack), so it works
+   whatever font a text uses; the "Lato" faces cover CSS that names Lato directly. */
+@font-face {
+  font-family: "Saudi Riyal";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./SaudiRiyal-Regular.woff2") format("woff2");
+  unicode-range: U+20C1;
+}
+@font-face {
+  font-family: "Saudi Riyal";
+  font-style: italic;
+  font-weight: 400;
+  font-display: block;
+  src: url("./SaudiRiyal-Regular.woff2") format("woff2");
+  unicode-range: U+20C1;
+}
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./SaudiRiyal-Regular.woff2") format("woff2");
+  unicode-range: U+20C1;
+}
+@font-face {
+  font-family: "Lato";
+  font-style: italic;
+  font-weight: 400;
+  font-display: block;
+  src: url("./SaudiRiyal-Regular.woff2") format("woff2");
+  unicode-range: U+20C1;
 }

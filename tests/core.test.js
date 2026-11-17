@@ -25,7 +25,28 @@ test('colours', function () {
 
 test('fontStack quotes the family and always ends with the fallback', function () {
   assert.equal(core.fontStack(''), core.FONT_STACK_FALLBACK);
-  assert.equal(core.fontStack('IBM "Plex" Sans'), '"IBM Plex Sans", ' + core.FONT_STACK_FALLBACK);
+  assert.equal(core.fontStack('IBM "Plex" Sans'), '"Saudi Riyal", "IBM Plex Sans", ' + core.FONT_STACK_FALLBACK.replace('"Saudi Riyal", ', ''));
+  assert.ok(core.FONT_STACK_FALLBACK.startsWith('"Saudi Riyal", '));
+});
+
+test('the riyal sign (U+20C1) has a font in both styles (bold is synthesised), and Lato leaves it alone', function () {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const dir = path.join(__dirname, '..', 'shared', 'fonts');
+  const css = fs.readFileSync(path.join(dir, 'fonts.css'), 'utf8');
+  const faces = css.match(/@font-face\s*\{[^}]*\}/g);
+  faces.forEach(function (f) {
+    if (/SaudiRiyal/.test(f)) assert.match(f, /unicode-range: U\+20C1;/);
+    else assert.doesNotMatch(f, /U\+20A0-20CF/, 'a Lato face still claims U+20C1');
+  });
+  ['Saudi Riyal', 'Lato'].forEach(function (fam) {
+    ['normal', 'italic'].forEach(function (st) {
+      assert.ok(faces.some(function (f) {
+        return /SaudiRiyal-Regular/.test(f) && f.indexOf('"' + fam + '"') >= 0 && f.indexOf('font-style: ' + st) >= 0 && /font-weight: 400;/.test(f);
+      }), fam + ' ' + st);
+    });
+  });
+  ['SaudiRiyal-Regular.woff2'].forEach(function (f) { assert.ok(fs.statSync(path.join(dir, f)).size > 100, f); });
 });
 
 test('merge: saved settings over defaults', function () {
