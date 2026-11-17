@@ -780,10 +780,15 @@
             });
           } else if (vert) {
             // up-down, Angled / Vertical: rotated about the centre of the gap
-            var angc = AC.orientation === 'angled' ? -45 : -90;
-            var room = Math.abs(cGap) - 8;
-            if (AC.orientation === 'angled') room = room * Math.SQRT2;
-            L.axes.appendChild(node('text', Object.assign({ x: cc, y: cpos, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: color, transform: 'rotate(' + angc + ' ' + cc + ' ' + cpos + ')' }, catFont), B.ellipsize(ls[0], Math.max(12, room), AC.size, AC.weight, AC.font)));
+            if (AC.orientation === 'angled') {
+              // Angled: the end of the name touches the bar above the gap (as on the axis), the name hangs down-left
+              var roomA = (Math.abs(cGap) - AC.size - 4) * Math.SQRT2;
+              var txa = cc + AC.size * 0.35;
+              var tya = Math.min(centerL, centerR) + 2;
+              L.axes.appendChild(node('text', Object.assign({ x: txa, y: tya, 'text-anchor': 'end', fill: color, transform: 'rotate(-45 ' + txa + ' ' + tya + ')' }, catFont), B.ellipsize(ls[0], Math.max(12, roomA), AC.size, AC.weight, AC.font)));
+            } else {
+              L.axes.appendChild(node('text', Object.assign({ x: cc, y: cpos, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: color, transform: 'rotate(-90 ' + cc + ' ' + cpos + ')' }, catFont), B.ellipsize(ls[0], Math.max(12, Math.abs(cGap) - 8), AC.size, AC.weight, AC.font)));
+            }
           } else {
             // left-right: wrapped lines centred in the gap
             var lhh = Math.round(AC.size * 1.25);
