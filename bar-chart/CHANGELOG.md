@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
+## 1.3.2 — 2026-11-17
+- Diverging up-down with names between the two sides: Category axis Direction (Horizontal / Angled / Vertical) now applies.
+
 ## 1.3.1 — 2026-11-17
 - The Saudi riyal sign (⃁) now shows correctly everywhere (title, explanation, numbers, tooltips, Format dialog, saved pictures) instead of "?" or a box: the sign is bundled as a tiny font.
 

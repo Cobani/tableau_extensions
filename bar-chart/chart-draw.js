@@ -757,7 +757,22 @@
         if (centerDiv) {
           var cpos = (centerL + centerR) / 2;
           var q = XY(cc, cpos);
-          L.axes.appendChild(node('text', Object.assign({ x: q[0], y: q[1] + (vert ? 0 : AC.size * 0.35), 'text-anchor': 'middle', fill: color }, catFont), B.ellipsize(n.label, Math.abs(cGap) - 6, AC.size, AC.weight, AC.font)));
+          if (vert && AC.orientation === 'wrap') {
+            // up-down: names wrap inside the slot, the block centred in the gap
+            var lhc = Math.round(AC.size * 1.25);
+            var yc = cpos - (ls.length - 1) * lhc / 2 + AC.size * 0.35;
+            ls.forEach(function (t, k) {
+              L.axes.appendChild(node('text', Object.assign({ x: cc, y: yc + k * lhc, 'text-anchor': 'middle', fill: color }, catFont), t));
+            });
+          } else if (vert) {
+            // up-down, Angled / Vertical: rotated about the centre of the gap
+            var angc = AC.orientation === 'angled' ? -45 : -90;
+            var room = Math.abs(cGap) - 8;
+            if (AC.orientation === 'angled') room = room * Math.SQRT2;
+            L.axes.appendChild(node('text', Object.assign({ x: cc, y: cpos, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: color, transform: 'rotate(' + angc + ' ' + cc + ' ' + cpos + ')' }, catFont), B.ellipsize(ls[0], Math.max(12, room), AC.size, AC.weight, AC.font)));
+          } else {
+            L.axes.appendChild(node('text', Object.assign({ x: q[0], y: q[1] + AC.size * 0.35, 'text-anchor': 'middle', fill: color }, catFont), B.ellipsize(n.label, Math.abs(cGap) - 6, AC.size, AC.weight, AC.font)));
+          }
           return;
         }
         var lh2 = Math.round(AC.size * 1.25);
