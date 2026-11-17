@@ -2,6 +2,9 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
+## 1.4.0 — 2026-11-17
+- Dimension tile takes up to 8 fields (was 6).
+
 ## 1.3.3 — 2026-11-17
 - Names between the two sides wrap when they don't fit (long single words break too); left-right layout wraps them as well.
 

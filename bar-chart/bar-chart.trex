@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
-  <worksheet-extension id="com.ilyascoban.vizext.barchart" extension-version="1.3.3">
+  <worksheet-extension id="com.ilyascoban.vizext.barchart" extension-version="1.4.0">
     <default-locale>en_US</default-locale>
     <name resource-id="name"/>
     <description>Bar chart: dimensions on Dimension (the first make the bars, the rest the breakdown and drill-down levels), measures on Measure (grouped, stacked, 100% or left-right), Line measures drawn over the bars and a Target marker; measures on Tooltip add tooltip rows.</description>
@@ -21,7 +21,7 @@
       <role-spec>
         <role-type>discrete-dimension</role-type>
       </role-spec>
-      <fields max-count="6"/>
+      <fields max-count="8"/>
       <tooltip resource-id="category-tooltip">One or more dimensions, outermost first (e.g. Category, Sub-Category, Region). The first ones make the bars (how many: Format → Chart type); the rest are the breakdown for segments, the tooltip and drill-down. Leave empty for one bar per measure.</tooltip>
     </encoding>
 

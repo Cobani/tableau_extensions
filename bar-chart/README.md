@@ -58,7 +58,7 @@ card too; every field there becomes a `name: value` tooltip row.
 
 | Marks card tile | What to drop | Drives |
 | --- | --- | --- |
-| **Dimension** | 0–6 dimensions, outermost first (e.g. Category, Sub-Category, Region) | the first ones make the bars (Chart type → *Bars are*, default the first field; outer ones group the bars). The rest are the **breakdown**: tooltip rows, bar segments and drill-down levels. Empty = one bar per measure |
+| **Dimension** | 0–8 dimensions, outermost first (e.g. Category, Sub-Category, Region) | the first ones make the bars (Chart type → *Bars are*, default the first field; outer ones group the bars). The rest are the **breakdown**: tooltip rows, bar segments and drill-down levels. Empty = one bar per measure |
 | **Measure** | one or more measures, dropped **one at a time** | the bar lengths. Two or more measures stand side by side, stack, or compare left-right |
 | **Line** | up to 4 measures (optional) | lines over the bars, on the bars' axis or their own |
 | **Target** | one measure (optional) | a target marker on every bar; progress bars can fill up to it |
