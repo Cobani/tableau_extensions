@@ -2,9 +2,6 @@
 
 All user-visible changes to this extension. Newest first. The version is the `extension-version` in `bar-chart.trex`.
 
-## 1.4.1 — 2026-11-17
-- Names between the two sides, Angled: the end of the name sits at the bar.
-
 ## 1.4.0 — 2026-11-17
 - Dimension tile takes up to 8 fields (was 6).
 
