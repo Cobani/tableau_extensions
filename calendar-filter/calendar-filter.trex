@@ -3,7 +3,7 @@
   <worksheet-extension id="com.ilyascoban.vizext.calendarfilter" extension-version="1.0.0">
     <default-locale>en_US</default-locale>
     <name resource-id="name"/>
-    <description>Calendar Filter: a text box that shows the dates chosen and opens a calendar window to filter by year, month, week or day, with ranges, several values, quick ranges and null dates. Use it with a dashboard Filter action.</description>
+    <description>Calendar Filter: a text box that shows the dates chosen and opens a calendar window to set the date filter on the Filters shelf by year, month, week or day, with ranges, several values, quick ranges and null dates. Start date and End date set which dates the calendar offers.</description>
     <author name="ilyas coban" email="ilyas.cbn@gmail.com" organization="ilyas coban" website="https://www.linkedin.com/in/ilyascoban/"/>
     <min-api-version>1.11</min-api-version>
     <source-location>
@@ -16,33 +16,30 @@
       <configure-context-menu-item />
     </context-menu>
 
-    <encoding id="date">
-      <display-name resource-id="date-name">Date</display-name>
-      <role-spec>
-        <role-type>discrete-dimension</role-type>
-      </role-spec>
+    <encoding id="start">
+      <display-name resource-id="start-name">Start date</display-name>
+      <data-spec>
+        <data-type>temporal</data-type>
+      </data-spec>
       <fields max-count="1"/>
-      <tooltip resource-id="date-tooltip">The date to filter, at day level: right-click it and choose Exact Date or Day (with the year). Date-times are grouped by day.</tooltip>
+      <tooltip resource-id="start-tooltip">The first date the calendar offers, e.g. {MIN([Order Date])}. Use a FIXED calculation so the date filter doesn't change it.</tooltip>
     </encoding>
 
-    <encoding id="value">
-      <display-name resource-id="value-name">Value</display-name>
+    <encoding id="end">
+      <display-name resource-id="end-name">End date</display-name>
       <data-spec>
-        <data-type>numeric</data-type>
+        <data-type>temporal</data-type>
       </data-spec>
-      <role-spec>
-        <role-type>continuous-measure</role-type>
-      </role-spec>
       <fields max-count="1"/>
-      <tooltip resource-id="value-tooltip">Optional. A measure (e.g. a count of rows) shown in the calendar cells and used to shade them.</tooltip>
+      <tooltip resource-id="end-tooltip">The last date the calendar offers, e.g. {MAX([Order Date])}. Use a FIXED calculation so the date filter doesn't change it.</tooltip>
     </encoding>
   </worksheet-extension>
 
   <resources>
     <resource id="name"><text locale="en_US">Calendar Filter</text></resource>
-    <resource id="date-name"><text locale="en_US">Date</text></resource>
-    <resource id="date-tooltip"><text locale="en_US">The date to filter, at day level: right-click it and choose Exact Date or Day (with the year). Date-times are grouped by day.</text></resource>
-    <resource id="value-name"><text locale="en_US">Value</text></resource>
-    <resource id="value-tooltip"><text locale="en_US">Optional. A measure (e.g. a count of rows) shown in the calendar cells and used to shade them.</text></resource>
+    <resource id="start-name"><text locale="en_US">Start date</text></resource>
+    <resource id="start-tooltip"><text locale="en_US">The first date the calendar offers, e.g. {MIN([Order Date])}. Use a FIXED calculation so the date filter doesn't change it.</text></resource>
+    <resource id="end-name"><text locale="en_US">End date</text></resource>
+    <resource id="end-tooltip"><text locale="en_US">The last date the calendar offers, e.g. {MAX([Order Date])}. Use a FIXED calculation so the date filter doesn't change it.</text></resource>
   </resources>
 </manifest>

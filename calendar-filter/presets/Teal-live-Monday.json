@@ -24,8 +24,8 @@
       "italic": false,
       "bgColor": "#FFFFFF",
       "borderColor": "#0F7B6C",
-      "radius": 15,
-      "height": 30
+      "radius": 12,
+      "height": 24
     },
     "window": {
       "apply": "live",
@@ -76,9 +76,7 @@
       "font": "Lato",
       "textColor": "#17202B",
       "mutedColor": "#68707D",
-      "bgColor": "#FFFFFF",
-      "cellNumbers": true,
-      "heat": true
+      "bgColor": "#FFFFFF"
     },
     "card": {
       "padding": 4,

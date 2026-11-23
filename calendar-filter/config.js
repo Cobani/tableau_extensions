@@ -10,9 +10,9 @@
  * drift anywhere. A "period" is identified by its first day plus its granularity:
  *   Y year · M month · W week (starts on calendar.weekStart) · D day.
  *
- * Settings are one JSON string under STORAGE_KEY, saved inside the workbook. The chosen filter
- * itself is NOT a setting: it lives in Tableau's mark selection (dashboard viewers can't save
- * settings), and the text box reads it back from there after a reload.
+ * Settings are one JSON string under STORAGE_KEY, saved inside the workbook. The chosen dates are
+ * NOT a setting: they live in the date filter on the sheet's Filters shelf (saved with the workbook,
+ * shown in the Filters pane), and the text box reads them back from there.
  */
 (function () {
   var clone = ExtCore.clone, merge = ExtCore.merge;
@@ -60,7 +60,7 @@
       bgColor: '#FFFFFF',
       borderColor: '#C9CDD4',
       radius: 4, // px
-      height: 30 // px
+      height: 24 // px
     },
     // ---- The calendar window (Tableau's dialog window) -----------------------
     window: {
@@ -102,9 +102,11 @@
       font: 'Lato',
       textColor: '#17202B',
       mutedColor: '#68707D', // weekday letters, week numbers, help text
-      bgColor: '#FFFFFF', // window background
-      cellNumbers: false, // the Value tile's number under each cell
-      heat: false // shade cells by the Value tile's number
+      bgColor: '#FFFFFF' // window background
+    },
+    // ---- Which filter on the Filters shelf is set ---------------------------------
+    filter: {
+      field: '' // the filter's field name; empty = the first date filter on the shelf
     },
     card: {
       padding: 4, // px around the text box
@@ -418,15 +420,20 @@
     return QUICK.filter(function (q) { return cfg.quick.items[q[0]] !== false && on.indexOf(quickRange(q[0], 0, 0).g) >= 0; });
   }
 
-  /** The how-to text at the bottom of the calendar window, for the click behaviour in use. */
-  function helpText (cfg) {
+  /**
+   * The how-to text at the bottom of the calendar window, for the click behaviour in use.
+   * rangeOnly: the date filter is a range of dates, so Ctrl/⌘ can't add separate values.
+   */
+  function helpText (cfg, rangeOnly) {
     var s = cfg.selection;
     var mod = /Mac|iPhone|iPad/.test((typeof navigator !== 'undefined' && navigator.platform) || '') ? '⌘' : 'Ctrl';
     if (s.mode === 'single') return 'Click: pick one · Click it again: clear';
     if (s.mode === 'range') return 'Click the first, then the last to pick a range · Click again to start over';
-    var parts = s.mode === 'toggle'
-      ? ['Click: add or remove', 'Shift-click: add a range']
-      : ['Click: pick one', 'Shift-click: range', mod + '-click: add or remove'];
+    var parts = rangeOnly
+      ? ['Click: pick one', 'Shift-click: range']
+      : s.mode === 'toggle'
+        ? ['Click: add or remove', 'Shift-click: add a range']
+        : ['Click: pick one', 'Shift-click: range', mod + '-click: add or remove'];
     if (s.drag) parts.push('Drag: range');
     return parts.join(' · ');
   }

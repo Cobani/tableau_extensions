@@ -12,7 +12,8 @@
   var saveTimer = null;
   var hist = null;
   var activeTab = 'box';
-  var fieldName = ''; // the date field's name, sent by the text box
+  var fieldName = ''; // the date filter's name, sent by the text box
+  var filterNames = []; // the filters on the sheet's Filters shelf
 
   const kit = ExtDialog.kit({
     get: get,
@@ -30,7 +31,7 @@
   var TABS = [
     { id: 'box', label: 'Text box', build: buildBoxTab, keys: ['title', 'box'] },
     { id: 'window', label: 'Window', build: buildWindowTab, keys: ['window'] },
-    { id: 'calendar', label: 'Calendar', build: buildCalendarTab, keys: ['calendar', 'selection', 'nulls'] },
+    { id: 'calendar', label: 'Calendar', build: buildCalendarTab, keys: ['filter', 'calendar', 'selection', 'nulls'] },
     { id: 'quick', label: 'Quick ranges', build: buildQuickTab, keys: ['quick'] },
     { id: 'look', label: 'Look', build: buildLookTab, keys: ['look', 'card'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
@@ -41,7 +42,11 @@
   // ---------------------------------------------------------------------------
   function init () {
     return tableau.extensions.initializeDialogAsync().then(function (payload) {
-      try { fieldName = JSON.parse(payload || '{}').field || ''; } catch (e) { fieldName = ''; }
+      try {
+        var pl = JSON.parse(payload || '{}');
+        fieldName = pl.field || '';
+        filterNames = Array.isArray(pl.filters) ? pl.filters : [];
+      } catch (e) { fieldName = ''; filterNames = []; }
       cfg = Cf.read();
       original = Cf.clone(cfg);
       buildTabs();
@@ -96,7 +101,7 @@
   function buildBoxTab (p) {
     var g1 = group(p, 'Title above the box');
     g1.appendChild(segRow('Show', 'title.mode', [['field', 'Field name'], ['custom', 'Custom'], ['none', 'None']], rebuild));
-    if (cfg.title.mode === 'field') g1.appendChild(help('Shows “' + (fieldName || 'the field on the Date tile') + '”.'));
+    if (cfg.title.mode === 'field') g1.appendChild(help('Shows “' + (fieldName || 'the date filter’s field') + '”.'));
     if (cfg.title.mode === 'custom') g1.appendChild(textRow('Text', 'title.text', 'e.g. Period'));
     if (cfg.title.mode !== 'none') fontRows(g1, 'title');
 
@@ -118,7 +123,7 @@
     var g1 = group(p, 'Applying the choice');
     g1.appendChild(segRow('Filter the dashboard', 'window.apply', [['button', 'On Apply'], ['live', 'Live, on every click']], rebuild));
     g1.appendChild(help(cfg.window.apply === 'live'
-      ? 'Every click filters the dashboard straight away; the window stays open until Close. Needs Tableau 2023.1 or later — older versions apply when the window closes.'
+      ? 'Every click filters the dashboard straight away; the window stays open until Close. On older Tableau versions without dialog messages, the choice is applied when the window closes.'
       : 'Nothing changes on the dashboard until Apply. Cancel, Esc or × close the window and keep the filter as it was.'));
 
     var g2 = group(p, 'The window');
@@ -131,6 +136,14 @@
   }
 
   function buildCalendarTab (p) {
+    var g0 = group(p, 'Date filter');
+    var opts = [['', 'The first date filter on the Filters shelf']];
+    var names = filterNames.slice();
+    if (cfg.filter.field && names.indexOf(cfg.filter.field) < 0) names.push(cfg.filter.field);
+    names.forEach(function (n) { opts.push([n, n]); });
+    g0.appendChild(selectRow('Filter to set', 'filter.field', opts));
+    g0.appendChild(help('The filter on this sheet’s Filters shelf that the calendar writes to. Exact Date values allow any days (several, ranges, nulls); a range of dates holds one continuous range. Set the filter to Apply to Worksheets → All Using This Data Source so it filters the dashboard.'));
+
     var g1 = group(p, 'Calendar');
     g1.appendChild(selectRow('Week starts on', 'calendar.weekStart', [[0, 'Sunday'], [1, 'Monday'], [6, 'Saturday']]));
     g1.appendChild(help('Changes the Week rows, their numbers (week 1 holds 1 January, like Tableau’s WEEK) and the day columns. A week filter in force is cleared when this changes.'));
@@ -187,9 +200,6 @@
     g1.appendChild(colorRow('Text', 'look.textColor'));
     g1.appendChild(colorRow('Muted text', 'look.mutedColor'));
     g1.appendChild(colorRow('Background', 'look.bgColor'));
-    g1.appendChild(checkboxRow('Value in each cell', 'look.cellNumbers'));
-    g1.appendChild(checkboxRow('Shade cells by Value', 'look.heat'));
-    g1.appendChild(help('Both use the measure on the Value tile. Without one, cells show no number and shading only marks the days that have data.'));
 
     var g2 = group(p, 'Zone');
     g2.appendChild(numberRow('Padding (px)', 'card.padding', 0, 40, 1));
@@ -204,9 +214,10 @@
   var PRESET_TYPE = 'tableau-calendar-filter-preset';
   var PRESET_STORE = 'calendarfilter:presets:v1';
 
-  /** Settings that name this filter; "Look only" presets leave them out. */
+  /** Settings that belong to this sheet; "Look only" presets leave them out. */
   var FIELD_PATHS = [
-    'title.text' // custom title text
+    'title.text', // custom title text
+    'filter.field' // which filter on this sheet's Filters shelf is set
   ];
 
   var PRESET_VERSION = 1;
@@ -321,8 +332,8 @@
     rScope.appendChild(seg);
     g1.appendChild(rScope);
     g1.appendChild(help(presetUi.scope === 'look'
-      ? 'Every setting except the custom title text.'
-      : 'Every setting, including the custom title text.'));
+      ? 'Every setting except the custom title text and the chosen date filter.'
+      : 'Every setting, including the custom title text and the chosen date filter.'));
 
     var ta = h('textarea', { className: 'preset-json', readOnly: true, spellcheck: false });
     var current = function () { return JSON.stringify(makePreset(presetUi.scope, presetUi.name.trim()), null, 2); };
@@ -360,7 +371,7 @@
       var input = h('input', { type: 'checkbox' });
       input.checked = presetUi.keepFields;
       input.addEventListener('change', function () { presetUi.keepFields = input.checked; });
-      r.appendChild(h('div', { className: 'inline' }, [input, h('span', { className: 'help preset-inline-help', textContent: 'custom title text' })]));
+      r.appendChild(h('div', { className: 'inline' }, [input, h('span', { className: 'help preset-inline-help', textContent: 'custom title text and date filter' })]));
       return r;
     })());
     var file = h('input', { type: 'file', accept: '.json,application/json,text/plain' });

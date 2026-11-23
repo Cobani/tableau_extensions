@@ -121,9 +121,14 @@ over SVG links).
 - The dialog cannot read the worksheet: the chart sends what it needs in the dialog payload.
 - Rows are capped by `data.maxRows` (default 1,000; 0 = all) via `ExtCore.readSummary`; a truncated
   read shows the corner note through `ExtCore.rowNotice`.
-  Exception: **calendar-filter** has no row limit (it always reads every date; decided Nov 2026).
-- A calendar-style control can open its own window with `displayDialogAsync` (calendar-filter's
-  picker.html); the window talks back with `closeDialog(payload)` and, for live updates,
+  Exception: **calendar-filter** has no row limit (decided Nov 2026).
+- A viz extension can filter its own sheet (`applyFilterAsync`, `applyRangeFilterAsync`,
+  `clearFilterAsync`); a filter shared to other sheets ("Apply to Worksheets") then filters the
+  dashboard and shows in the Filters pane. calendar-filter does this and reads all dates from the
+  filter's domain (`getDomainAsync(Database)`) and FIXED Start / End dates, because its own sheet
+  is filtered too.
+- A control can open its own window with `displayDialogAsync` (calendar-filter's picker.html); the
+  window talks back with `closeDialog(payload)` and, for live updates,
   `sendDialogMessageToParentAsync` → `DialogMessageReceived` on `tableau.extensions.ui`.
 
 ## 5. Recipes

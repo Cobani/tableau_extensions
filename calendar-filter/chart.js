@@ -5,36 +5,41 @@
  *
  * A filter, not a chart. The zone shows one text box with the dates currently chosen. Clicking it
  * opens the calendar in Tableau's own dialog window (picker.html), so the calendar is not limited
- * to the size of the zone. The choice is passed to the dashboard by selecting this sheet's marks
- * (one mark per date), which a dashboard Filter action turns into a filter on other sheets.
+ * to the size of the zone. The choice is written into the date filter on this sheet's Filters
+ * shelf; sharing that filter ("Apply to Worksheets → All Using This Data Source") makes it filter
+ * the dashboard, and it shows in the Filters pane like any other filter.
  *
  * Marks card tiles (calendar-filter.trex):
- *   date    Date (required): one date at day level (exact date or DAY). Datetimes are grouped by day.
- *   value   Value (optional): one measure; shown in the calendar cells and used to shade them.
+ *   start   Start date: the first day the calendar offers, e.g. {MIN([Onboarding Start Date])}
+ *   end     End date: the last day, e.g. {MAX([Onboarding Start Date])}
+ * Use FIXED level-of-detail calculations: they are computed before the date filter, so the calendar
+ * keeps showing every date between Start and End while the filter narrows this very sheet.
  *
- * The chosen filter is kept in Tableau's mark selection, not in the settings (viewers on Tableau
- * Server can't save settings). After a reload the text box reads the selection back
- * (getSelectedMarksAsync) and rebuilds the granularity from it (Cf.inferState).
+ * The date filter (found with getFiltersAsync; Format → Calendar → Date filter picks one when the
+ * shelf has several):
+ *   categorical (Exact Date / Day, discrete)  any days: single, ranges, several · nulls Include/Exclude/Only
+ *   range       (continuous "Range of dates") one continuous range · nulls via the null option
+ *
+ * The chosen filter lives in the workbook's filter (saved with the workbook, in custom views, shown
+ * in the Filters pane). After a reload or a change made elsewhere (FilterChanged) the text box
+ * reads the filter back and rebuilds the granularity from it (Cf.inferState).
  *
  * Talking to the calendar window:
- *   payload in   { state, days, values, hasNull, nullValue, field, maxDay }
+ *   payload in   { state, start, end, days (null = every day can be picked), rangeOnly, hasNull, field }
  *   live mode    the window sends { type: 'state', state } with sendDialogMessageToParentAsync
- *                after every change (Tableau Extensions API 1.15+; older Tableau falls back to Apply)
  *   on close     closeDialog(JSON { type: 'apply' | 'cancel' | 'close', state })
  */
 (function () {
-  var esc = ExtCore.esc;
-
   var el = {};
   var worksheet = null;
   var cfg = null;
   var model = null;          // see buildModel()
   var applied = null;        // the filter in force: { gran, sel, nullState }
-  var restored = false;      // the selection was read back from Tableau once
   var dialogOpen = false;
   var renderToken = 0;
-  var ownSelect = 0;         // time of our last selectMarks / clear call (their MarkSelectionChanged is ours)
-  var notice = '';           // short warning shown under the box, e.g. "No data in Feb 2027"
+  var ownChange = 0;         // time of our last filter call (its FilterChanged is ours)
+  var notice = '';           // short warning under the box
+  var lastRange = null;      // { start, end } from the last read that had them
 
   // ---------------------------------------------------------------------------
   // Init
@@ -66,16 +71,16 @@
       applied = Cf.emptyState(cfg);
 
       worksheet.addEventListener(tableau.TableauEventType.SummaryDataChanged, requestRefresh);
-      if (tableau.TableauEventType.MarkSelectionChanged) {
-        worksheet.addEventListener(tableau.TableauEventType.MarkSelectionChanged, onSelectionChanged);
+      if (tableau.TableauEventType.FilterChanged) {
+        worksheet.addEventListener(tableau.TableauEventType.FilterChanged, onFilterChanged);
       }
       tableau.extensions.settings.addEventListener(tableau.TableauEventType.SettingsChanged, function () {
         var before = cfg;
         cfg = Cf.read();
-        // The week start or the granularities changed: the old selection may not fit any more.
+        if (before.filter.field !== cfg.filter.field) { scheduleRefresh(); return; }
         if (before.calendar.weekStart !== cfg.calendar.weekStart && applied.gran === 'W' && applied.sel.length) {
           applied = Cf.emptyState(cfg);
-          applySelection();
+          applyFilter();
         } else if (Cf.grans(cfg).indexOf(applied.gran) < 0) {
           applied.gran = Cf.firstGran(cfg, applied.gran);
         }
@@ -95,8 +100,7 @@
       el.boxClear.addEventListener('click', function (e) {
         e.stopPropagation();
         applied = Cf.emptyState(cfg);
-        notice = '';
-        applySelection();
+        applyFilter();
         paint();
       });
 
@@ -130,7 +134,10 @@
   function configure () {
     var options = { width: 520, height: 720 };
     if (tableau.DialogStyle && tableau.DialogStyle.Modal) options.dialogStyle = tableau.DialogStyle.Modal;
-    var payload = JSON.stringify({ field: model ? model.caption : '' });
+    var payload = JSON.stringify({
+      field: model ? model.caption : '',
+      filters: model ? model.filterNames : []
+    });
     return tableau.extensions.ui.displayDialogAsync(folderUrl() + 'configure.html', payload, options).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.error('Calendar Filter dialog error:', err);
@@ -141,7 +148,7 @@
   // The calendar window
   // ---------------------------------------------------------------------------
   function openCalendar () {
-    if (dialogOpen || !model || model.issue) return;
+    if (dialogOpen || !model || model.issue || !model.range) return;
     var size = Cf.WINDOW_SIZES[cfg.window.size] || Cf.WINDOW_SIZES.M;
     var options = { width: size.w, height: size.h };
     var DS = tableau.DialogStyle || {};
@@ -149,12 +156,12 @@
     if (style) options.dialogStyle = style;
     var payload = JSON.stringify({
       state: applied,
+      start: model.range.start,
+      end: model.range.end,
       days: model.days,
-      values: model.hasValues ? model.days.map(function (d) { return model.value[d]; }) : null,
+      rangeOnly: model.kind === 'range',
       hasNull: model.hasNull,
-      nullValue: model.nullValue,
-      field: model.caption,
-      maxDay: model.days.length ? model.days[model.days.length - 1] : null
+      field: model.caption
     });
     dialogOpen = true;
     el.box.classList.add('is-open');
@@ -180,8 +187,7 @@
     var msg = parse(ev && ev.message);
     if (!msg || msg.type !== 'state' || !msg.state) return;
     clearTimeout(liveTimer);
-    // A drag sends many states in a row: apply the last one.
-    liveTimer = setTimeout(function () { take(msg.state); }, 120);
+    liveTimer = setTimeout(function () { take(msg.state); }, 150); // a drag sends many in a row
   }
 
   /** Makes a state from the window the filter in force. */
@@ -193,69 +199,120 @@
     };
     if (JSON.stringify(next) === JSON.stringify(applied)) return;
     applied = next;
-    applySelection();
+    applyFilter();
     paint();
   }
 
   // ---------------------------------------------------------------------------
-  // Passing the filter to Tableau: select this sheet's marks
+  // Writing the date filter
   // ---------------------------------------------------------------------------
-  function applySelection () {
+  function utcDate (day) { return new Date(day * 864e5); }
+
+  function allDays () {
+    var out = [];
+    if (!model || !model.range) return out;
+    for (var d = model.range.start; d <= model.range.end; d++) out.push(d);
+    return out;
+  }
+
+  function applyFilter () {
     notice = '';
-    if (!model || model.issue || !worksheet) return;
-    var r = Cf.resolve(applied, model.days, model.hasNull);
-    ownSelect = Date.now();
-    if (r.all) { ExtCore.clearSelection(worksheet); return; }
-    var raws = [];
-    r.days.forEach(function (d) { Array.prototype.push.apply(raws, model.raw[d] || []); });
-    if (r.nulls) Array.prototype.push.apply(raws, model.nullRaw);
-    if (!raws.length) {
-      // Tableau can't select "nothing": clear, so the dashboard shows everything, and say so.
-      ExtCore.clearSelection(worksheet);
-      notice = applied.nullState === 'only' ? 'No null dates in the data — showing all dates' : 'No data in these dates — showing all dates';
-      return;
+    if (!model || model.issue || !model.filter) return;
+    var name = model.filter.fieldName;
+    var T = tableau;
+    var r = Cf.resolve(applied, model.days || allDays(), model.hasNull);
+    ownChange = Date.now();
+    var call;
+    if (r.all) {
+      call = worksheet.clearFilterAsync(name);
+    } else if (model.kind === 'range') {
+      var NO = T.FilterNullOption || { AllValues: 'all-values', NonNullValues: 'non-null-values', NullValues: 'null-values' };
+      var only = applied.nullState === 'only';
+      var lo = !only && r.days.length ? r.days[0] : model.range.start;
+      var hi = !only && r.days.length ? r.days[r.days.length - 1] : model.range.end;
+      var opt = only ? NO.NullValues : r.nulls ? NO.AllValues : NO.NonNullValues;
+      call = worksheet.applyRangeFilterAsync(name, { min: utcDate(lo), max: utcDate(hi), nullOption: opt });
+    } else {
+      var U = T.FilterUpdateType || { Replace: 'replace' };
+      if (!applied.sel.length && applied.nullState === 'exclude') {
+        // Every date but no null: exclude the null value (a short list instead of every date).
+        call = model.nullRaw.length
+          ? worksheet.applyFilterAsync(name, model.nullRaw, U.Replace, { isExcludeMode: true })
+          : worksheet.clearFilterAsync(name);
+      } else {
+        var vals = [];
+        r.days.forEach(function (d) { Array.prototype.push.apply(vals, model.raw[d] || [Cf.iso(d)]); });
+        if (r.nulls) Array.prototype.push.apply(vals, model.nullRaw);
+        if (!vals.length) {
+          notice = applied.nullState === 'only' ? 'No null dates in the data — showing all dates' : 'No data in these dates — showing all dates';
+          call = worksheet.clearFilterAsync(name);
+        } else {
+          call = worksheet.applyFilterAsync(name, vals, U.Replace, { isExcludeMode: false });
+        }
+      }
     }
-    ExtCore.select(worksheet, [{ fieldName: model.column, value: raws }], 'Calendar Filter');
-  }
-
-  /** Someone else changed the selection (Tableau's own clear, a reset): read it back. */
-  var selTimer = 0;
-  function onSelectionChanged () {
-    if (Date.now() - ownSelect < 1500) return;
-    clearTimeout(selTimer);
-    selTimer = setTimeout(function () { readSelection().then(function (changed) { if (changed) paint(); }); }, 250);
-  }
-
-  /** Reads Tableau's selected marks into `applied`. Resolves true when that changed the filter. */
-  async function readSelection () {
-    if (!model || model.issue || !worksheet.getSelectedMarksAsync) return false;
-    var marks;
-    try { marks = await worksheet.getSelectedMarksAsync(); } catch (e) { console.warn('Calendar Filter: could not read the selection', e); return false; }
-    var days = {};
-    var nullSel = false;
-    ((marks && marks.data) || []).forEach(function (table) {
-      var col = (table.columns || []).find(function (c) { return c.fieldName === model.column; }) ||
-        ExtCore.findColumn(table, model.field);
-      if (!col) return;
-      (table.data || []).forEach(function (row) {
-        var cell = row[col.index];
-        if (Cf.isNullCell(cell)) { nullSel = true; return; }
-        var d = Cf.cellDay(cell);
-        if (d != null) days[d] = true;
-      });
+    Promise.resolve(call).catch(function (err) {
+      console.error('Calendar Filter: Tableau did not accept the filter', err);
+      notice = 'Tableau did not accept the filter. Click the ! mark for details.';
+      paint();
     });
-    var list = Object.keys(days).map(Number).sort(function (a, b) { return a - b; });
-    // Same dates as what we hold: keep ours (it remembers the granularity).
-    var cur = Cf.resolve(applied, model.days, model.hasNull);
-    var curDays = cur.all ? [] : cur.days;
-    if (!cur.all && JSON.stringify(curDays) === JSON.stringify(list) && cur.nulls === nullSel) return false;
-    if (cur.all && !list.length && !nullSel) return false;
-    applied = Cf.inferState(list, nullSel, model.days, cfg);
-    return true;
+  }
+
+  /** Someone else changed the filter (the Filters pane, a reset, a custom view): read it back. */
+  var filterTimer = 0;
+  function onFilterChanged (ev) {
+    if (Date.now() - ownChange < 1500) return;
+    if (ev && ev.fieldName && model && model.filter && ev.fieldName !== model.filter.fieldName) return;
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(scheduleRefresh, 200);
+  }
+
+  /** The state the filter shows now. Keeps ours when it means the same dates (ours remembers the granularity). */
+  function stateFromFilter (f) {
+    var days = model.days || allDays();
+    var picked = [];
+    var nullSel = false;
+    var all = false;
+    if (model.kind === 'range') {
+      var opt = String(f.nullOption || (f.includeNullValues ? 'all-values' : 'non-null-values')).toLowerCase().replace(/[^a-z]/g, '');
+      if (opt === 'nullvalues') return { gran: Cf.firstGran(cfg, cfg.calendar.openAt), sel: [], nullState: 'only' };
+      nullSel = opt === 'allvalues';
+      var lo = Cf.cellDay(f.minValue);
+      var hi = Cf.cellDay(f.maxValue);
+      lo = lo == null ? model.range.start : lo;
+      hi = hi == null ? model.range.end : hi;
+      if (lo <= model.range.start && hi >= model.range.end) all = true;
+      else days.forEach(function (d) { if (d >= lo && d <= hi) picked.push(d); });
+    } else if (f.isAllSelected) {
+      all = true;
+      nullSel = model.hasNull;
+    } else {
+      var inList = {};
+      var nullIn = false;
+      (f.appliedValues || []).forEach(function (dv) {
+        if (Cf.isNullCell(dv)) { nullIn = true; return; }
+        var d = Cf.cellDay(dv);
+        if (d != null) inList[d] = true;
+      });
+      if (f.isExcludeMode) {
+        days.forEach(function (d) { if (!inList[d]) picked.push(d); });
+        nullSel = model.hasNull && !nullIn;
+        if (picked.length === days.length) all = true;
+      } else {
+        days.forEach(function (d) { if (inList[d]) picked.push(d); });
+        nullSel = nullIn;
+      }
+    }
+    if (all) {
+      return nullSel || !model.hasNull ? Cf.emptyState(cfg) : { gran: Cf.firstGran(cfg, cfg.calendar.openAt), sel: [], nullState: 'exclude' };
+    }
+    var cur = Cf.resolve(applied, days, model.hasNull);
+    if (!cur.all && JSON.stringify(cur.days) === JSON.stringify(picked) && cur.nulls === nullSel) return applied;
+    return Cf.inferState(picked, nullSel, days, cfg);
   }
 
   // ---------------------------------------------------------------------------
-  // Data
+  // Data: Start / End from the summary data, the date filter from the Filters shelf
   // ---------------------------------------------------------------------------
   var REFRESH_DELAY = 150;
   var CALL_RETRIES = 2;
@@ -284,19 +341,17 @@
     var first = token === 1;
     if (first) T.mark('data requested');
     try {
-      // Every row: a calendar with missing dates would be wrong, so there is no row limit here.
       var table = await withRetry(function () { return ExtCore.readSummary(worksheet, { limit: 0 }); }, 'getSummaryData');
       if (token !== renderToken) return;
       var fields = await withRetry(getFields, 'getVisualSpecificationAsync');
       if (token !== renderToken) return;
-      if (first) T.mark('data received', (table.data || []).length + ' rows');
-      model = buildModel(table, fields);
-      if (!restored && !model.issue) {
-        restored = true;
-        var changed = await readSelection();
-        // Nothing chosen yet but nulls are excluded by default: apply that once.
-        if (!changed && !Cf.isFiltered(applied, cfg) && cfg.nulls.default === 'exclude' && model.hasNull) applySelection();
-      }
+      var filters = await withRetry(function () { return worksheet.getFiltersAsync(); }, 'getFiltersAsync');
+      if (token !== renderToken) return;
+      if (first) T.mark('data received');
+      var m = await buildModel(table, fields, filters || []);
+      if (token !== renderToken) return;
+      model = m;
+      if (!m.issue && m.filter) applied = stateFromFilter(m.filter);
       paint();
       if (first) { T.mark('text box drawn'); T.done('Calendar Filter load timings'); }
     } catch (err) {
@@ -306,68 +361,115 @@
     }
   }
 
-  /** The fields on the Date and Value tiles: { date, value } (either may be null). */
+  /** The fields on the Start date and End date tiles: { start, end } (either may be null). */
   async function getFields () {
     var spec = await worksheet.getVisualSpecificationAsync();
     var marks = spec.marksSpecifications[spec.activeMarksSpecificationIndex];
-    var out = { date: null, value: null };
+    var out = { start: null, end: null };
     (marks.encodings || []).forEach(function (enc) {
       if (!enc.field) return;
       var type = String(enc.type || '').toLowerCase();
       var id = type && type !== 'custom' ? type : enc.id;
-      if (id === 'date' && !out.date) out.date = enc.field;
-      if (id === 'value' && !out.value) out.value = enc.field;
+      if (id === 'start' && !out.start) out.start = enc.field;
+      if (id === 'end' && !out.end) out.end = enc.field;
     });
     return out;
   }
 
+  /** The first day found in a column (LOD values are the same on every row). */
+  function dayIn (table, field, taken) {
+    var col = field ? ExtCore.findColumn(table, field, taken) : null;
+    if (!col) return { day: null, col: null };
+    var rows = table.data || [];
+    for (var i = 0; i < rows.length; i++) {
+      var d = Cf.cellDay(rows[i][col.index]);
+      if (d != null) return { day: d, col: col };
+    }
+    return { day: null, col: col };
+  }
+
+  function filterKind (f) {
+    var t = String((f && f.filterType) || '').toLowerCase();
+    if (t.indexOf('categorical') >= 0) return 'categorical';
+    if (t.indexOf('relative') >= 0) return 'relative';
+    if (t.indexOf('range') >= 0) return 'range';
+    return t || 'other';
+  }
+
+  /** Is this filter on a date? Range: its min / max are dates. Categorical: its values are. */
+  function looksLikeDate (f) {
+    var k = filterKind(f);
+    if (k === 'range') return Cf.cellDay(f.minValue) != null || Cf.cellDay(f.maxValue) != null;
+    if (k === 'categorical') {
+      if ((f.appliedValues || []).some(function (dv) { return Cf.cellDay(dv) != null; })) return true;
+      return /date|day/i.test(f.fieldName || '');
+    }
+    return false;
+  }
+
   /**
    * {
-   *   days: sorted day numbers with data · raw: { day: [raw cell values] } (several for datetimes)
-   *   value: { day: summed Value } · hasValues · hasNull · nullRaw: [raw values of null dates]
-   *   nullValue · column: the date column's fieldName (for selecting) · field · caption · issue
+   *   range: { start, end } · filter: the Tableau filter · kind: 'categorical' | 'range'
+   *   days: sorted days in the filter's list of values (categorical), null = every day (range)
+   *   raw: { day: [values as the filter lists them] } · hasNull · nullRaw · caption · filterNames · issue
    * }
    */
-  function buildModel (table, fields) {
-    var m = { days: [], raw: {}, value: {}, hasValues: false, hasNull: false, nullRaw: [], nullValue: 0, column: '', field: fields.date, caption: '', issue: '' };
-    if (!fields.date) {
-      m.issue = 'Drop a date on the <b>Date</b> tile (as an exact date or Day).';
+  async function buildModel (table, fields, filters) {
+    var m = { range: null, filter: null, kind: '', days: null, raw: {}, hasNull: false, nullRaw: [], caption: '', filterNames: [], issue: '' };
+    m.filterNames = filters.map(function (f) { return f.fieldName; });
+    if (!fields.start || !fields.end) {
+      m.issue = 'Drop the first date on <b>Start date</b> and the last date on <b>End date</b>, e.g. <code>{MIN([Order Date])}</code> and <code>{MAX([Order Date])}</code>.';
       return m;
     }
-    var col = ExtCore.findColumn(table, fields.date);
-    if (!col) { m.issue = 'Could not find the date field in the data. Remove it from the Date tile and add it again.'; return m; }
-    var vcol = fields.value ? ExtCore.findColumn(table, fields.value, [col]) : null;
-    m.column = col.fieldName;
-    m.caption = captionOf(fields.date.name || col.fieldName);
-    m.hasValues = !!vcol;
-    var bad = 0;
-    var rows = table.data || [];
-    for (var i = rows.length - 1; i >= 0; i--) { // Tableau sends rows last-to-first
-      var cell = rows[i][col.index];
-      var v = vcol ? ExtCore.toNumber(rows[i][vcol.index]) : 1;
-      if (!isFinite(v)) v = 0;
-      if (Cf.isNullCell(cell)) {
-        m.hasNull = true;
-        m.nullRaw.push(cell ? cell.value : null);
-        m.nullValue += v;
-        continue;
-      }
-      var d = Cf.cellDay(cell);
-      if (d == null) { bad++; continue; }
-      if (!m.raw[d]) { m.raw[d] = []; m.value[d] = 0; m.days.push(d); }
-      if (m.raw[d].indexOf(cell.value) < 0) m.raw[d].push(cell.value);
-      m.value[d] += v;
+    var s = dayIn(table, fields.start);
+    var e = dayIn(table, fields.end, s.col ? [s.col] : []);
+    if (s.day != null && e.day != null) lastRange = { start: Math.min(s.day, e.day), end: Math.max(s.day, e.day) };
+    // A filter that leaves this sheet with no rows empties Start / End: keep the last ones seen.
+    m.range = lastRange;
+
+    var want = cfg.filter.field;
+    var f = want ? filters.find(function (x) { return x.fieldName === want; }) : null;
+    if (!f) f = filters.find(function (x) { return (filterKind(x) === 'categorical' || filterKind(x) === 'range') && looksLikeDate(x); });
+    if (!f) f = filters.find(function (x) { return filterKind(x) === 'relative'; }); // explained below
+    if (!f) {
+      m.issue = 'Put the date to filter on this sheet’s <b>Filters</b> shelf (Exact Date values, or a range of dates) and set it to <b>Apply to Worksheets → All Using This Data Source</b>.';
+      return m;
     }
-    m.days.sort(function (a, b) { return a - b; });
-    if (bad && !m.days.length) {
-      m.issue = 'The Date tile needs a full date. Right-click the date on the Date tile and choose <b>Exact Date</b> or <b>Day</b> (the one with the year).';
-    } else if (m.days.length > 2 && m.days.every(function (d) { return Cf.parts(d).d === 1; })) {
-      m.issue = 'The date is at month or year level. Right-click it on the Date tile and choose <b>Exact Date</b> or <b>Day</b>, so every day can be picked.';
+    m.filter = f;
+    m.kind = filterKind(f);
+    m.caption = captionOf(f.fieldName);
+    if (m.kind !== 'categorical' && m.kind !== 'range') {
+      m.issue = 'The filter on “' + ExtCore.esc(f.fieldName) + '” is a relative-date filter. Edit it to <b>Exact Date</b> values or a <b>Range of dates</b>.';
+      return m;
+    }
+    if (m.kind === 'range') {
+      m.hasNull = true; // a range of dates always has the null option (Tableau can't tell us whether nulls exist)
+    } else {
+      var dom = null;
+      try {
+        var DT = tableau.FilterDomainType || { Database: 'database' };
+        dom = await withRetry(function () { return f.getDomainAsync(DT.Database); }, 'getDomainAsync');
+      } catch (err) { console.warn('Calendar Filter: could not read the filter’s values', err); }
+      var days = [];
+      ((dom && dom.values) || []).forEach(function (dv) {
+        if (Cf.isNullCell(dv)) { m.hasNull = true; m.nullRaw.push(dv.value == null ? null : dv.value); return; }
+        var d = Cf.cellDay(dv);
+        if (d == null) return;
+        if (!m.raw[d]) { m.raw[d] = []; days.push(d); }
+        var v = typeof dv.value === 'string' ? dv.value : Cf.iso(d);
+        if (m.raw[d].indexOf(v) < 0) m.raw[d].push(v);
+      });
+      days.sort(function (a, b) { return a - b; });
+      if (!m.range && days.length) m.range = { start: days[0], end: days[days.length - 1] };
+      m.days = m.range ? days.filter(function (d) { return d >= m.range.start && d <= m.range.end; }) : days;
+    }
+    if (!m.range) {
+      m.issue = 'Start date and End date are empty. Use FIXED calculations such as <code>{MAX([Order Date])}</code>, which the date filter does not change.';
     }
     return m;
   }
 
-  /** "DAY(Order Date)" → "Order Date". */
+  /** "DAY(Order Date)" / "MDY(Order Date)" → "Order Date". */
   function captionOf (name) {
     var s = String(name || '');
     var mm = /^[A-Za-z]+\((.*)\)$/.exec(s);
@@ -437,5 +539,5 @@
     el.hint.innerHTML = html;
   }
 
-  window.CalendarFilter = { init: init, _buildModel: buildModel, _captionOf: captionOf };
+  window.CalendarFilter = { init: init, _captionOf: captionOf, _filterKind: filterKind };
 })();

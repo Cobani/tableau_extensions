@@ -105,4 +105,7 @@ test('calendar-filter: the how-to line follows the click behaviour', function ()
   assert.doesNotMatch(Cf.helpText(cfg(function (x) { x.selection.drag = false; })), /Drag/);
   assert.match(Cf.helpText(cfg(function (x) { x.selection.mode = 'single'; })), /pick one/);
   assert.match(Cf.helpText(cfg(function (x) { x.selection.mode = 'toggle'; })), /add or remove/);
+  // A range-of-dates filter can't hold separate values: no Ctrl / toggle advice.
+  assert.doesNotMatch(Cf.helpText(cfg(), true), /add or remove/);
+  assert.doesNotMatch(Cf.helpText(cfg(function (x) { x.selection.mode = 'toggle'; }), true), /add or remove/);
 });

@@ -48,7 +48,7 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 | <img src="maturity-ladder/examples/example-1.png" width="120"> | [**Maturity Ladder**](#maturity-ladder) | Amounts falling due per time bucket, stacked by group, with a running total | Maturity date · Amount · Group · Item | [`maturity-ladder.trex`](maturity-ladder/maturity-ladder.trex) |
 | <img src="parameter-switcher/examples/example-1.png" width="120"> | [**Parameter Switcher**](#parameter-switcher) | Tabs, buttons, pills, a toggle or a stepper that set a Tableau parameter | Options (optional) | [`parameter-switcher.trex`](parameter-switcher/parameter-switcher.trex) |
 | <img src="narrative-card/examples/example-1.png" width="120"> | [**Narrative Card**](#narrative-card) | Sentences you write, with live numbers, changes and conditions inside | Measures · Date | [`narrative-card.trex`](narrative-card/narrative-card.trex) |
-| <img src="calendar-filter/examples/example-1.png" width="120"> | [**Calendar Filter**](#calendar-filter) | A text box that opens a calendar window to filter by year, month, week or day | Date, Value (optional) | [`calendar-filter.trex`](calendar-filter/calendar-filter.trex) |
+| <img src="calendar-filter/examples/example-1.png" width="120"> | [**Calendar Filter**](#calendar-filter) | A text box that opens a calendar window and sets the date filter on the Filters shelf (year, month, week or day) | Start date, End date | [`calendar-filter.trex`](calendar-filter/calendar-filter.trex) |
 
 ## What every extension can do
 
@@ -424,16 +424,15 @@ Sentences written by the dashboard builder, with live numbers inside: `{Revenue}
   <img src="calendar-filter/examples/example-2.png" alt="Calendar Filter example 2" width="340">
 </p>
 
-A filter, not a chart: a **text box** with the dates chosen; a click opens a **calendar window** (Tableau's dialog, not limited to the zone). Works with a dashboard **Filter action** on this sheet.
+A filter, not a chart: a **text box** with the dates chosen; a click opens a **calendar window** (Tableau's dialog, not limited to the zone). The choice is written into the **date filter on the sheet's Filters shelf**, so it shows in the Filters pane and filters every sheet the filter applies to.
 
-**Tiles:** `Date` (1 date at day level), `Value` (1 measure, optional — shown in the cells and used to shade them).
+**Tiles:** `Start date`, `End date` (FIXED calculations such as `{MIN([Date])}` / `{MAX([Date])}`: the calendar shows every date between them).
 
 - Filter by **year, month, week (with week numbers) or day**; switching granularity clears the choice.
 - Single values, **ranges** (Shift-click or drag) and **several values** (Ctrl/⌘-click); a how-to line at the bottom.
-- **Quick ranges**: Today … Month to date … Last year, counted back from today or the latest date in the data.
-- **Null dates**: Include, Exclude or Only.
+- Works with an **Exact Date** filter (any days, null dates) or a **Range of dates** filter (one range).
+- **Quick ranges**: Today … Month to date … Last year. **Null dates**: Include, Exclude or Only.
 - **Apply / Cancel**, or **Live** filtering on every click. Weeks start on Sunday (or Monday / Saturday).
-- No row limit: every date is read.
 
 [Full documentation →](calendar-filter/README.md)
 ## Getting started in Tableau

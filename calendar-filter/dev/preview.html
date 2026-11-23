@@ -27,25 +27,27 @@
     <b>Calendar Filter — dev preview</b>
     <label>Data
       <select id="data">
-        <option value="default">Order Date + Value, 42 null dates</option>
-        <option value="novalue">No Value tile</option>
-        <option value="datetime">Date-time (several rows a day)</option>
-        <option value="nonull">No null dates</option>
-        <option value="month">Date at month level (message)</option>
-        <option value="empty">Nothing on the Date tile</option>
+        <option value="default">Exact Date filter, 42 null dates</option>
+        <option value="range">Range-of-dates filter</option>
+        <option value="datetime">Exact Date filter on a date-time</option>
+        <option value="nonull">Exact Date filter, no null dates</option>
+        <option value="relative">Relative-date filter (message)</option>
+        <option value="nofilter">No filter on the shelf (message)</option>
+        <option value="notiles">Nothing on Start / End (message)</option>
       </select>
     </label>
     <button id="fmt" type="button">Format Extension</button>
-    <button id="external" type="button">Clear selection in Tableau</button>
+    <button id="external" type="button">Change the filter in Tableau</button>
+    <button id="externalClear" type="button">Clear the filter in Tableau</button>
     <button id="reload" type="button">Reload the zone</button>
-    <button id="reset" type="button">Reset settings + selection</button>
+    <button id="reset" type="button">Reset settings + filter</button>
     <span class="note">Click the text box to open the calendar. Drag the zone's corner to resize. Add ?debug for timings.</span>
   </div>
   <div class="tw" id="tw">
     <div class="dash">
       <h2>Dashboard (mock)</h2>
       <div class="zone" id="zone"><iframe id="card" title="Calendar Filter"></iframe></div>
-      <div class="sel" id="sel">Selected in Tableau: nothing (all dates)</div>
+      <div class="sel" id="sel">Filters pane: …</div>
     </div>
     <div class="backdrop" id="backdrop"></div>
     <div class="dlg" id="dlg"><div class="dlgbar"><span id="dlgTitle">Tableau window</span><b id="dlgX" title="Close">×</b></div><div class="frame"><iframe id="dialog" title="Dialog"></iframe></div></div>
@@ -55,22 +57,19 @@
   var card = document.getElementById('card');
   try { dataSel.value = localStorage.getItem('cfMockData') || 'default'; } catch (e) {}
   function load () { card.src = '../index.html?mock&data=' + dataSel.value + (/debug/.test(location.search) ? '&debug' : ''); }
-  function showSel (count, sample) {
-    document.getElementById('sel').textContent = count
-      ? 'Selected in Tableau: ' + count + ' marks, e.g. ' + JSON.stringify(sample) + '\n(a dashboard Filter action would keep these dates on the other sheets)'
-      : 'Selected in Tableau: nothing (all dates)';
+  function showSel (text) {
+    document.getElementById('sel').textContent = 'Filters pane (shared with the other sheets):\n' + text;
   }
-  function readStoredSel () {
-    try { var l = JSON.parse(localStorage.getItem('cfMockSelection:' + dataSel.value) || '[]'); showSel(l.length, l.slice(0, 6)); } catch (e) { showSel(0); }
-  }
+  function readStoredSel () {}
   dataSel.addEventListener('change', function () { localStorage.setItem('cfMockData', dataSel.value); closeDlg(); load(); readStoredSel(); });
   document.getElementById('reload').addEventListener('click', function () { closeDlg(); load(); });
   document.getElementById('reset').addEventListener('click', function () {
-    Object.keys(localStorage).filter(function (k) { return /^cfMock(Settings|Selection)/.test(k); }).forEach(function (k) { localStorage.removeItem(k); });
+    Object.keys(localStorage).filter(function (k) { return /^cfMock(Settings|Filter)/.test(k); }).forEach(function (k) { localStorage.removeItem(k); });
     closeDlg(); load(); readStoredSel();
   });
   document.getElementById('fmt').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-configure' }, '*'); });
-  document.getElementById('external').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-external-clear' }, '*'); });
+  document.getElementById('external').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-external' }, '*'); });
+  document.getElementById('externalClear').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-external-clear' }, '*'); });
   document.getElementById('dlgX').addEventListener('click', function () { closeDlg(); });
 
   var dlg = document.getElementById('dlg');
@@ -101,7 +100,7 @@
     }
     if (d.type === 'cf-close-dialog') closeDlg(d.payload);
     if (d.type === 'cf-dialog-message-up' && card.contentWindow) card.contentWindow.postMessage({ type: 'cf-dialog-message', message: d.message }, '*');
-    if (d.type === 'cf-selection') showSel(d.count, d.sample);
+    if (d.type === 'cf-filter') showSel(d.text);
   });
   load();
   readStoredSel();

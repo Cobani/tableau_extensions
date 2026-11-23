@@ -25,7 +25,7 @@
       "bgColor": "#FFFFFF",
       "borderColor": "#C9CDD4",
       "radius": 4,
-      "height": 30
+      "height": 24
     },
     "window": {
       "apply": "button",
@@ -76,9 +76,7 @@
       "font": "Lato",
       "textColor": "#17202B",
       "mutedColor": "#68707D",
-      "bgColor": "#FFFFFF",
-      "cellNumbers": false,
-      "heat": false
+      "bgColor": "#FFFFFF"
     },
     "card": {
       "padding": 4,

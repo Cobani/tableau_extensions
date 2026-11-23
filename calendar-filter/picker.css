@@ -41,6 +41,7 @@ button { font: inherit; color: inherit; }
 .cell.is-sel small, .cell.is-sel .wnum, .cell.is-sel .wval { color: rgba(255, 255, 255, .85); }
 .cell.is-empty, .cell.is-out { color: var(--muted); opacity: .6; }
 .cell.is-sel.is-empty, .cell.is-sel.is-out { opacity: .75; }
+.cell.is-outside { opacity: .3; background: transparent; }
 .cell.is-off { cursor: not-allowed; }
 .cell.is-off:hover { border-color: var(--line); }
 .cell.is-pending { outline: 2px dashed var(--accent); outline-offset: -2px; }
@@ -56,6 +57,7 @@ button { font: inherit; color: inherit; }
 .wrow--head { border: 0; padding-top: 0; padding-bottom: 0; }
 .wrow--head span { font-size: 10.5px; color: var(--muted); }
 
+.draft.is-note { color: #9A3412; }
 .draft { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; }
 .ftr { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; flex: none; }
 .nulls { display: flex; align-items: center; gap: 6px; font-size: 12px; }

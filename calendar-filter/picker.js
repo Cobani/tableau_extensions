@@ -4,19 +4,23 @@
  * Calendar Filter — the calendar window (picker.html), opened by a click on the text box.
  *
  * It is a Tableau dialog window, so it can be larger than the extension zone. It can't read the
- * worksheet: the text box sends the dates that have data, their Value, and the filter in force
- * (see chart.js). Settings (look, granularities, click behaviour…) are read from the workbook.
+ * worksheet: the text box sends the Start / End dates, the days that have data (when the date
+ * filter lists them) and the filter in force (see chart.js). Settings (look, granularities, click
+ * behaviour…) are read from the workbook.
+ *
+ * Only days between Start and End can be picked. With a "range of dates" filter (rangeOnly) the
+ * choice is always one continuous range: whatever is picked is filled from the first to the last.
  *
  * Apply mode (Format → Window):
  *   button  the choice is a draft until Apply; Cancel / Esc / × leave the dashboard as it was
- *   live    every change is sent straight to the text box, which filters the dashboard
+ *   live    every change is sent straight to the text box, which sets the filter
  */
 (function () {
   var cfg = null;
-  var data = null;    // { days, cum (prefix sums of values), hasValues, hasNull, nullValue, field, maxDay }
+  var data = null;    // { start, end, days (null = all), set, rangeOnly, hasNull, field, minY, maxY }
   var st = null;      // the draft: { gran, sel: Set of period starts, nullState }
   var page = { y: 2026, m: 0 };
-  var ui = { anchor: null, pending: null, menu: false };
+  var ui = { anchor: null, pending: null, menu: false, note: '' };
   var drag = null;
   var el = {};
   var live = false;
@@ -29,14 +33,13 @@
       try { p = JSON.parse(payload || '{}'); } catch (e) { p = {}; }
       data = prepare(p);
       var s = p.state || Cf.emptyState(cfg);
-      st = { gran: Cf.firstGran(cfg, s.gran || cfg.calendar.openAt), sel: new Set(Array.isArray(s.sel) ? s.sel : []), nullState: s.nullState || cfg.nulls.default };
-      if (!st.sel.size && s.gran !== st.gran) st.gran = Cf.firstGran(cfg, cfg.calendar.openAt);
-      if (!st.sel.size) st.gran = Cf.firstGran(cfg, cfg.calendar.openAt);
+      var sel = Array.isArray(s.sel) ? s.sel : [];
+      st = { gran: sel.length ? Cf.firstGran(cfg, s.gran) : Cf.firstGran(cfg, cfg.calendar.openAt), sel: new Set(sel), nullState: s.nullState || cfg.nulls.default };
       if (cfg.nulls.control === 'hidden' && !st.sel.size) st.nullState = cfg.nulls.default;
       live = cfg.window.apply === 'live';
       canMessage = !!(tableau.extensions.ui && tableau.extensions.ui.sendDialogMessageToParentAsync);
       var last = Array.from(st.sel).sort(function (a, b) { return b - a; })[0];
-      var at = Cf.parts(last != null ? last : (data.maxDay != null ? data.maxDay : Cf.today()));
+      var at = Cf.parts(last != null ? Math.min(Math.max(last, data.start), data.end) : data.end);
       page = { y: at.y, m: at.m };
       ['root', 'title', 'hdr', 'chips', 'side', 'grid', 'draft', 'nulls', 'actions', 'help', 'menu'].forEach(function (id) { el[id] = document.getElementById(id); });
       wire();
@@ -50,40 +53,39 @@
   // Data from the text box
   // ---------------------------------------------------------------------------
   function prepare (p) {
-    var days = Array.isArray(p.days) ? p.days.slice() : [];
-    var vals = Array.isArray(p.values) && p.values.length === days.length ? p.values : null;
-    var cum = [0];
-    for (var i = 0; i < days.length; i++) cum.push(cum[i] + (vals ? (Number(vals[i]) || 0) : 1));
-    var y = Cf.parts(Cf.today()).y;
+    var t = Cf.today();
+    var start = typeof p.start === 'number' ? p.start : t - 365;
+    var end = typeof p.end === 'number' ? p.end : t;
+    var days = Array.isArray(p.days) ? p.days.slice().sort(function (a, b) { return a - b; }) : null;
+    var set = null;
+    if (days) { set = {}; days.forEach(function (d) { set[d] = true; }); }
     return {
+      start: Math.min(start, end),
+      end: Math.max(start, end),
       days: days,
-      cum: cum,
-      hasValues: !!vals,
+      set: set,
+      rangeOnly: !!p.rangeOnly,
       hasNull: !!p.hasNull,
-      nullValue: Number(p.nullValue) || 0,
       field: p.field || 'Date',
-      maxDay: p.maxDay != null ? p.maxDay : null,
-      minY: days.length ? Math.min(Cf.parts(days[0]).y, y) : y,
-      maxY: days.length ? Math.max(Cf.parts(days[days.length - 1]).y, y) : y
+      minY: Cf.parts(Math.min(start, end)).y,
+      maxY: Cf.parts(Math.max(start, end)).y
     };
   }
 
-  /** First index with days[i] >= d. */
-  function lower (d) {
-    var lo = 0;
-    var hi = data.days.length;
-    while (lo < hi) { var mid = (lo + hi) >> 1; if (data.days[mid] < d) lo = mid + 1; else hi = mid; }
-    return lo;
-  }
+  /** Does the day have data? (Every day between Start and End when the filter doesn't list its values.) */
+  function hasData (d) { return d >= data.start && d <= data.end && (!data.set || !!data.set[d]); }
 
-  /** { n: dates with data, v: summed Value } for the days a ≤ d < b. */
-  function stats (a, b) {
-    var i = lower(a);
-    var j = lower(b);
-    return { n: j - i, v: data.cum[j] - data.cum[i] };
+  /** Days in the period [s, next) that can be picked, and how many have data. */
+  function pinfo (g, s) {
+    var e = Cf.periodNext(g, s);
+    var lo = Math.max(s, data.start);
+    var hi = Math.min(e - 1, data.end);
+    if (lo > hi) return { inRange: false, n: 0 };
+    var n = 0;
+    if (!data.set) n = hi - lo + 1;
+    else for (var d = lo; d <= hi; d++) if (data.set[d]) n++;
+    return { inRange: true, n: n };
   }
-
-  function pstats (g, s) { return stats(s, Cf.periodNext(g, s)); }
 
   // ---------------------------------------------------------------------------
   // Sending the result
@@ -92,8 +94,20 @@
     return { gran: st.gran, sel: Array.from(st.sel).sort(function (a, b) { return a - b; }), nullState: st.nullState };
   }
 
+  /** A "range of dates" filter holds one continuous range: fill the gaps. */
+  function fillRange () {
+    if (!data.rangeOnly || st.sel.size < 2) return;
+    var list = Array.from(st.sel).sort(function (a, b) { return a - b; });
+    var full = Cf.periodRange(st.gran, list[0], list[list.length - 1]);
+    if (full.length !== list.length) {
+      st.sel = new Set(full);
+      ui.note = 'This date filter is a range, so the dates in between are included.';
+    }
+  }
+
   /** After every change: redraw, and in live mode tell the text box. */
   function changed () {
+    fillRange();
     render();
     if (live && canMessage) {
       try {
@@ -113,7 +127,11 @@
   // ---------------------------------------------------------------------------
   // Clicking
   // ---------------------------------------------------------------------------
-  function isOff (g, s) { return cfg.selection.emptyPeriods === 'off' && pstats(g, s).n === 0; }
+  /** Can't be picked: outside Start – End, or (when set so) no data. */
+  function isOff (g, s) {
+    var i = pinfo(g, s);
+    return !i.inRange || (cfg.selection.emptyPeriods === 'off' && i.n === 0);
+  }
 
   function setGran (g) {
     if (g === st.gran) return;
@@ -127,7 +145,7 @@
     if (isOff(g, s)) return;
     if (st.nullState === 'only') st.nullState = 'include';
     var mode = cfg.selection.mode;
-    var ctrl = ev.ctrlKey || ev.metaKey;
+    var ctrl = (ev.ctrlKey || ev.metaKey) && !data.rangeOnly; // a range filter can't hold separate values
     if (mode === 'single') {
       if (st.sel.has(s) && st.sel.size === 1) st.sel = new Set(); else st.sel = new Set([s]);
       return;
@@ -136,12 +154,13 @@
       if (ui.pending == null) { ui.pending = s; st.sel = new Set([s]); } else { st.sel = new Set(rangeOf(ui.pending, s)); ui.pending = null; }
       return;
     }
+    var toggle = mode === 'toggle' && !data.rangeOnly;
     if (ev.shiftKey && ui.anchor != null) {
       var r = rangeOf(ui.anchor, s);
-      if (ctrl || mode === 'toggle') r.forEach(function (x) { st.sel.add(x); }); else st.sel = new Set(r);
+      if (ctrl || toggle) r.forEach(function (x) { st.sel.add(x); }); else st.sel = new Set(r);
       return;
     }
-    if (ctrl || mode === 'toggle') {
+    if (ctrl || toggle) {
       if (st.sel.has(s)) st.sel.delete(s); else st.sel.add(s);
       ui.anchor = s;
       return;
@@ -152,14 +171,16 @@
   }
 
   function applyQuick (id) {
-    var anchor = cfg.quick.anchor === 'data' && data.maxDay != null ? data.maxDay : Cf.today();
+    var anchor = cfg.quick.anchor === 'data' ? data.end : Cf.today();
     var q = Cf.quickRange(id, anchor, cfg.calendar.weekStart);
     if (!q) return;
     st.gran = q.g;
-    st.sel = new Set(Cf.periodRange(q.g, q.a, q.b));
+    var list = Cf.periodRange(q.g, q.a, q.b).filter(function (s) { return pinfo(q.g, s).inRange; });
+    st.sel = new Set(list);
     ui.anchor = q.b; ui.pending = null;
+    ui.note = list.length ? '' : 'That range is outside the Start and End dates.';
     if (st.nullState === 'only') st.nullState = cfg.nulls.default;
-    var e = Cf.parts(q.b);
+    var e = Cf.parts(Math.min(Math.max(q.b, data.start), data.end));
     page = { y: e.y, m: e.m };
   }
 
@@ -171,11 +192,12 @@
       var cell = ev.target.closest('[data-s]');
       if (!cell || ev.button !== 0) return;
       ev.preventDefault();
+      ui.note = '';
       var s = +cell.getAttribute('data-s');
       var mode = cfg.selection.mode;
       if (cfg.selection.drag && (mode === 'multi' || mode === 'toggle') && !ev.shiftKey && !isOff(st.gran, s)) {
-        var ctrl = ev.ctrlKey || ev.metaKey;
-        drag = { from: s, to: s, base: (mode === 'toggle' || ctrl) ? new Set(st.sel) : new Set(), moved: false, ev: { shiftKey: false, ctrlKey: ev.ctrlKey, metaKey: ev.metaKey } };
+        var add = (mode === 'toggle' || ev.ctrlKey || ev.metaKey) && !data.rangeOnly;
+        drag = { from: s, to: s, base: add ? new Set(st.sel) : new Set(), moved: false, ev: { shiftKey: false, ctrlKey: ev.ctrlKey, metaKey: ev.metaKey } };
       } else {
         clickCell(s, ev);
         changed();
@@ -206,7 +228,7 @@
     document.addEventListener('click', function (ev) {
       var t = ev.target;
       var b;
-      if ((b = t.closest('[data-g]'))) { setGran(b.getAttribute('data-g')); ui.menu = false; changed(); return; }
+      if ((b = t.closest('[data-g]'))) { setGran(b.getAttribute('data-g')); ui.menu = false; ui.note = ''; changed(); return; }
       if ((b = t.closest('[data-nav]'))) {
         var dir = +b.getAttribute('data-nav');
         if (st.gran === 'M') page.y += dir; else { var n = page.y * 12 + page.m + dir; page.y = Math.floor(n / 12); page.m = ((n % 12) + 12) % 12; }
@@ -217,7 +239,7 @@
       if ((b = t.closest('[data-q]'))) { ui.menu = false; applyQuick(b.getAttribute('data-q')); changed(); return; }
       if ((b = t.closest('[data-null]'))) { st.nullState = b.getAttribute('data-null'); changed(); return; }
       if (t.closest('[data-clear]')) {
-        st.sel = new Set(); st.nullState = cfg.nulls.default; ui.anchor = null; ui.pending = null;
+        st.sel = new Set(); st.nullState = cfg.nulls.default; ui.anchor = null; ui.pending = null; ui.note = '';
         changed();
         return;
       }
@@ -236,24 +258,17 @@
   // ---------------------------------------------------------------------------
   var esc = Cf.escHtml;
 
-  function fmtValue (v) { return Cf.formatScaled(v, 'dynamic', Math.abs(v) >= 1000 ? 1 : 0); }
-
-  function heat (v, max) {
-    if (!cfg.look.heat || !v || !max) return '';
-    return 'background:' + Cf.rgba(cfg.look.accent, 0.06 + 0.34 * (v / max)) + ';';
-  }
-
-  function cell (g, s, text, cls, max, withNumber) {
-    var ps = pstats(g, s);
+  function cell (g, s, text, cls) {
+    var i = pinfo(g, s);
     var c = 'cell';
     if (st.sel.has(s)) c += ' is-sel';
-    if (!ps.n) c += ' is-empty';
+    if (!i.inRange) c += ' is-outside';
+    else if (!i.n) c += ' is-empty';
     if (isOff(g, s)) c += ' is-off';
     if (ui.pending === s) c += ' is-pending';
     if (cls) c += ' ' + cls;
-    var tip = Cf.label(g, s, true, cfg.calendar.weekStart) + (ps.n ? (data.hasValues ? ' — ' + fmtValue(ps.v) : '') : ' — no data');
-    var num = withNumber !== false && cfg.look.cellNumbers && data.hasValues && ps.n ? '<small>' + esc(fmtValue(ps.v)) + '</small>' : '';
-    return '<div class="' + c + '" data-s="' + s + '" title="' + esc(tip) + '" style="' + heat(ps.v, max) + '">' + text + num + '</div>';
+    var tip = Cf.label(g, s, true, cfg.calendar.weekStart) + (!i.inRange ? ' — outside the Start and End dates' : !i.n ? ' — no data' : '');
+    return '<div class="' + c + '" data-s="' + s + '" title="' + esc(tip) + '">' + text + '</div>';
   }
 
   function weekdayHead () {
@@ -267,18 +282,15 @@
     var g = st.gran;
     var ws = cfg.calendar.weekStart;
     var items = [];
-    var max = 0;
     var wide = window.innerWidth >= 540;
     if (g === 'Y') {
       for (var y = data.minY; y <= data.maxY; y++) items.push(Cf.dayOf(y, 0, 1));
-      items.forEach(function (s) { max = Math.max(max, pstats(g, s).v); });
       var cols = Math.min(items.length, 4);
-      return { cls: 'grid--years', style: 'grid-template-columns:repeat(' + cols + ',1fr);grid-auto-rows:minmax(0,64px)', html: items.map(function (s) { return cell(g, s, Cf.label(g, s, false, ws), '', max); }).join('') };
+      return { cls: 'grid--years', style: 'grid-template-columns:repeat(' + cols + ',1fr);grid-auto-rows:minmax(0,64px)', html: items.map(function (s) { return cell(g, s, Cf.label(g, s, false, ws)); }).join('') };
     }
     if (g === 'M') {
       for (var m = 0; m < 12; m++) items.push(Cf.dayOf(page.y, m, 1));
-      items.forEach(function (s) { max = Math.max(max, pstats(g, s).v); });
-      return { cls: 'grid--months', style: 'grid-template-columns:repeat(' + (wide ? 4 : 3) + ',1fr);grid-auto-rows:1fr', html: items.map(function (s) { return cell(g, s, Cf.label(g, s, false, ws), '', max); }).join('') };
+      return { cls: 'grid--months', style: 'grid-template-columns:repeat(' + (wide ? 4 : 3) + ',1fr);grid-auto-rows:1fr', html: items.map(function (s) { return cell(g, s, Cf.label(g, s, false, ws)); }).join('') };
     }
     var mStart = Cf.dayOf(page.y, page.m, 1);
     var mEnd = Cf.dayOf(page.y, page.m + 1, 1) - 1;
@@ -287,8 +299,7 @@
     var s;
     if (g === 'W') {
       for (s = first; s <= mEnd; s += 7) items.push(s);
-      items.forEach(function (x) { max = Math.max(max, pstats('W', x).v); });
-      var hd = '<div class="wrow wrow--head"><span class="wnum"></span>' + head.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '<span class="wval"></span></div>';
+      var hd = '<div class="wrow wrow--head"><span class="wnum"></span>' + head.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div>';
       return {
         cls: 'grid--weeks',
         style: 'grid-template-columns:1fr;grid-template-rows:auto repeat(' + items.length + ',1fr)',
@@ -296,32 +307,32 @@
           var inner = '<span class="wnum">W' + Cf.weekNumber(x, ws).n + '</span>';
           for (var i = 0; i < 7; i++) {
             var p = Cf.parts(x + i);
-            inner += '<span class="' + (p.m !== page.m ? 'is-out' : '') + '">' + p.d + '</span>';
+            var off = p.m !== page.m || !hasData(x + i);
+            inner += '<span class="' + (off ? 'is-out' : '') + '">' + p.d + '</span>';
           }
-          var ps = pstats('W', x);
-          inner += '<span class="wval">' + (cfg.look.cellNumbers && data.hasValues && ps.n ? esc(fmtValue(ps.v)) : '') + '</span>';
-          return cell('W', x, inner, 'wrow', max, false);
+          return cell('W', x, inner, 'wrow');
         }).join('')
       };
     }
     var rows = 0;
     for (s = first; s <= mEnd; s += 7) rows++;
     for (var k = 0; k < rows * 7; k++) items.push(first + k);
-    items.forEach(function (x) { if (Cf.parts(x).m === page.m) max = Math.max(max, pstats('D', x).v); });
     return {
       cls: 'grid--days',
       style: 'grid-template-columns:repeat(7,1fr);grid-template-rows:auto repeat(' + rows + ',1fr)',
       html: head.map(function (x) { return '<div class="wkhd">' + x + '</div>'; }).join('') + items.map(function (x) {
         var out = Cf.parts(x).m !== page.m;
         if (out && !cfg.calendar.adjacentDays) return '<div class="cell is-blank"></div>';
-        return cell('D', x, String(Cf.parts(x).d), out ? 'is-out' : '', max);
+        return cell('D', x, String(Cf.parts(x).d), out ? 'is-out' : '');
       }).join('')
     };
   }
 
   function navBounds () {
-    if (st.gran === 'M') return [page.y > data.minY, page.y < data.maxY];
-    return [page.y * 12 + page.m > data.minY * 12, page.y * 12 + page.m < data.maxY * 12 + 11];
+    var a = Cf.parts(data.start);
+    var b = Cf.parts(data.end);
+    if (st.gran === 'M') return [page.y > a.y, page.y < b.y];
+    return [page.y * 12 + page.m > a.y * 12 + a.m, page.y * 12 + page.m < b.y * 12 + b.m];
   }
 
   function render () {
@@ -336,9 +347,8 @@
     document.body.style.fontFamily = Cf.fontStack(L.font);
 
     var short = window.innerWidth < 440;
-    el.title.textContent = data.field;
+    el.title.textContent = data.field + ' · ' + Cf.label('D', data.start, true) + ' – ' + Cf.label('D', data.end, true);
 
-    // Header: granularity buttons, page navigation, quick-range dropdown
     var h = '<div class="seg" role="group" aria-label="Granularity">' + Cf.grans(cfg).map(function (g) {
       return '<button type="button" data-g="' + g + '" class="' + (g === st.gran ? 'is-on' : '') + '" aria-pressed="' + (g === st.gran) + '">' + (short ? g : Cf.GRAN_NAMES[g]) + '</button>';
     }).join('') + '</div>';
@@ -353,11 +363,12 @@
     if (cfg.quick.position === 'dropdown' && quick.length) h += '<button type="button" class="pbtn" data-menu="1" aria-haspopup="menu">Quick ranges ▾</button>';
     el.hdr.innerHTML = h;
 
-    el.chips.innerHTML = cfg.quick.position === 'chips' ? quick.map(function (q) { return '<button type="button" data-q="' + q[0] + '">' + esc(q[1]) + '</button>'; }).join('') : '';
+    var qb = function (q) { return '<button type="button" data-q="' + q[0] + '">' + esc(q[1]) + '</button>'; };
+    el.chips.innerHTML = cfg.quick.position === 'chips' ? quick.map(qb).join('') : '';
     el.chips.style.display = cfg.quick.position === 'chips' && quick.length ? '' : 'none';
-    el.side.innerHTML = cfg.quick.position === 'side' ? quick.map(function (q) { return '<button type="button" data-q="' + q[0] + '">' + esc(q[1]) + '</button>'; }).join('') : '';
+    el.side.innerHTML = cfg.quick.position === 'side' ? quick.map(qb).join('') : '';
     el.side.style.display = cfg.quick.position === 'side' && quick.length ? '' : 'none';
-    el.menu.innerHTML = quick.map(function (q) { return '<button type="button" data-q="' + q[0] + '">' + esc(q[1]) + '</button>'; }).join('');
+    el.menu.innerHTML = cfg.quick.position === 'dropdown' ? quick.map(qb).join('') : '';
     el.menu.style.display = ui.menu && cfg.quick.position === 'dropdown' ? '' : 'none';
 
     var gr = gridHtml();
@@ -366,10 +377,11 @@
     el.grid.innerHTML = gr.html;
 
     var sum = Cf.summary(stateOut(), cfg, 3);
-    el.draft.textContent = (live ? 'Filter: ' : 'Selected: ') + (sum || cfg.box.placeholder);
+    el.draft.textContent = ui.note || (live ? 'Filter: ' : 'Selected: ') + (sum || cfg.box.placeholder);
+    el.draft.classList.toggle('is-note', !!ui.note);
 
     var n = '';
-    if (data.hasNull) { // no null dates in the data: nothing to choose
+    if (data.hasNull) { // no null dates: nothing to choose
       if (cfg.nulls.control === 'seg') {
         n = '<span class="lbl">Null dates</span><div class="seg seg--sm" role="group" aria-label="Null dates">' + [['include', 'Include'], ['exclude', 'Exclude'], ['only', 'Only']].map(function (o) {
           return '<button type="button" data-null="' + o[0] + '" class="' + (st.nullState === o[0] ? 'is-on' : '') + '" aria-pressed="' + (st.nullState === o[0]) + '">' + o[1] + '</button>';
@@ -384,11 +396,11 @@
       ? '<button type="button" class="btn btn--primary" data-done="1">Close</button>'
       : '<button type="button" class="btn" data-cancel="1">Cancel</button><button type="button" class="btn btn--primary" data-apply="1">Apply</button>');
 
-    el.help.textContent = Cf.helpText(cfg) + ' · Esc: ' + (live ? 'close' : 'cancel');
+    el.help.textContent = Cf.helpText(cfg, data.rangeOnly) + ' · Esc: ' + (live ? 'close' : 'cancel');
     el.help.style.display = cfg.window.help ? '' : 'none';
   }
 
   window.addEventListener('resize', function () { if (cfg) render(); });
 
-  window.CalendarFilterPicker = { init: init, _stats: function (a, b) { return stats(a, b); } };
+  window.CalendarFilterPicker = { init: init };
 })();
