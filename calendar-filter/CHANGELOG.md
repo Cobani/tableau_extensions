@@ -1,5 +1,8 @@
 # Calendar Filter — changelog
 
+## 1.0.1 — 2026-11-23
+- New defaults: compact 20 px text box (9 px text, “All Dates”), 12 px regular title in grey, small calendar window, no padding around the box.
+
 ## 1.0.0
 - New extension: a text box with the dates chosen; a click opens a calendar window (Tableau's dialog, not limited to the zone) to filter by year, month, week or day.
 - Sets the date filter on the sheet's Filters shelf (Exact Date values or a range of dates), so the choice shows in the Filters pane and is saved with the workbook.

@@ -42,30 +42,30 @@
       mode: 'field', // field (the date field's name) | custom | none
       text: '', // used when mode = custom
       font: 'Lato',
-      size: 11,
-      weight: 700,
-      color: '#68707D',
+      size: 12,
+      weight: 400,
+      color: '#555555',
       italic: false
     },
     // ---- The text box on the dashboard ---------------------------------------
     box: {
-      placeholder: 'All dates', // shown when nothing is filtered
+      placeholder: 'All Dates', // shown when nothing is filtered
       clearButton: true, // × in the box clears the filter without opening the calendar
       icon: true, // calendar icon at the left
       font: 'Lato',
-      size: 13,
+      size: 9,
       weight: 400,
-      color: '#17202B',
+      color: '#05070A',
       italic: false,
       bgColor: '#FFFFFF',
       borderColor: '#C9CDD4',
       radius: 4, // px
-      height: 24 // px
+      height: 20 // px
     },
     // ---- The calendar window (Tableau's dialog window) -----------------------
     window: {
       apply: 'button', // button (Apply / Cancel) | live (every click filters straight away)
-      size: 'M', // S | M | L, see WINDOW_SIZES
+      size: 'S', // S | M | L, see WINDOW_SIZES
       dialog: 'onTop', // onTop (Modal: stays in front of Tableau) | floating (Modeless)
       help: true // how-to line at the bottom (click, Shift, Ctrl/⌘, drag)
     },
@@ -115,7 +115,7 @@
       field: '' // the filter's field name; empty = the first date filter on the shelf
     },
     card: {
-      padding: 4, // px around the text box
+      padding: 0, // px around the text box
       bgColor: '#FFFFFF',
       bgOpacity: 0
     }
@@ -127,8 +127,7 @@
   /** Brand themes (shared/theme.js): plain look settings only. Default.json must change nothing. */
   var THEME_MAP = {
     'fonts.family': ['title.font', 'box.font', 'look.font'],
-    'colors.title': ['title.color'],
-    'colors.text': ['box.color', 'look.textColor'],
+    'colors.text': ['look.textColor'],
     'colors.muted': ['look.mutedColor'],
     'colors.axisLine': ['box.borderColor'],
     'colors.background': ['card.bgColor', 'box.bgColor', 'look.bgColor'],

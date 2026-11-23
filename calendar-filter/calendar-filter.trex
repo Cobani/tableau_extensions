@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
-  <worksheet-extension id="com.ilyascoban.vizext.calendarfilter" extension-version="1.0.0">
+  <worksheet-extension id="com.ilyascoban.vizext.calendarfilter" extension-version="1.0.1">
     <default-locale>en_US</default-locale>
     <name resource-id="name"/>
     <description>Calendar Filter: a text box that shows the dates chosen and opens a calendar window to set the date filter on the Filters shelf by year, month, week or day, with ranges, several values, quick ranges and null dates. Start date and End date set which dates the calendar offers.</description>

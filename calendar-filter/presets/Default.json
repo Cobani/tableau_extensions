@@ -3,33 +3,33 @@
   "version": 1,
   "name": "Default",
   "scope": "look",
-  "exported": "2026-11-23T10:00:00.000Z",
+  "exported": "2026-11-23T17:30:00.000Z",
   "settings": {
     "title": {
       "mode": "field",
       "font": "Lato",
-      "size": 11,
-      "weight": 700,
-      "color": "#68707D",
+      "size": 12,
+      "weight": 400,
+      "color": "#555555",
       "italic": false
     },
     "box": {
-      "placeholder": "All dates",
+      "placeholder": "All Dates",
       "clearButton": true,
       "icon": true,
       "font": "Lato",
-      "size": 13,
+      "size": 9,
       "weight": 400,
-      "color": "#17202B",
+      "color": "#05070A",
       "italic": false,
       "bgColor": "#FFFFFF",
       "borderColor": "#C9CDD4",
       "radius": 4,
-      "height": 24
+      "height": 20
     },
     "window": {
       "apply": "button",
-      "size": "M",
+      "size": "S",
       "dialog": "onTop",
       "help": true
     },
@@ -78,13 +78,13 @@
       "mutedColor": "#68707D",
       "bgColor": "#FFFFFF"
     },
-    "card": {
-      "padding": 4,
-      "bgColor": "#FFFFFF",
-      "bgOpacity": 0
-    },
     "range": {
       "source": "tiles"
+    },
+    "card": {
+      "padding": 0,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0
     }
   }
 }

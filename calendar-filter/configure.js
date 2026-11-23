@@ -108,7 +108,7 @@
     if (cfg.title.mode !== 'none') fontRows(g1, 'title');
 
     var g2 = group(p, 'Text box');
-    g2.appendChild(textRow('When nothing is filtered', 'box.placeholder', 'All dates'));
+    g2.appendChild(textRow('When nothing is filtered', 'box.placeholder', 'All Dates'));
     g2.appendChild(checkboxRow('Clear button (×)', 'box.clearButton'));
     g2.appendChild(help('Clears the filter without opening the calendar. Shown only while something is filtered.'));
     g2.appendChild(checkboxRow('Calendar icon', 'box.icon'));

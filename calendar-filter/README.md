@@ -36,8 +36,8 @@ Data used in the examples is made up.
 
    Right-click the filter → **Apply to Worksheets → All Using This Data Source** (or *Selected
    Worksheets*), so it filters the dashboard. Show its filter card if you like; it stays in step.
-4. **Dashboard.** Put the worksheet on the dashboard. A short zone is enough (about 46 px high with
-   the title, 28 px without).
+4. **Dashboard.** Put the worksheet on the dashboard. A short zone is enough (about 40 px high with
+   the title, 22 px without).
 
 That's it: click the text box, pick dates, press **Apply**. The filter in the Filters pane changes;
 a change made in the Filters pane (or a reset, or a custom view) shows up in the text box too.
@@ -67,7 +67,7 @@ Weeks show their number (**W47**). Week 1 is the week that holds 1 January, like
 
 | Tab | Settings |
 |---|---|
-| **Text box** | Title above the box (field name, custom text or none) and its font · text when nothing is filtered · × clear button · calendar icon · height (24 px by default), corners, colours, font |
+| **Text box** | Title above the box (field name, custom text or none) and its font · text when nothing is filtered · × clear button · calendar icon · height (20 px by default), corners, colours, font |
 | **Window** | Filter the dashboard *On Apply* or *Live, on every click* · window size (Small / Medium / Large) · on top of Tableau or floating · how-to line |
 | **Calendar** | Date filter to set (when the Filters shelf has several) · week starts on (Sunday, Monday, Saturday) · which granularities are offered · opens at (default **Day**) · days of the next / previous month · click behaviour (Standard, Toggle, Single value, Range only) · drag to select · periods with no data clickable or not · null dates control and default |
 | **Quick ranges** | Where they appear (list on the left, dropdown, chips, off) · count back from today or from the latest date in the data · which ones are listed |
