@@ -93,7 +93,7 @@
     // ---- Quick ranges (Today, Month to date, …) ----------------------------------
     quick: {
       position: 'side', // side (list on the left) | dropdown | chips | off
-      anchor: 'today', // today | data (latest date in the data)
+      anchor: 'today', // today | data (the End date tile)
       items: quickItems // which quick ranges are listed
     },
     // ---- Look of the calendar ---------------------------------------------------
@@ -103,6 +103,12 @@
       textColor: '#17202B',
       mutedColor: '#68707D', // weekday letters, week numbers, help text
       bgColor: '#FFFFFF' // window background
+    },
+    // ---- Where the calendar's first and last dates come from -------------------------
+    range: {
+      source: 'tiles', // tiles (Start date / End date on the Marks card) | params (two date parameters)
+      startParam: '', // parameter names, used when source = params
+      endParam: ''
     },
     // ---- Which filter on the Filters shelf is set ---------------------------------
     filter: {

@@ -82,6 +82,9 @@
       "padding": 4,
       "bgColor": "#FFFFFF",
       "bgOpacity": 0
+    },
+    "range": {
+      "source": "tiles"
     }
   }
 }

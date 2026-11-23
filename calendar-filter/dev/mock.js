@@ -28,6 +28,7 @@
     datetime: 'Exact Date filter on a date-time',
     nonull: 'Exact Date filter, no null dates',
     relative: 'Relative-date filter (message)',
+    params: 'Start / End from two date parameters',
     nofilter: 'No filter on the Filters shelf (message)',
     notiles: 'Nothing on Start / End (message)'
   };
@@ -147,8 +148,25 @@
   // ---- Settings ----------------------------------------------------------------
   function readSettings () {
     try { const s = localStorage.getItem(SET_KEY); if (s) return JSON.parse(s); } catch (e) { /* ignore */ }
+    // The "params" data set starts with the two parameters chosen, until the Format dialog saves something.
+    if (dataName === 'params') return { calendarFilter1: JSON.stringify({ range: { source: 'params', startParam: 'Report Start', endParam: 'Report End' } }) };
     return {};
   }
+
+  // ---- Parameters (the "params" data set uses two of them) --------------------------
+  function makeParam (name, dataType, value) {
+    const handlers = [];
+    const p = {
+      name: name,
+      id: '[Parameters].[' + name + ']',
+      dataType: dataType,
+      currentValue: dv(value),
+      addEventListener: function (t, h) { if (t === 'parameter-changed') handlers.push(h); return function () {}; },
+      _set: function (v) { p.currentValue = dv(v); handlers.slice().forEach(function (h) { h({ getParameterAsync: function () { return Promise.resolve(p); } }); }); }
+    };
+    return p;
+  }
+  const PARAMETERS = [makeParam('Report Start', 'date', '2025-01-01'), makeParam('Report End', 'date', MAX_DAY), makeParam('Region', 'string', 'Northland')];
   let pending = readSettings();
   const settingsHandlers = [];
   const filterHandlers = [];
@@ -178,10 +196,18 @@
       writeFilter(KIND === 'range' ? { min: last[0], max: last[last.length - 1], nullOption: 'non-null-values' } : { values: [].concat.apply([], last.map(rawOf)), exclude: false });
     }
     if (d.type === 'cf-external-clear' && !isDialog) writeFilter({ all: true });
+    if (d.type === 'cf-param' && !isDialog) {
+      // Moves Report End back one month, as a parameter control on the dashboard would.
+      const p = PARAMETERS[1];
+      const t = new Date(p.currentValue.value + 'T00:00:00Z');
+      t.setUTCMonth(t.getUTCMonth() - 1);
+      p._set(iso(t.getTime()));
+    }
   });
 
   const worksheet = {
     name: 'Calendar (mock)',
+    getParametersAsync: function () { return Promise.resolve(PARAMETERS.slice()); },
     getFiltersAsync: function () { return Promise.resolve(dataName === 'nofilter' ? [] : [makeFilter()]); },
     applyFilterAsync: function (field, values, updateType, options) {
       console.log('mock applyFilterAsync', field, (values || []).length + ' values', JSON.stringify((values || []).slice(0, 4)), updateType, JSON.stringify(options || {}));
@@ -212,7 +238,7 @@
       });
     },
     getVisualSpecificationAsync: function () {
-      const enc = dataName === 'notiles' ? [] : [
+      const enc = dataName === 'notiles' || dataName === 'params' ? [] : [
         { id: 'start', field: { id: '[mock].[none:Calculation_start:ok]', name: 'Start Date' } },
         { id: 'end', field: { id: '[mock].[none:Calculation_end:ok]', name: 'End Date' } }
       ];
@@ -227,7 +253,7 @@
 
   window.tableau = {
     TableauEventType: {
-      SummaryDataChanged: 'summary-data-changed', SettingsChanged: 'settings-changed',
+      SummaryDataChanged: 'summary-data-changed', SettingsChanged: 'settings-changed', ParameterChanged: 'parameter-changed',
       FilterChanged: 'filter-changed', DialogMessageReceived: 'dialog-message-received'
     },
     DialogStyle: { Modal: 'modal', Modeless: 'modeless', Window: 'window' },

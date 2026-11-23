@@ -31,6 +31,7 @@
         <option value="range">Range-of-dates filter</option>
         <option value="datetime">Exact Date filter on a date-time</option>
         <option value="nonull">Exact Date filter, no null dates</option>
+        <option value="params">Start / End from two date parameters</option>
         <option value="relative">Relative-date filter (message)</option>
         <option value="nofilter">No filter on the shelf (message)</option>
         <option value="notiles">Nothing on Start / End (message)</option>
@@ -39,6 +40,7 @@
     <button id="fmt" type="button">Format Extension</button>
     <button id="external" type="button">Change the filter in Tableau</button>
     <button id="externalClear" type="button">Clear the filter in Tableau</button>
+    <button id="param" type="button">End parameter −1 month</button>
     <button id="reload" type="button">Reload the zone</button>
     <button id="reset" type="button">Reset settings + filter</button>
     <span class="note">Click the text box to open the calendar. Drag the zone's corner to resize. Add ?debug for timings.</span>
@@ -69,6 +71,7 @@
   });
   document.getElementById('fmt').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-configure' }, '*'); });
   document.getElementById('external').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-external' }, '*'); });
+  document.getElementById('param').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-param' }, '*'); });
   document.getElementById('externalClear').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-external-clear' }, '*'); });
   document.getElementById('dlgX').addEventListener('click', function () { closeDlg(); });
 

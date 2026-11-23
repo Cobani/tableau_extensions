@@ -14,6 +14,8 @@
  *   end     End date: the last day, e.g. {MAX([Onboarding Start Date])}
  * Use FIXED level-of-detail calculations: they are computed before the date filter, so the calendar
  * keeps showing every date between Start and End while the filter narrows this very sheet.
+ * Or (Format → Calendar → First and last dates from: Parameters) two date parameters give the
+ * first and last day instead; then the tiles are not needed, and ParameterChanged redraws.
  *
  * The date filter (found with getFiltersAsync; Format → Calendar → Date filter picks one when the
  * shelf has several):
@@ -40,6 +42,7 @@
   var ownChange = 0;         // time of our last filter call (its FilterChanged is ours)
   var notice = '';           // short warning under the box
   var lastRange = null;      // { start, end } from the last read that had them
+  var watched = {};          // parameter names that already have a ParameterChanged listener
 
   // ---------------------------------------------------------------------------
   // Init
@@ -77,7 +80,7 @@
       tableau.extensions.settings.addEventListener(tableau.TableauEventType.SettingsChanged, function () {
         var before = cfg;
         cfg = Cf.read();
-        if (before.filter.field !== cfg.filter.field) { scheduleRefresh(); return; }
+        if (before.filter.field !== cfg.filter.field || JSON.stringify(before.range) !== JSON.stringify(cfg.range)) { lastRange = null; scheduleRefresh(); return; }
         if (before.calendar.weekStart !== cfg.calendar.weekStart && applied.gran === 'W' && applied.sel.length) {
           applied = Cf.emptyState(cfg);
           applyFilter();
@@ -134,11 +137,15 @@
   function configure () {
     var options = { width: 520, height: 720 };
     if (tableau.DialogStyle && tableau.DialogStyle.Modal) options.dialogStyle = tableau.DialogStyle.Modal;
-    var payload = JSON.stringify({
-      field: model ? model.caption : '',
-      filters: model ? model.filterNames : []
-    });
-    return tableau.extensions.ui.displayDialogAsync(folderUrl() + 'configure.html', payload, options).catch(function (err) {
+    // The dialog can't read the worksheet: send the filter and (date) parameter names.
+    return readParams().then(function (list) {
+      var payload = JSON.stringify({
+        field: model ? model.caption : '',
+        filters: model ? model.filterNames : [],
+        parameters: list.filter(function (p) { return /date/i.test(String(p.dataType || '')); }).map(function (p) { return p.name; })
+      });
+      return tableau.extensions.ui.displayDialogAsync(folderUrl() + 'configure.html', payload, options);
+    }).catch(function (err) {
       var closed = tableau.ErrorCodes && err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
       if (!closed) console.error('Calendar Filter dialog error:', err);
     });
@@ -335,6 +342,41 @@
     }
   }
 
+  /** The worksheet's parameters ([] when Tableau can't list them). */
+  function readParams () {
+    if (!worksheet || !worksheet.getParametersAsync) return Promise.resolve([]);
+    return Promise.resolve(worksheet.getParametersAsync()).then(function (l) { return l || []; }, function (e) {
+      console.warn('Calendar Filter: could not read the parameters', e);
+      return [];
+    });
+  }
+
+  /**
+   * Start / End from two date parameters: { start, end } days, or { issue }. Watches them, so a
+   * change on the dashboard redraws the calendar.
+   */
+  async function rangeFromParams () {
+    var r = cfg.range;
+    if (!r.startParam || !r.endParam) return { issue: 'Choose the start and end parameters in <b>Format Extension → Calendar</b>.' };
+    var list = await withRetry(function () { return worksheet.getParametersAsync(); }, 'getParametersAsync');
+    var find = function (n) { return (list || []).find(function (p) { return p.name === n; }) || null; };
+    var ps = find(r.startParam);
+    var pe = find(r.endParam);
+    var missing = [ps ? null : r.startParam, pe ? null : r.endParam].filter(Boolean);
+    if (missing.length) return { issue: 'The parameter “' + ExtCore.esc(missing[0]) + '” was not found. Choose another in <b>Format Extension → Calendar</b>.' };
+    [ps, pe].forEach(function (p) {
+      if (watched[p.name] || !p.addEventListener) return;
+      watched[p.name] = true;
+      p.addEventListener(tableau.TableauEventType.ParameterChanged, function () {
+        if (cfg.range.source === 'params' && (cfg.range.startParam === p.name || cfg.range.endParam === p.name)) requestRefresh();
+      });
+    });
+    var a = Cf.cellDay(ps.currentValue);
+    var b = Cf.cellDay(pe.currentValue);
+    if (a == null || b == null) return { issue: 'The start and end parameters need date values (Data type: Date or Date & Time).' };
+    return { start: Math.min(a, b), end: Math.max(a, b) };
+  }
+
   async function refresh () {
     var token = ++renderToken;
     var T = window.ExtTiming || { mark: function () {}, done: function () {} };
@@ -348,7 +390,9 @@
       var filters = await withRetry(function () { return worksheet.getFiltersAsync(); }, 'getFiltersAsync');
       if (token !== renderToken) return;
       if (first) T.mark('data received');
-      var m = await buildModel(table, fields, filters || []);
+      var fromParams = cfg.range.source === 'params' ? await rangeFromParams() : null;
+      if (token !== renderToken) return;
+      var m = await buildModel(table, fields, filters || [], fromParams);
       if (token !== renderToken) return;
       model = m;
       if (!m.issue && m.filter) applied = stateFromFilter(m.filter);
@@ -414,18 +458,23 @@
    *   raw: { day: [values as the filter lists them] } · hasNull · nullRaw · caption · filterNames · issue
    * }
    */
-  async function buildModel (table, fields, filters) {
+  async function buildModel (table, fields, filters, fromParams) {
     var m = { range: null, filter: null, kind: '', days: null, raw: {}, hasNull: false, nullRaw: [], caption: '', filterNames: [], issue: '' };
     m.filterNames = filters.map(function (f) { return f.fieldName; });
-    if (!fields.start || !fields.end) {
-      m.issue = 'Drop the first date on <b>Start date</b> and the last date on <b>End date</b>, e.g. <code>{MIN([Order Date])}</code> and <code>{MAX([Order Date])}</code>.';
-      return m;
+    if (fromParams) {
+      if (fromParams.issue) { m.issue = fromParams.issue; return m; }
+      m.range = { start: fromParams.start, end: fromParams.end };
+    } else {
+      if (!fields.start || !fields.end) {
+        m.issue = 'Drop the first date on <b>Start date</b> and the last date on <b>End date</b>, e.g. <code>{MIN([Order Date])}</code> and <code>{MAX([Order Date])}</code> — or use two date parameters (<b>Format Extension → Calendar</b>).';
+        return m;
+      }
+      var s = dayIn(table, fields.start);
+      var e = dayIn(table, fields.end, s.col ? [s.col] : []);
+      if (s.day != null && e.day != null) lastRange = { start: Math.min(s.day, e.day), end: Math.max(s.day, e.day) };
+      // A filter that leaves this sheet with no rows empties Start / End: keep the last ones seen.
+      m.range = lastRange;
     }
-    var s = dayIn(table, fields.start);
-    var e = dayIn(table, fields.end, s.col ? [s.col] : []);
-    if (s.day != null && e.day != null) lastRange = { start: Math.min(s.day, e.day), end: Math.max(s.day, e.day) };
-    // A filter that leaves this sheet with no rows empties Start / End: keep the last ones seen.
-    m.range = lastRange;
 
     var want = cfg.filter.field;
     var f = want ? filters.find(function (x) { return x.fieldName === want; }) : null;

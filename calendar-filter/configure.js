@@ -14,6 +14,7 @@
   var activeTab = 'box';
   var fieldName = ''; // the date filter's name, sent by the text box
   var filterNames = []; // the filters on the sheet's Filters shelf
+  var paramNames = []; // the workbook's date parameters
 
   const kit = ExtDialog.kit({
     get: get,
@@ -31,7 +32,7 @@
   var TABS = [
     { id: 'box', label: 'Text box', build: buildBoxTab, keys: ['title', 'box'] },
     { id: 'window', label: 'Window', build: buildWindowTab, keys: ['window'] },
-    { id: 'calendar', label: 'Calendar', build: buildCalendarTab, keys: ['filter', 'calendar', 'selection', 'nulls'] },
+    { id: 'calendar', label: 'Calendar', build: buildCalendarTab, keys: ['filter', 'range', 'calendar', 'selection', 'nulls'] },
     { id: 'quick', label: 'Quick ranges', build: buildQuickTab, keys: ['quick'] },
     { id: 'look', label: 'Look', build: buildLookTab, keys: ['look', 'card'] },
     { id: 'presets', label: 'Presets', build: buildPresetsTab, keys: [] }
@@ -46,7 +47,8 @@
         var pl = JSON.parse(payload || '{}');
         fieldName = pl.field || '';
         filterNames = Array.isArray(pl.filters) ? pl.filters : [];
-      } catch (e) { fieldName = ''; filterNames = []; }
+        paramNames = Array.isArray(pl.parameters) ? pl.parameters : [];
+      } catch (e) { fieldName = ''; filterNames = []; paramNames = []; }
       cfg = Cf.read();
       original = Cf.clone(cfg);
       buildTabs();
@@ -144,6 +146,25 @@
     g0.appendChild(selectRow('Filter to set', 'filter.field', opts));
     g0.appendChild(help('The filter on this sheet’s Filters shelf that the calendar writes to. Exact Date values allow any days (several, ranges, nulls); a range of dates holds one continuous range. Set the filter to Apply to Worksheets → All Using This Data Source so it filters the dashboard.'));
 
+    var gr = group(p, 'First and last dates');
+    gr.appendChild(segRow('Come from', 'range.source', [['tiles', 'Start / End tiles'], ['params', 'Parameters']], rebuild));
+    if (cfg.range.source === 'params') {
+      var popts = function (cur) {
+        var list = [['', 'Choose a parameter…']];
+        var names = paramNames.slice();
+        if (cur && names.indexOf(cur) < 0) names.push(cur);
+        names.forEach(function (n) { list.push([n, n]); });
+        return list;
+      };
+      gr.appendChild(selectRow('Start parameter', 'range.startParam', popts(cfg.range.startParam)));
+      gr.appendChild(selectRow('End parameter', 'range.endParam', popts(cfg.range.endParam)));
+      gr.appendChild(help(paramNames.length
+        ? 'The calendar offers every date from the start parameter to the end parameter, and follows them when they change. The Start date and End date tiles are not needed.'
+        : 'No date parameters found. Create two parameters with Data type Date, then close this window and open Format Extension again.'));
+    } else {
+      gr.appendChild(help('FIXED calculations on the Start date and End date tiles, e.g. {MIN([Order Date])} and {MAX([Order Date])}. To use parameters there, wrap each in a calculated field — or choose Parameters above.'));
+    }
+
     var g1 = group(p, 'Calendar');
     g1.appendChild(selectRow('Week starts on', 'calendar.weekStart', [[0, 'Sunday'], [1, 'Monday'], [6, 'Saturday']]));
     g1.appendChild(help('Changes the Week rows, their numbers (week 1 holds 1 January, like Tableau’s WEEK) and the day columns. A week filter in force is cleared when this changes.'));
@@ -185,8 +206,8 @@
   function buildQuickTab (p) {
     var g1 = group(p, 'Quick ranges');
     g1.appendChild(selectRow('Where', 'quick.position', [['side', 'List on the left'], ['dropdown', 'Dropdown in the header'], ['chips', 'Chips under the header'], ['off', 'Off']]));
-    g1.appendChild(selectRow('Count back from', 'quick.anchor', [['today', 'Today'], ['data', 'The latest date in the data']],
-      'Latest date suits data that lands a day or two late: “Last 7 days” then ends on the last loaded day.'));
+    g1.appendChild(selectRow('Count back from', 'quick.anchor', [['today', 'Today'], ['data', 'The End date']],
+      'End date suits data that lands a day or two late: “Last 7 days” then ends on the End date.'));
     g1.appendChild(help('“To date” ranges and “Last 7 / 30 days” pick exact days, so they switch the calendar to Day. A quick range whose granularity is switched off is not listed.'));
     var g2 = group(p, 'Listed');
     Cf.QUICK.forEach(function (q) { g2.appendChild(checkboxRow(q[1], 'quick.items.' + q[0])); });
@@ -217,7 +238,8 @@
   /** Settings that belong to this sheet; "Look only" presets leave them out. */
   var FIELD_PATHS = [
     'title.text', // custom title text
-    'filter.field' // which filter on this sheet's Filters shelf is set
+    'filter.field', // which filter on this sheet's Filters shelf is set
+    'range.startParam', 'range.endParam' // this workbook's parameters
   ];
 
   var PRESET_VERSION = 1;
@@ -332,8 +354,8 @@
     rScope.appendChild(seg);
     g1.appendChild(rScope);
     g1.appendChild(help(presetUi.scope === 'look'
-      ? 'Every setting except the custom title text and the chosen date filter.'
-      : 'Every setting, including the custom title text and the chosen date filter.'));
+      ? 'Every setting except the custom title text, the chosen date filter and parameters.'
+      : 'Every setting, including the custom title text, the chosen date filter and parameters.'));
 
     var ta = h('textarea', { className: 'preset-json', readOnly: true, spellcheck: false });
     var current = function () { return JSON.stringify(makePreset(presetUi.scope, presetUi.name.trim()), null, 2); };
@@ -371,7 +393,7 @@
       var input = h('input', { type: 'checkbox' });
       input.checked = presetUi.keepFields;
       input.addEventListener('change', function () { presetUi.keepFields = input.checked; });
-      r.appendChild(h('div', { className: 'inline' }, [input, h('span', { className: 'help preset-inline-help', textContent: 'custom title text and date filter' })]));
+      r.appendChild(h('div', { className: 'inline' }, [input, h('span', { className: 'help preset-inline-help', textContent: 'custom title text, date filter and parameters' })]));
       return r;
     })());
     var file = h('input', { type: 'file', accept: '.json,application/json,text/plain' });
