@@ -1,6 +1,6 @@
 # AGENTS.md — how to work on this repo (for any AI model or person)
 
-Tableau **viz (worksheet) extensions**, hosted on GitHub Pages. Fifteen extensions, one folder each, no
+Tableau **viz (worksheet) extensions**, hosted on GitHub Pages. Sixteen extensions, one folder each, no
 dependencies, no build step. Read this file before touching anything; it replaces exploring the tree.
 `BACKLOG.md` lists the work that is planned next, each item written as a ready-to-run task.
 
@@ -47,7 +47,7 @@ elegance.
 | No outside hosts, CDNs, analytics, or new runtime dependencies | The hosting network blocks them; one safe-list entry must cover everything |
 | Example, mock and screenshot data is made up: generic retail names, invented place names (Harbor St, Northland), no real companies, banks, products, systems, countries or cities | The repo is public |
 | Secrets never go in tracked files, remote URLs, logs or chat | — |
-| `shared/` changes need a test and a check of every extension | One file, fifteen extensions |
+| `shared/` changes need a test and a check of every extension | One file, sixteen extensions |
 | Bundled presets hold **every** setting of their chart (field-specific paths excepted) | `tests/presets.test.js` enforces it |
 | Do not edit `shared/lib/`, `**/icons.js` by hand, or anything third-party | Generated / vendored |
 | The licence situation, the author's contact details in `.trex`, and the push-token setup stay as they are | Owner's decisions |
@@ -95,6 +95,7 @@ tools/make_icons.py manifest icons
 | maturity-ladder | chart.js | MaturityLadder / Ml / MaturityLadderConfigure | maturityLadder1 | maturity-ladder.trex |
 | parameter-switcher | chart.js | ParameterSwitcher / Ps / ParameterSwitcherConfigure | parameterSwitcher1 | parameter-switcher.trex |
 | narrative-card | chart.js | NarrativeCard / Nc / NarrativeCardConfigure | narrativeCard1 | narrative-card.trex |
+| calendar-filter | chart.js (+ picker.js: the calendar window) | CalendarFilter / Cf / CalendarFilterConfigure (+ CalendarFilterPicker) | calendarFilter1 | calendar-filter.trex |
 
 Versions: `python3 release.py versions`. Manifest id: `com.ilyascoban.vizext.<slug without dashes>`;
 hosted at `https://cobani.github.io/tableau_extensions/<slug>/`.
@@ -120,6 +121,10 @@ over SVG links).
 - The dialog cannot read the worksheet: the chart sends what it needs in the dialog payload.
 - Rows are capped by `data.maxRows` (default 1,000; 0 = all) via `ExtCore.readSummary`; a truncated
   read shows the corner note through `ExtCore.rowNotice`.
+  Exception: **calendar-filter** has no row limit (it always reads every date; decided Nov 2026).
+- A calendar-style control can open its own window with `displayDialogAsync` (calendar-filter's
+  picker.html); the window talks back with `closeDialog(payload)` and, for live updates,
+  `sendDialogMessageToParentAsync` → `DialogMessageReceived` on `tableau.extensions.ui`.
 
 ## 5. Recipes
 

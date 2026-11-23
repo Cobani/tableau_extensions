@@ -11,7 +11,7 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 ![Hosted on GitHub Pages](https://img.shields.io/badge/hosted%20on-GitHub%20Pages-222)
 
 [KPI Card](#kpi-card) · [KPI Card Multi](#kpi-card-multi) · [Waterfall](#waterfall) · [Line Chart](#line-chart) · [Bar Chart](#bar-chart) · [Matrix](#matrix) · [Data Lineage](#data-lineage)<br>
-[Sankey](#sankey) · [Funnel](#funnel) · [Bullet & Gauge](#bullet--gauge) · [Cohort Grid](#cohort-grid) · [Treemap & Donut](#treemap--donut) · [Maturity Ladder](#maturity-ladder) · [Parameter Switcher](#parameter-switcher) · [Narrative Card](#narrative-card)
+[Sankey](#sankey) · [Funnel](#funnel) · [Bullet & Gauge](#bullet--gauge) · [Cohort Grid](#cohort-grid) · [Treemap & Donut](#treemap--donut) · [Maturity Ladder](#maturity-ladder) · [Parameter Switcher](#parameter-switcher) · [Narrative Card](#narrative-card) · [Calendar Filter](#calendar-filter)
 
 </div>
 
@@ -48,6 +48,7 @@ Drop fields on the Marks card, style everything from a Format dialog, no code in
 | <img src="maturity-ladder/examples/example-1.png" width="120"> | [**Maturity Ladder**](#maturity-ladder) | Amounts falling due per time bucket, stacked by group, with a running total | Maturity date · Amount · Group · Item | [`maturity-ladder.trex`](maturity-ladder/maturity-ladder.trex) |
 | <img src="parameter-switcher/examples/example-1.png" width="120"> | [**Parameter Switcher**](#parameter-switcher) | Tabs, buttons, pills, a toggle or a stepper that set a Tableau parameter | Options (optional) | [`parameter-switcher.trex`](parameter-switcher/parameter-switcher.trex) |
 | <img src="narrative-card/examples/example-1.png" width="120"> | [**Narrative Card**](#narrative-card) | Sentences you write, with live numbers, changes and conditions inside | Measures · Date | [`narrative-card.trex`](narrative-card/narrative-card.trex) |
+| <img src="calendar-filter/examples/example-1.png" width="120"> | [**Calendar Filter**](#calendar-filter) | A text box that opens a calendar window to filter by year, month, week or day | Date, Value (optional) | [`calendar-filter.trex`](calendar-filter/calendar-filter.trex) |
 
 ## What every extension can do
 
@@ -415,6 +416,26 @@ Sentences written by the dashboard builder, with live numbers inside: `{Revenue}
 
 ---
 
+
+## Calendar Filter
+
+<p>
+  <img src="calendar-filter/examples/example-1.png" alt="Calendar Filter example 1" width="340">
+  <img src="calendar-filter/examples/example-2.png" alt="Calendar Filter example 2" width="340">
+</p>
+
+A filter, not a chart: a **text box** with the dates chosen; a click opens a **calendar window** (Tableau's dialog, not limited to the zone). Works with a dashboard **Filter action** on this sheet.
+
+**Tiles:** `Date` (1 date at day level), `Value` (1 measure, optional — shown in the cells and used to shade them).
+
+- Filter by **year, month, week (with week numbers) or day**; switching granularity clears the choice.
+- Single values, **ranges** (Shift-click or drag) and **several values** (Ctrl/⌘-click); a how-to line at the bottom.
+- **Quick ranges**: Today … Month to date … Last year, counted back from today or the latest date in the data.
+- **Null dates**: Include, Exclude or Only.
+- **Apply / Cancel**, or **Live** filtering on every click. Weeks start on Sunday (or Monday / Saturday).
+- No row limit: every date is read.
+
+[Full documentation →](calendar-filter/README.md)
 ## Getting started in Tableau
 
 1. Download the extension's `.trex` file from the table above (or from its folder).
@@ -484,6 +505,7 @@ Then open a browser preview with sample data, no Tableau needed (add `?debug` fo
 | Maturity Ladder | http://localhost:8766/maturity-ladder/dev/preview.html |
 | Parameter Switcher | http://localhost:8766/parameter-switcher/dev/preview.html |
 | Narrative Card | http://localhost:8766/narrative-card/dev/preview.html |
+| Calendar Filter | http://localhost:8766/calendar-filter/dev/preview.html |
 
 The local server also lists your Tableau shape palettes (from *My Tableau Repository* and the Tableau Desktop install) for the icon pickers. Python 3 standard library only.
 

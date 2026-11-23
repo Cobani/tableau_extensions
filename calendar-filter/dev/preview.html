@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Calendar Filter — dev preview</title>
+<style>
+  body { margin: 0; font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #263244; background: #eef0f2; }
+  .bar { display: flex; gap: 14px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e2e4e8; flex-wrap: wrap; }
+  .bar b { font-size: 14px; }
+  button, select { font: inherit; padding: 4px 10px; }
+  .note { color: #68707d; }
+  .tw { position: relative; margin: 16px; height: 620px; background: #fff; border: 1px solid #d5d9df; border-radius: 6px; overflow: hidden; }
+  .dash { padding: 16px; }
+  .dash h2 { margin: 0 0 12px; font-size: 16px; }
+  .zone { resize: both; overflow: hidden; width: 300px; height: 64px; border: 1px dashed #c8ccd2; }
+  .zone iframe, .dlg iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .sel { margin-top: 14px; padding: 10px 12px; background: #f6f7f9; border-radius: 6px; font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; max-width: 820px; }
+  .backdrop { position: absolute; inset: 0; background: rgba(20, 24, 30, .25); display: none; }
+  .dlg { position: absolute; display: none; background: #fff; border: 1px solid #b9bec5; border-radius: 6px; box-shadow: 0 12px 36px rgba(0,0,0,.25); flex-direction: column; overflow: hidden; }
+  .dlgbar { height: 26px; flex: none; background: #f0f1f3; border-bottom: 1px solid #dcdfe3; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 11px; color: #444; }
+  .dlgbar b { cursor: pointer; font-size: 15px; padding: 0 4px; }
+  .dlg .frame { flex: 1; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <b>Calendar Filter — dev preview</b>
+    <label>Data
+      <select id="data">
+        <option value="default">Order Date + Value, 42 null dates</option>
+        <option value="novalue">No Value tile</option>
+        <option value="datetime">Date-time (several rows a day)</option>
+        <option value="nonull">No null dates</option>
+        <option value="month">Date at month level (message)</option>
+        <option value="empty">Nothing on the Date tile</option>
+      </select>
+    </label>
+    <button id="fmt" type="button">Format Extension</button>
+    <button id="external" type="button">Clear selection in Tableau</button>
+    <button id="reload" type="button">Reload the zone</button>
+    <button id="reset" type="button">Reset settings + selection</button>
+    <span class="note">Click the text box to open the calendar. Drag the zone's corner to resize. Add ?debug for timings.</span>
+  </div>
+  <div class="tw" id="tw">
+    <div class="dash">
+      <h2>Dashboard (mock)</h2>
+      <div class="zone" id="zone"><iframe id="card" title="Calendar Filter"></iframe></div>
+      <div class="sel" id="sel">Selected in Tableau: nothing (all dates)</div>
+    </div>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="dlg" id="dlg"><div class="dlgbar"><span id="dlgTitle">Tableau window</span><b id="dlgX" title="Close">×</b></div><div class="frame"><iframe id="dialog" title="Dialog"></iframe></div></div>
+  </div>
+<script>
+  var dataSel = document.getElementById('data');
+  var card = document.getElementById('card');
+  try { dataSel.value = localStorage.getItem('cfMockData') || 'default'; } catch (e) {}
+  function load () { card.src = '../index.html?mock&data=' + dataSel.value + (/debug/.test(location.search) ? '&debug' : ''); }
+  function showSel (count, sample) {
+    document.getElementById('sel').textContent = count
+      ? 'Selected in Tableau: ' + count + ' marks, e.g. ' + JSON.stringify(sample) + '\n(a dashboard Filter action would keep these dates on the other sheets)'
+      : 'Selected in Tableau: nothing (all dates)';
+  }
+  function readStoredSel () {
+    try { var l = JSON.parse(localStorage.getItem('cfMockSelection:' + dataSel.value) || '[]'); showSel(l.length, l.slice(0, 6)); } catch (e) { showSel(0); }
+  }
+  dataSel.addEventListener('change', function () { localStorage.setItem('cfMockData', dataSel.value); closeDlg(); load(); readStoredSel(); });
+  document.getElementById('reload').addEventListener('click', function () { closeDlg(); load(); });
+  document.getElementById('reset').addEventListener('click', function () {
+    Object.keys(localStorage).filter(function (k) { return /^cfMock(Settings|Selection)/.test(k); }).forEach(function (k) { localStorage.removeItem(k); });
+    closeDlg(); load(); readStoredSel();
+  });
+  document.getElementById('fmt').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-configure' }, '*'); });
+  document.getElementById('external').addEventListener('click', function () { card.contentWindow.postMessage({ type: 'cf-external-clear' }, '*'); });
+  document.getElementById('dlgX').addEventListener('click', function () { closeDlg(); });
+
+  var dlg = document.getElementById('dlg');
+  var dialog = document.getElementById('dialog');
+  function closeDlg (payload) {
+    if (dlg.style.display !== 'flex') return;
+    dlg.style.display = 'none';
+    document.getElementById('backdrop').style.display = 'none';
+    dialog.src = 'about:blank';
+    if (card.contentWindow) card.contentWindow.postMessage({ type: 'cf-dialog-closed', payload: payload }, '*');
+  }
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d) return;
+    if (d.type === 'cf-open-dialog') {
+      var o = d.options || {};
+      var w = o.width || 480;
+      var hh = (o.height || 460) + 26;
+      var tw = document.getElementById('tw');
+      dlg.style.width = w + 'px';
+      dlg.style.height = hh + 'px';
+      dlg.style.left = Math.max(8, (tw.clientWidth - w) / 2) + 'px';
+      dlg.style.top = Math.max(8, (tw.clientHeight - hh) / 2) + 'px';
+      dlg.style.display = 'flex';
+      document.getElementById('backdrop').style.display = o.dialogStyle === 'modal' ? 'block' : 'none';
+      document.getElementById('dlgTitle').textContent = (d.kind === 'picker' ? 'Calendar' : 'Format Extension') + ' — Tableau ' + (o.dialogStyle === 'modal' ? 'modal' : 'floating') + ' window (' + w + ' × ' + (o.height || 460) + ')';
+      dialog.src = d.url;
+    }
+    if (d.type === 'cf-close-dialog') closeDlg(d.payload);
+    if (d.type === 'cf-dialog-message-up' && card.contentWindow) card.contentWindow.postMessage({ type: 'cf-dialog-message', message: d.message }, '*');
+    if (d.type === 'cf-selection') showSel(d.count, d.sample);
+  });
+  load();
+  readStoredSel();
+</script>
+</body>
+</html>

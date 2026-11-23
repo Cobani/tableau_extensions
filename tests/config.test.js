@@ -5,6 +5,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const h = require('./helpers.js');
 
+const NO_ROW_LIMIT = ['calendar-filter'];
+
 h.extensions().forEach(function (slug) {
   test(slug + ': config.js loads and publishes DEFAULTS, read, write, STORAGE_KEY', function () {
     const api = h.configApi(h.sandbox(h.configScripts(slug)));
@@ -34,7 +36,13 @@ h.extensions().forEach(function (slug) {
     });
   });
 
-  test(slug + ': the row limit defaults to 1000 and a saved value is kept', function () {
+  // Calendar Filter reads every row on purpose (a calendar with missing dates would be wrong): no row limit.
+  if (NO_ROW_LIMIT.indexOf(slug) >= 0) {
+    test(slug + ': has no row limit setting (reads every date)', function () {
+      const api = h.configApi(h.sandbox(h.configScripts(slug)));
+      assert.equal(api.DEFAULTS.data, undefined);
+    });
+  } else test(slug + ': the row limit defaults to 1000 and a saved value is kept', function () {
     const api = h.configApi(h.sandbox(h.configScripts(slug)));
     assert.equal(api.DEFAULTS.data.maxRows, 1000);
     const saved = slug === 'kpi-card-multi' ? '{"shared":{"data":{"maxRows":0}},"cards":{}}' : '{"data":{"maxRows":0}}';
@@ -58,7 +66,7 @@ h.extensions().forEach(function (slug) {
 });
 
 // The settings key is what ties a workbook to its saved formatting: it must never change.
-const KEYS = { 'kpi-card': 'kpiCard', waterfall: 'waterfall1', 'line-chart': 'linechart1', 'bar-chart': 'barChart1', 'matrix-table': 'matrixTable1', 'data-lineage': 'dataLineage1', 'kpi-card-multi': 'kpiCardMulti1', 'sankey': 'sankey1', 'funnel': 'funnel1', 'bullet-gauge': 'bulletGauge1', 'cohort-grid': 'cohortGrid1', 'treemap-donut': 'treemapDonut1', 'maturity-ladder': 'maturityLadder1', 'parameter-switcher': 'parameterSwitcher1', 'narrative-card': 'narrativeCard1' };
+const KEYS = { 'kpi-card': 'kpiCard', waterfall: 'waterfall1', 'line-chart': 'linechart1', 'bar-chart': 'barChart1', 'matrix-table': 'matrixTable1', 'data-lineage': 'dataLineage1', 'kpi-card-multi': 'kpiCardMulti1', 'sankey': 'sankey1', 'funnel': 'funnel1', 'bullet-gauge': 'bulletGauge1', 'cohort-grid': 'cohortGrid1', 'treemap-donut': 'treemapDonut1', 'maturity-ladder': 'maturityLadder1', 'parameter-switcher': 'parameterSwitcher1', 'narrative-card': 'narrativeCard1', 'calendar-filter': 'calendarFilter1' };
 Object.keys(KEYS).forEach(function (slug) {
   test(slug + ': settings key is still "' + KEYS[slug] + '"', function () {
     assert.equal(h.configApi(h.sandbox(h.configScripts(slug))).STORAGE_KEY, KEYS[slug]);

@@ -153,6 +153,19 @@ def glyph_narrative_card(d):
         rr(d, (52, y, 52 + w, y + 16), 8, WHITE if y != 150 else (255, 255, 255, 150))
 
 
+def glyph_calendar_filter(d):
+    rr(d, (48, 66, 232, 226), 20, WHITE)            # calendar sheet
+    rr(d, (48, 66, 232, 108), 20, ACCENT)           # header band
+    rr(d, (48, 92, 232, 108), 0, ACCENT)
+    rr(d, (88, 50, 104, 84), 8, WHITE)              # rings
+    rr(d, (176, 50, 192, 84), 8, WHITE)
+    for row in range(3):
+        for col in range(4):
+            x = 68 + col * 40
+            y = 124 + row * 32
+            rr(d, (x, y, x + 26, y + 20), 5, ACCENT if (row, col) in ((1, 1), (1, 2)) else (31, 42, 68, 70))
+
+
 ICONS = {
     "kpi-card": ("kpi-card/kpiCard.trex", glyph_kpi_card),
     "kpi-card-multi": ("kpi-card-multi/kpiCardMulti.trex", glyph_kpi_card_multi),
@@ -169,6 +182,7 @@ ICONS = {
     "treemap-donut": ("treemap-donut/treemap-donut.trex", glyph_treemap_donut),
     "parameter-switcher": ("parameter-switcher/parameter-switcher.trex", glyph_parameter_switcher),
     "narrative-card": ("narrative-card/narrative-card.trex", glyph_narrative_card),
+    "calendar-filter": ("calendar-filter/calendar-filter.trex", glyph_calendar_filter),
 }
 
 ICON_RE = re.compile(r"<icon\s*/>|<icon>.*?</icon>", re.S)

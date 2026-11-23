@@ -1,0 +1,89 @@
+{
+  "type": "tableau-calendar-filter-preset",
+  "version": 1,
+  "name": "Default",
+  "scope": "look",
+  "exported": "2026-11-23T10:00:00.000Z",
+  "settings": {
+    "title": {
+      "mode": "field",
+      "font": "Lato",
+      "size": 11,
+      "weight": 700,
+      "color": "#68707D",
+      "italic": false
+    },
+    "box": {
+      "placeholder": "All dates",
+      "clearButton": true,
+      "icon": true,
+      "font": "Lato",
+      "size": 13,
+      "weight": 400,
+      "color": "#17202B",
+      "italic": false,
+      "bgColor": "#FFFFFF",
+      "borderColor": "#C9CDD4",
+      "radius": 4,
+      "height": 30
+    },
+    "window": {
+      "apply": "button",
+      "size": "M",
+      "dialog": "onTop",
+      "help": true
+    },
+    "calendar": {
+      "weekStart": 0,
+      "showYear": true,
+      "showMonth": true,
+      "showWeek": true,
+      "showDay": true,
+      "openAt": "D",
+      "adjacentDays": true
+    },
+    "selection": {
+      "mode": "multi",
+      "drag": true,
+      "emptyPeriods": "dim"
+    },
+    "nulls": {
+      "control": "seg",
+      "default": "include"
+    },
+    "quick": {
+      "position": "side",
+      "anchor": "today",
+      "items": {
+        "today": true,
+        "yesterday": true,
+        "thisWeek": true,
+        "lastWeek": true,
+        "last7": true,
+        "last30": true,
+        "mtd": true,
+        "thisMonth": true,
+        "lastMonth": true,
+        "qtd": true,
+        "last12": true,
+        "ytd": true,
+        "thisYear": true,
+        "lastYear": true
+      }
+    },
+    "look": {
+      "accent": "#2E6FD8",
+      "font": "Lato",
+      "textColor": "#17202B",
+      "mutedColor": "#68707D",
+      "bgColor": "#FFFFFF",
+      "cellNumbers": false,
+      "heat": false
+    },
+    "card": {
+      "padding": 4,
+      "bgColor": "#FFFFFF",
+      "bgOpacity": 0
+    }
+  }
+}

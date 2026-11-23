@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calendar Filter — Calendar</title>
+    <link rel="stylesheet" href="../shared/fonts/fonts.css?v=ab949029bd" />
+    <link rel="stylesheet" href="./picker.css?v=66c8ede586" />
+  </head>
+
+  <body>
+    <div id="root" class="root">
+      <div id="title" class="ttl"></div>
+      <div id="hdr" class="hdr"></div>
+      <div id="chips" class="chips" style="display:none"></div>
+      <div class="body">
+        <div id="side" class="side" style="display:none"></div>
+        <div id="grid" class="grid" role="grid" aria-label="Calendar"></div>
+      </div>
+      <div id="draft" class="draft" role="status"></div>
+      <div class="ftr">
+        <div id="nulls" class="nulls"></div>
+        <div id="actions" class="actions"></div>
+      </div>
+      <div id="help" class="help"></div>
+      <div id="menu" class="menu" role="menu" style="display:none"></div>
+    </div>
+
+    <script src="../shared/boot.js?v=274c7f0929" data-lib="../shared/lib/tableau.extensions.1.17.0.min.js?v=276479f2c7" data-mock="./dev/mock.js?v=c958b9be5c" data-name="Calendar Filter — Calendar" data-ext-version="1.0.0"></script>
+    <script src="../shared/core.js?v=12ed79da06"></script>
+    <script src="./config.js?v=d88b66a3e2"></script>
+    <script src="./picker.js?v=6108c81efd"></script>
+    <script>
+      if (window.ExtBoot) {
+        ExtBoot.start(function () { if (!window.CalendarFilterPicker) return false; window.CalendarFilterPicker.init(); return true; }, { dialog: true });
+      } else {
+        console.error('Could not load the Calendar Filter files.');
+      }
+    </script>
+  </body>
+</html>

@@ -16,6 +16,7 @@ const ext = {};
   'MaturityLadder', 'Ml', 'MaturityLadderConfigure',
   'ParameterSwitcher', 'Ps', 'ParameterSwitcherConfigure',
   'NarrativeCard', 'Nc', 'NarrativeCardConfigure',
+  'CalendarFilter', 'Cf', 'CalendarFilterConfigure', 'CalendarFilterPicker',
   'ChartExport', 'MxExport', 'KPI_ICONS', 'EXT_ICONS'].forEach(function (n) { ext[n] = 'writable'; });
 
 module.exports = [

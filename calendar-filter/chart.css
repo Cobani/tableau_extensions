@@ -1,0 +1,34 @@
+/* Calendar Filter — the text box on the dashboard. */
+:root { --cf-accent: #2E6FD8; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+body { font-family: Lato, "Segoe UI", system-ui, sans-serif; }
+
+.card { height: 100%; display: flex; flex-direction: column; justify-content: flex-start; gap: 3px; min-width: 0; }
+.title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+
+.box {
+  display: flex; align-items: center; gap: 7px; min-width: 0; flex: none;
+  padding: 0 8px; border: 1px solid #C9CDD4; background: #fff; cursor: pointer;
+  user-select: none; outline: none; transition: border-color .12s, box-shadow .12s;
+}
+.box:hover { border-color: var(--cf-accent) !important; }
+.box:focus-visible, .box.is-open {
+  border-color: var(--cf-accent) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cf-accent) 25%, transparent);
+}
+.box-icon { flex: none; opacity: .75; }
+.box-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+.box-text.is-placeholder { opacity: .6; }
+.box-clear {
+  flex: none; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 15px; line-height: 1; opacity: .55; cursor: pointer;
+}
+.box-clear:hover { opacity: 1; background: rgba(0, 0, 0, .07); }
+.box-caret { flex: none; opacity: .55; }
+
+.notice { font-size: 11px; color: #9A3412; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.hint { display: none; font-size: 12px; line-height: 1.4; color: #68707D; }
+.card.is-empty .title, .card.is-empty .box, .card.is-empty .notice { display: none !important; }
+.card.is-empty .hint { display: block; }

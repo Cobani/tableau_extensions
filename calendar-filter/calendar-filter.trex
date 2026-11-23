@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.ilyascoban.vizext.calendarfilter" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>Calendar Filter: a text box that shows the dates chosen and opens a calendar window to filter by year, month, week or day, with ranges, several values, quick ranges and null dates. Use it with a dashboard Filter action.</description>
+    <author name="ilyas coban" email="ilyas.cbn@gmail.com" organization="ilyas coban" website="https://www.linkedin.com/in/ilyascoban/"/>
+    <min-api-version>1.11</min-api-version>
+    <source-location>
+      <url>https://cobani.github.io/tableau_extensions/calendar-filter/</url>
+    </source-location>
+    <icon>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</icon>
+
+    <!-- Adds the "Format Extension" button that opens configure.html -->
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+
+    <encoding id="date">
+      <display-name resource-id="date-name">Date</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="date-tooltip">The date to filter, at day level: right-click it and choose Exact Date or Day (with the year). Date-times are grouped by day.</tooltip>
+    </encoding>
+
+    <encoding id="value">
+      <display-name resource-id="value-name">Value</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count="1"/>
+      <tooltip resource-id="value-tooltip">Optional. A measure (e.g. a count of rows) shown in the calendar cells and used to shade them.</tooltip>
+    </encoding>
+  </worksheet-extension>
+
+  <resources>
+    <resource id="name"><text locale="en_US">Calendar Filter</text></resource>
+    <resource id="date-name"><text locale="en_US">Date</text></resource>
+    <resource id="date-tooltip"><text locale="en_US">The date to filter, at day level: right-click it and choose Exact Date or Day (with the year). Date-times are grouped by day.</text></resource>
+    <resource id="value-name"><text locale="en_US">Value</text></resource>
+    <resource id="value-tooltip"><text locale="en_US">Optional. A measure (e.g. a count of rows) shown in the calendar cells and used to shade them.</text></resource>
+  </resources>
+</manifest>
